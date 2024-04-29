@@ -1,7 +1,6 @@
 package mchorse.bbs_mod.ui.framework.elements.utils;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.systems.VertexSorter;
 import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.entities.StubEntity;
@@ -218,7 +217,7 @@ public abstract class UIModelRenderer extends UIElement
         /* Cache the global stuff */
         MatrixStackUtils.cacheMatrices();
 
-        RenderSystem.setProjectionMatrix(this.camera.projection, VertexSorter.BY_Z);
+        RenderSystem.setProjectionMatrix(this.camera.projection);
         RenderSystem.setInverseViewRotationMatrix(new Matrix3f(this.camera.view).invert());
 
         /* Rendering begins... */

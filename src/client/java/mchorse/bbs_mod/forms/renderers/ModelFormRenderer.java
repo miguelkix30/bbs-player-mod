@@ -135,6 +135,8 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
 
         if (this.animator != null && model != null)
         {
+            RenderSystem.enableDepthTest();
+
             MatrixStack stack = context.batcher.getContext().getMatrices();
 
             stack.push();
@@ -173,6 +175,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
             stack.pop();
 
             RenderSystem.depthFunc(GL11.GL_ALWAYS);
+            RenderSystem.disableDepthTest();
         }
     }
 

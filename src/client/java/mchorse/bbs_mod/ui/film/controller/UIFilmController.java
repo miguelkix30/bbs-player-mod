@@ -1,7 +1,6 @@
 package mchorse.bbs_mod.ui.film.controller;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.systems.VertexSorter;
 import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.camera.controller.RunnerCameraController;
@@ -61,7 +60,6 @@ import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.hit.HitResult;
@@ -896,7 +894,7 @@ public class UIFilmController extends UIElement
         /* Cache the global stuff */
         MatrixStackUtils.cacheMatrices();
 
-        RenderSystem.setProjectionMatrix(this.panel.lastProjection, VertexSorter.BY_Z);
+        RenderSystem.setProjectionMatrix(this.panel.lastProjection);
         RenderSystem.setInverseViewRotationMatrix(new Matrix3f(this.panel.lastView).invert());
 
         /* Render the stencil */

@@ -1,11 +1,12 @@
 package mchorse.bbs_mod.ui.framework;
 
 import mchorse.bbs_mod.BBSModClient;
+import mchorse.bbs_mod.ui.utils.DrawContext;
 import mchorse.bbs_mod.ui.utils.IFileDropListener;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
@@ -43,7 +44,7 @@ public class UIScreen extends Screen implements IFileDropListener
         MinecraftClient mc = MinecraftClient.getInstance();
 
         this.menu = menu;
-        this.context = new UIRenderingContext(new DrawContext(mc, mc.getBufferBuilders().getEntityVertexConsumers()));
+        this.context = new UIRenderingContext(new DrawContext());
 
         this.menu.context.setup(this.context);
     }
@@ -144,9 +145,9 @@ public class UIScreen extends Screen implements IFileDropListener
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount)
+    public boolean mouseScrolled(double mouseX, double mouseY, double amount)
     {
-        return this.menu.mouseScrolled((int) mouseX, (int) mouseY, (int) verticalAmount);
+        return this.menu.mouseScrolled((int) mouseX, (int) mouseY, (int) amount);
     }
 
     @Override
@@ -176,14 +177,15 @@ public class UIScreen extends Screen implements IFileDropListener
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta)
+    public void renderBackground(MatrixStack matrices)
     {}
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta)
+    public void render(MatrixStack matrices, int mouseX, int mouseY, float delta)
     {
-        super.render(context, mouseX, mouseY, delta);
+        super.render(matrices, mouseX, mouseY, delta);
 
+        this.menu.context.batcher.getContext().setMatrices(matrices);
         this.menu.context.setTransition(this.client.getTickDelta());
         this.menu.renderMenu(this.context, mouseX, mouseY);
     }

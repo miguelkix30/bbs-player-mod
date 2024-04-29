@@ -1,16 +1,16 @@
 package mchorse.bbs_mod.ui.framework.elements.utils;
 
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.graphics.texture.Texture;
 import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.utils.Area;
+import mchorse.bbs_mod.ui.utils.DrawContext;
 import mchorse.bbs_mod.ui.utils.icons.Icon;
 import mchorse.bbs_mod.utils.colors.Colors;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.ShaderProgram;
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.GameRenderer;
@@ -463,8 +463,16 @@ public class Batcher2D
 
     public void text(String label, float x, float y, int color, boolean shadow)
     {
-        this.context.drawText(this.font.getRenderer(), label, (int) x, (int) y, color, shadow);
-        this.context.draw();
+        TextRenderer renderer = this.font.getRenderer();
+
+        if (shadow)
+        {
+            renderer.drawWithShadow(this.context.getMatrices(), label, (int) x, (int) y, color);
+        }
+        else
+        {
+            renderer.draw(this.context.getMatrices(), label, (int) x, (int) y, color);
+        }
 
         RenderSystem.depthFunc(GL11.GL_ALWAYS);
     }

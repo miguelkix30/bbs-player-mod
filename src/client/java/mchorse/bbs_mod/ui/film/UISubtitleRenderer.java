@@ -2,7 +2,6 @@ package mchorse.bbs_mod.ui.film;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.systems.VertexSorter;
 import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.camera.clips.misc.Subtitle;
 import mchorse.bbs_mod.client.BBSShaders;
@@ -104,7 +103,7 @@ public class UISubtitleRenderer
             int fw = (int) ((w + 10) * scale);
             int fh = (int) ((h + 10) * scale);
 
-            RenderSystem.setProjectionMatrix(new Matrix4f().ortho(0, w + 10, 0, h + 10, -100, 100), VertexSorter.BY_Z);
+            RenderSystem.setProjectionMatrix(new Matrix4f().ortho(0, w + 10, 0, h + 10, -100, 100));
 
             framebuffer.resize(fw, fh);
             framebuffer.applyClear();
@@ -132,7 +131,7 @@ public class UISubtitleRenderer
             /* Render the texture */
             fb.beginWrite(true);
 
-            RenderSystem.setProjectionMatrix(ortho, VertexSorter.BY_Z);
+            RenderSystem.setProjectionMatrix(ortho);
 
             Transform transform = new Transform();
 
@@ -160,7 +159,7 @@ public class UISubtitleRenderer
             stack.pop();
         }
 
-        RenderSystem.setProjectionMatrix(cache, VertexSorter.BY_Z);
+        RenderSystem.setProjectionMatrix(cache);
         RenderSystem.enableCull();
     }
 }

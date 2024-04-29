@@ -1,7 +1,6 @@
 package mchorse.bbs_mod.utils;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.systems.VertexSorter;
 import mchorse.bbs_mod.utils.pose.Transform;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.RotationAxis;
@@ -34,7 +33,7 @@ public class MatrixStackUtils
     public static void restoreMatrices()
     {
         /* Return back to orthographic projection */
-        RenderSystem.setProjectionMatrix(oldProjection, VertexSorter.BY_Z);
+        RenderSystem.setProjectionMatrix(oldProjection);
         RenderSystem.setInverseViewRotationMatrix(oldInverse);
 
         MatrixStack renderStack = RenderSystem.getModelViewStack();

@@ -55,12 +55,14 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
+import net.minecraft.block.Material;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
@@ -73,7 +75,6 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.BlockPos;
@@ -111,12 +112,11 @@ public class BBSMod implements ModInitializer
             .dimensions(EntityDimensions.fixed(0.6F, 1.8F))
             .build());
 
-    public static final Block MODEL_BLOCK = new ModelBlock(FabricBlockSettings.create()
+    public static final Block MODEL_BLOCK = new ModelBlock(FabricBlockSettings.of(Material.METAL)
         .noBlockBreakParticles()
         .dropsNothing()
         .noCollision()
         .nonOpaque()
-        .notSolid()
         .strength(0F));
 
     public static final BlockItem MODEL_BLOCK_ITEM = new BlockItem(MODEL_BLOCK, new Item.Settings());
@@ -127,13 +127,8 @@ public class BBSMod implements ModInitializer
         FabricBlockEntityTypeBuilder.create(ModelBlockEntity::new, MODEL_BLOCK).build()
     );
 
-    public static final ItemGroup ITEM_GROUP = FabricItemGroup.builder()
+    public static final ItemGroup ITEM_GROUP = FabricItemGroup.builder(Identifier.of(MOD_ID, "main"))
         .icon(() -> createModelBlockStack(Link.assets("textures/icon.png")))
-        .displayName(Text.translatable("itemGroup.bbs.main"))
-        .entries((context, entries) ->
-        {
-            entries.add(createModelBlockStack(Link.assets("textures/model_block.png")));
-        })
         .build();
 
     private static ItemStack createModelBlockStack(Link texture)
@@ -330,7 +325,10 @@ public class BBSMod implements ModInitializer
         Registry.register(Registries.BLOCK, new Identifier(MOD_ID, "model"), MODEL_BLOCK);
         Registry.register(Registries.ITEM, new Identifier(MOD_ID, "model"), MODEL_BLOCK_ITEM);
 
-        Registry.register(Registries.ITEM_GROUP, new Identifier(MOD_ID, "main"), ITEM_GROUP);
+        ItemGroupEvents.modifyEntriesEvent(ITEM_GROUP).register(content ->
+        {
+            content.add(createModelBlockStack(Link.assets("textures/model_block.png")));
+        });
     }
 
     private void registerEvents()
