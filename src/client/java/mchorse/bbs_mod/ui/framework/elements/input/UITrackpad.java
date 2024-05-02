@@ -396,7 +396,7 @@ public class UITrackpad extends UIBaseTextbox
         }
         else if (this.area.isInside(context))
         {
-            if (!context.isFocused() && context.isPressed(GLFW.GLFW_KEY_MINUS))
+            if (!context.isFocused() && (context.isPressed(GLFW.GLFW_KEY_MINUS) || context.isPressed(GLFW.GLFW_KEY_KP_SUBTRACT)))
             {
                 this.setValueAndNotify(-this.value);
 

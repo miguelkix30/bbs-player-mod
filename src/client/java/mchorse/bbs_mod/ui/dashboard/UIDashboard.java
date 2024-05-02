@@ -49,7 +49,7 @@ public class UIDashboard extends UIBaseMenu
     public UIIcon settings;
 
     /* Camera data */
-    public final UIOrbitCamera orbitUI = new UIOrbitCamera();
+    public final UIOrbitCamera orbitUI = new UIOrbitCamera(() -> this.panels.panel.getOrbitViewport());
     public final OrbitCamera orbit = this.orbitUI.orbit;
     public final OrbitCameraController camera = new OrbitCameraController(this.orbit, 5);
 

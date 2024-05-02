@@ -46,7 +46,7 @@ public class UIModelBlockEditorMenu extends UIBaseMenu
 
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
 
-        this.uiOrbitCamera = new UIOrbitCamera();
+        this.uiOrbitCamera = new UIOrbitCamera(() -> this.main.area);
         this.uiOrbitCamera.setControl(true);
         this.orbitCameraController = new OrbitCameraController(this.uiOrbitCamera.orbit);
         this.orbitCameraController.camera.position.set(player.getPos().x, player.getPos().y + 1D, player.getPos().z);

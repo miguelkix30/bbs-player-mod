@@ -5,11 +5,19 @@ import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.framework.elements.IUIElement;
 import mchorse.bbs_mod.ui.utils.Area;
 
+import java.util.function.Supplier;
+
 public class UIOrbitCamera implements IUIElement
 {
     public OrbitCamera orbit = new OrbitCamera();
     private boolean control;
     private boolean enabled = true;
+    private Supplier<Area> area;
+
+    public UIOrbitCamera(Supplier<Area> area)
+    {
+        this.area = area;
+    }
 
     public boolean canControl()
     {
@@ -44,6 +52,13 @@ public class UIOrbitCamera implements IUIElement
     @Override
     public IUIElement mouseClicked(UIContext context)
     {
+        Area area = this.area.get();
+
+        if (area == null || !area.isInside(context))
+        {
+            return null;
+        }
+
         int i = this.orbit.canStart(context);
 
         if (i >= 0)
