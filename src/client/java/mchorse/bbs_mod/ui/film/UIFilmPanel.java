@@ -856,8 +856,6 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
 
             if (this.cameraClips.getClip() != null && this.cameraClips.isVisible())
             {
-                System.out.println((!this.lastPosition.equals(current)) + " " + check);
-
                 if (!this.lastPosition.equals(current) && check)
                 {
                     this.cameraClips.editClip(current);
