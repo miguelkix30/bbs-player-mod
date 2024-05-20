@@ -2,8 +2,6 @@ package mchorse.bbs_mod.cubic;
 
 import mchorse.bbs_mod.cubic.data.animation.Animations;
 import mchorse.bbs_mod.cubic.data.model.Model;
-import mchorse.bbs_mod.cubic.parsing.AnimationParser;
-import mchorse.bbs_mod.cubic.parsing.ModelParser;
 import mchorse.bbs_mod.data.DataToString;
 import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.math.molang.MolangParser;
@@ -14,29 +12,48 @@ import java.io.InputStream;
 
 public class CubicLoader
 {
+    public static MapType loadFile(InputStream stream)
+    {
+        try
+        {
+            return DataToString.mapFromString(loadStringFile(stream));
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public static String loadStringFile(InputStream stream) throws IOException
+    {
+        String content = IOUtils.readText(stream);
+
+        stream.close();
+
+        return content;
+    }
+
     public LoadingInfo load(MolangParser parser, InputStream stream, String path)
     {
         LoadingInfo info = new LoadingInfo();
 
         try
         {
-            MapType root = this.loadFile(stream);
+            MapType root = loadFile(stream);
 
             if (root.has("model"))
             {
-                info.model = ModelParser.parse(parser, root.getMap("model"));
+                info.model = new Model(parser);
+                info.model.fromData(root.getMap("model"));
+                info.model.initialize();
             }
 
             if (root.has("animations"))
             {
-                MapType animations = root.getMap("animations");
-
-                info.animations = new Animations();
-
-                for (String key : animations.keys())
-                {
-                    info.animations.add(AnimationParser.parse(parser, key, animations.getMap(key)));
-                }
+                info.animations = new Animations(parser);
+                info.animations.fromData(root.getMap("animations"));
             }
         }
         catch (Exception e)
@@ -48,27 +65,21 @@ public class CubicLoader
         return info;
     }
 
-    private MapType loadFile(InputStream stream)
+    public static MapType toData(CubicModel model)
     {
-        try
+        MapType data = new MapType();
+
+        if (model.model != null)
         {
-            return DataToString.mapFromString(this.loadStringFile(stream));
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
+            data.put("model", model.model.toData());
         }
 
-        return null;
-    }
+        if (model.animations != null)
+        {
+            data.put("animations", model.animations.toData());
+        }
 
-    private String loadStringFile(InputStream stream) throws IOException
-    {
-        String content = IOUtils.readText(stream);
-
-        stream.close();
-
-        return content;
+        return data;
     }
 
     public static class LoadingInfo

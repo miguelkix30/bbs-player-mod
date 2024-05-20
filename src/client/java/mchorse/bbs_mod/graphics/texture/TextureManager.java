@@ -1,6 +1,8 @@
 package mchorse.bbs_mod.graphics.texture;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import mchorse.bbs_mod.BBSMod;
+import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.resources.AssetProvider;
 import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.utils.resources.MultiLink;
@@ -33,7 +35,7 @@ public class TextureManager implements IWatchDogListener
         return this.extruder;
     }
 
-    private Texture getError()
+    public Texture getError()
     {
         if (this.error == null)
         {
@@ -48,6 +50,28 @@ public class TextureManager implements IWatchDogListener
         }
 
         return this.error;
+    }
+
+    public void bindTexture(Link texture)
+    {
+        this.bindTexture(texture, 0);
+    }
+
+    public void bindTexture(Link texture, int unit)
+    {
+        this.bindTexture(this.getTexture(texture), unit);
+    }
+
+    public void bindTexture(Texture texture)
+    {
+        this.bindTexture(texture, 0);
+    }
+
+    public void bindTexture(Texture texture, int unit)
+    {
+        BBSRendering.trackTexture(texture);
+
+        RenderSystem.setShaderTexture(unit, texture.id);
     }
 
     public void bind(Link texture)
@@ -118,6 +142,11 @@ public class TextureManager implements IWatchDogListener
 
     public Texture getTexture(Link link, int filter)
     {
+        return this.getTexture(link, filter, false);
+    }
+
+    public Texture getTexture(Link link, int filter, boolean silent)
+    {
         Texture texture = this.textures.get(link);
 
         if (texture == null)
@@ -140,7 +169,10 @@ public class TextureManager implements IWatchDogListener
             }
             catch (Exception e)
             {
-                e.printStackTrace();
+                if (!silent)
+                {
+                    e.printStackTrace();
+                }
 
                 texture = this.getError();
 

@@ -30,6 +30,7 @@ import mchorse.bbs_mod.camera.clips.overwrite.PathClip;
 import mchorse.bbs_mod.entity.ActorEntity;
 import mchorse.bbs_mod.film.FilmManager;
 import mchorse.bbs_mod.forms.FormArchitect;
+import mchorse.bbs_mod.forms.forms.AnchorForm;
 import mchorse.bbs_mod.forms.forms.BillboardForm;
 import mchorse.bbs_mod.forms.forms.BlockForm;
 import mchorse.bbs_mod.forms.forms.ExtrudedForm;
@@ -55,6 +56,8 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
@@ -89,7 +92,6 @@ public class BBSMod implements ModInitializer
     private static File gameFolder;
     private static File assetsFolder;
     private static File settingsFolder;
-    private static File dataFolder;
 
     /* Core services */
     private static AssetProvider provider;
@@ -202,21 +204,6 @@ public class BBSMod implements ModInitializer
         return new File(settingsFolder, path);
     }
 
-    /**
-     * Data folder within game's folder. It's used to store game data like
-     * quests, dialogues, states, player data, etc. anything related to game
-     * basically.
-     */
-    public static File getDataFolder()
-    {
-        return dataFolder;
-    }
-
-    public static File getDataPath(String path)
-    {
-        return new File(dataFolder, path);
-    }
-
     public static File getExportFolder()
     {
         return getGamePath("export");
@@ -259,7 +246,6 @@ public class BBSMod implements ModInitializer
         gameFolder = FabricLoader.getInstance().getGameDir().toFile();
         assetsFolder = new File(gameFolder, "config/bbs/assets");
         settingsFolder = new File(gameFolder, "config/bbs/settings");
-        dataFolder = new File(gameFolder, "config/bbs/data");
 
         assetsFolder.mkdirs();
 
@@ -276,7 +262,8 @@ public class BBSMod implements ModInitializer
             .register(Link.bbs("particle"), ParticleForm.class, null)
             .register(Link.bbs("extruded"), ExtrudedForm.class, null)
             .register(Link.bbs("block"), BlockForm.class, null)
-            .register(Link.bbs("item"), ItemForm.class, null);
+            .register(Link.bbs("item"), ItemForm.class, null)
+            .register(Link.bbs("anchor"), AnchorForm.class, null);
 
         films = new FilmManager(() -> new File(worldFolder, "bbs/films"));
 
@@ -346,6 +333,11 @@ public class BBSMod implements ModInitializer
         });
 
         ServerLifecycleEvents.SERVER_STARTED.register((event) -> worldFolder = event.getSavePath(WorldSavePath.ROOT).toFile());
+
+        ServerPlayConnectionEvents.JOIN.register((a, b, c) ->
+        {
+            b.sendPacket(ServerNetwork.CLIENT_HANDSHAKE, PacketByteBufs.empty());
+        });
     }
 
     public static Settings setupConfig(Icon icon, String id, File destination, Consumer<SettingsBuilder> registerer)

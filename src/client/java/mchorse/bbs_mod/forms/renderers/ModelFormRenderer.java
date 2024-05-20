@@ -6,6 +6,8 @@ import mchorse.bbs_mod.client.BBSShaders;
 import mchorse.bbs_mod.cubic.CubicModel;
 import mchorse.bbs_mod.cubic.CubicModelAnimator;
 import mchorse.bbs_mod.cubic.animation.Animator;
+import mchorse.bbs_mod.cubic.animation.IAnimator;
+import mchorse.bbs_mod.cubic.animation.ProceduralAnimator;
 import mchorse.bbs_mod.cubic.data.model.ModelGroup;
 import mchorse.bbs_mod.cubic.render.CubicCubeRenderer;
 import mchorse.bbs_mod.cubic.render.CubicMatrixRenderer;
@@ -50,7 +52,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
 
     private Map<String, Matrix4f> bones = new HashMap<>();
 
-    private Animator animator;
+    private IAnimator animator;
     private long lastCheck;
 
     private IEntity entity = new StubEntity();
@@ -80,7 +82,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
         super(form);
     }
 
-    public Animator getAnimator()
+    public IAnimator getAnimator()
     {
         return this.animator;
     }
@@ -110,7 +112,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
             return;
         }
 
-        this.animator = new Animator();
+        this.animator = model.procedural ? new ProceduralAnimator() : new Animator();
         this.animator.setup(model, this.form.actions.get());
 
         this.lastCheck = model.loadTime;
@@ -154,7 +156,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
 
             MatrixStackUtils.multiply(stack, uiMatrix);
 
-            RenderSystem.setShaderTexture(0, BBSModClient.getTextures().getTexture(texture).id);
+            BBSModClient.getTextures().bindTexture(texture);
             RenderSystem.depthFunc(GL11.GL_LEQUAL);
             RenderSystem.setShader(GameRenderer::getRenderTypeEntityTranslucentCullProgram);
 
@@ -241,7 +243,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
 
             context.stack.multiply(RotationAxis.POSITIVE_Y.rotation(MathUtils.PI));
 
-            RenderSystem.setShaderTexture(0, BBSModClient.getTextures().getTexture(texture).id);
+            BBSModClient.getTextures().bindTexture(texture);
             RenderSystem.setShader(this.getShader(context,
                 GameRenderer::getRenderTypeEntityTranslucentCullProgram,
                 BBSShaders::getPickerModelsProgram));

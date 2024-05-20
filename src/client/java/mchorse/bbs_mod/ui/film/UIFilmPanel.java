@@ -6,6 +6,7 @@ import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.audio.AudioRenderer;
 import mchorse.bbs_mod.camera.Camera;
+import mchorse.bbs_mod.camera.OrbitCamera;
 import mchorse.bbs_mod.camera.clips.overwrite.IdleClip;
 import mchorse.bbs_mod.camera.controller.CameraController;
 import mchorse.bbs_mod.camera.controller.RunnerCameraController;
@@ -14,6 +15,7 @@ import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.client.renderer.MorphRenderer;
 import mchorse.bbs_mod.data.types.BaseType;
 import mchorse.bbs_mod.film.Film;
+import mchorse.bbs_mod.film.Recorder;
 import mchorse.bbs_mod.film.VoiceLines;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.FormUtils;
@@ -46,6 +48,7 @@ import mchorse.bbs_mod.ui.framework.elements.utils.UIRenderable;
 import mchorse.bbs_mod.ui.utils.Area;
 import mchorse.bbs_mod.ui.utils.UIUtils;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
+import mchorse.bbs_mod.utils.CollectionUtils;
 import mchorse.bbs_mod.utils.Direction;
 import mchorse.bbs_mod.utils.FFMpegUtils;
 import mchorse.bbs_mod.utils.ScreenshotRecorder;
@@ -121,11 +124,13 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
     private FilmEditorUndo.KeyframeSelection cachedKeyframeSelection;
     private FilmEditorUndo.KeyframeSelection cachedPropertiesSelection;
     private Map<BaseValue, BaseType> cachedUndo = new HashMap<>();
+    public boolean cacheMarkLastUndoNoMerging = false;
 
     public final Matrix4f lastView = new Matrix4f();
     public final Matrix4f lastProjection = new Matrix4f();
 
-    private Timer flightEditTime = new Timer(50);
+    private Timer flightEditTime = new Timer(100);
+    private Recorder lastRecorder;
 
     public static VoiceLines getVoiceLines()
     {
@@ -299,8 +304,8 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
 
     public Area getFramebufferArea(Area viewport)
     {
-        int width = BBSSettings.videoWidth.get(); // this.texture.width;
-        int height = BBSSettings.videoHeight.get(); // this.texture.height;
+        int width = BBSRendering.getVideoWidth();
+        int height = BBSRendering.getVideoHeight();
 
         Camera camera = new Camera();
 
@@ -419,6 +424,13 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         super.open();
 
         this.cameraClips.open();
+
+        Recorder recorder = BBSModClient.getFilms().stopRecording();
+
+        if (recorder != null && recorder.tick >= 0)
+        {
+            this.lastRecorder = recorder;
+        }
     }
 
     @Override
@@ -553,6 +565,27 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         this.controller.createEntities();
 
         this.entered = data != null;
+
+        if (this.lastRecorder != null)
+        {
+            /* Apply recorded data */
+            if (data != null && this.lastRecorder.film.getId().equals(data.getId()))
+            {
+                int replayId = this.lastRecorder.exception;
+
+                if (CollectionUtils.inRange(data.replays.getList(), replayId))
+                {
+                    BaseValue.edit(data.replays.getList().get(replayId), (replay) ->
+                    {
+                        replay.keyframes.copy(this.lastRecorder.keyframes);
+                    });
+
+                    this.dashboard.context.notify(UIKeys.FILMS_SAVED_NOTIFICATION.format(data.getId()), Colors.BLUE | Colors.A100);
+                }
+            }
+
+            this.lastRecorder = null;
+        }
     }
 
     private void handlePreValues(BaseValue baseValue)
@@ -652,6 +685,13 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         this.cachedKeyframeSelection = this.cachedPropertiesSelection = null;
 
         this.undoTimer.mark();
+
+        if (this.cacheMarkLastUndoNoMerging)
+        {
+            this.cacheMarkLastUndoNoMerging = false;
+
+            this.markLastUndoNoMerging();
+        }
     }
 
     private void handleUndos(IUndo<ValueGroup> undo, boolean redo)

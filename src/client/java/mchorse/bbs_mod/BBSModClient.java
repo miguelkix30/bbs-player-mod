@@ -10,7 +10,7 @@ import mchorse.bbs_mod.client.renderer.ModelBlockEntityRenderer;
 import mchorse.bbs_mod.client.renderer.ModelBlockItemRenderer;
 import mchorse.bbs_mod.cubic.model.ModelManager;
 import mchorse.bbs_mod.film.Films;
-import mchorse.bbs_mod.forms.categories.FormCategories;
+import mchorse.bbs_mod.forms.FormCategories;
 import mchorse.bbs_mod.graphics.FramebufferManager;
 import mchorse.bbs_mod.graphics.texture.TextureManager;
 import mchorse.bbs_mod.l10n.L10n;
@@ -18,9 +18,12 @@ import mchorse.bbs_mod.network.ClientNetwork;
 import mchorse.bbs_mod.particles.ParticleManager;
 import mchorse.bbs_mod.resources.AssetProvider;
 import mchorse.bbs_mod.resources.Link;
+import mchorse.bbs_mod.selectors.EntitySelectors;
 import mchorse.bbs_mod.settings.values.ValueLanguage;
 import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.ui.dashboard.UIDashboard;
+import mchorse.bbs_mod.ui.film.UIFilmPanel;
+import mchorse.bbs_mod.ui.film.menu.UIFilmsMenu;
 import mchorse.bbs_mod.ui.framework.UIScreen;
 import mchorse.bbs_mod.ui.model_blocks.UIModelBlockEditorMenu;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
@@ -36,6 +39,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
@@ -62,11 +66,13 @@ public class BBSModClient implements ClientModInitializer
     private static WatchDog watchDog;
     private static ScreenshotRecorder screenshotRecorder;
     private static VideoRecorder videoRecorder;
+    private static EntitySelectors selectors;
 
     private static ParticleManager particles;
 
     private static KeyBinding keyDashboard;
     private static KeyBinding keyModelBlockEditor;
+    private static KeyBinding keyFilms;
     /* private static KeyBinding keyToggleRecording; */
 
     private static UIDashboard dashboard;
@@ -115,6 +121,11 @@ public class BBSModClient implements ClientModInitializer
     public static VideoRecorder getVideoRecorder()
     {
         return videoRecorder;
+    }
+
+    public static EntitySelectors getSelectors()
+    {
+        return selectors;
     }
 
     public static ParticleManager getParticles()
@@ -168,25 +179,38 @@ public class BBSModClient implements ClientModInitializer
 
         File parentFile = BBSMod.getSettingsFolder().getParentFile();
 
+        particles = new ParticleManager(() -> new File(BBSMod.getAssetsFolder(), "particles"));
+
         models = new ModelManager(provider);
         formCategories = new FormCategories();
         formCategories.setup();
-        watchDog = new WatchDog(BBSMod.getAssetsFolder(), (runnable) -> MinecraftClient.getInstance().execute(runnable));
+        watchDog = new WatchDog(BBSMod.getAssetsFolder(), false, (runnable) -> MinecraftClient.getInstance().execute(runnable));
         watchDog.register(textures);
         watchDog.register(models);
         watchDog.register(sounds);
+        watchDog.register(formCategories);
         watchDog.start();
         screenshotRecorder = new ScreenshotRecorder(new File(parentFile, "screenshots"));
-        videoRecorder = new VideoRecorder(new File(parentFile, "movies"));
+        videoRecorder = new VideoRecorder();
+        selectors = new EntitySelectors();
+        selectors.read();
         films = new Films();
-
-        particles = new ParticleManager(() -> new File(BBSMod.getDataFolder(), "particles"));
 
         KeybindSettings.registerClasses();
 
         BBSMod.setupConfig(Icons.KEY_CAP, "keybinds", new File(BBSMod.getSettingsFolder(), "keybinds.json"), KeybindSettings::register);
 
         BBSSettings.language.postCallback((v) -> reloadLanguage(((ValueLanguage) v).get()));
+        BBSSettings.editorSeconds.postCallback((v) ->
+        {
+            if (dashboard != null)
+            {
+                if (dashboard.getPanels().panel instanceof UIFilmPanel panel)
+                {
+                    panel.fillData();
+                }
+            }
+        });
 
         BBSSettings.tooltipStyle.modes(
             UIKeys.ENGINE_TOOLTIP_STYLE_LIGHT,
@@ -220,6 +244,13 @@ public class BBSModClient implements ClientModInitializer
             "key." + BBSMod.MOD_ID + ".block_editor",
             InputUtil.Type.KEYSYM,
             GLFW.GLFW_KEY_HOME,
+            "category." + BBSMod.MOD_ID + ".main"
+        ));
+
+        keyFilms = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key." + BBSMod.MOD_ID + ".films",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_RIGHT_ALT,
             "category." + BBSMod.MOD_ID + ".main"
         ));
 
@@ -259,6 +290,8 @@ public class BBSModClient implements ClientModInitializer
         {
             dashboard = null;
             films = new Films();
+
+            ClientNetwork.resetHandshake();
         });
 
         ClientTickEvents.START_CLIENT_TICK.register((client) ->
@@ -276,10 +309,10 @@ public class BBSModClient implements ClientModInitializer
             }
 
             cameraController.update();
-            films.update();
 
             if (!mc.isPaused())
             {
+                films.update();
                 modelBlockItemRenderer.update();
             }
 
@@ -303,10 +336,20 @@ public class BBSModClient implements ClientModInitializer
                 }
             }
 
+            while (keyFilms.wasPressed())
+            {
+                UIScreen.open(new UIFilmsMenu());
+            }
+
             /* while (keyToggleRecording.wasPressed())
             {
                 requestToggleRecording = true;
             } */
+        });
+
+        HudRenderCallback.EVENT.register((drawContext, tickDelta) ->
+        {
+            BBSRendering.renderHud(drawContext, tickDelta);
         });
 
         ClientLifecycleEvents.CLIENT_STOPPING.register((e) ->

@@ -2,7 +2,11 @@ package mchorse.bbs_mod.film.replays;
 
 import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.settings.values.ValueGroup;
+import mchorse.bbs_mod.utils.Pair;
+import mchorse.bbs_mod.utils.keyframes.Keyframe;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
+import mchorse.bbs_mod.utils.keyframes.KeyframeInterpolation;
+import org.joml.Vector2d;
 
 import java.util.Arrays;
 import java.util.List;
@@ -166,17 +170,42 @@ public class ReplayKeyframes extends ValueGroup
 
         if (position)
         {
-            entity.setPosition(this.x.interpolate(tick), this.y.interpolate(tick), this.z.interpolate(tick));
             entity.setVelocity((float) this.vX.interpolate(tick), (float) this.vY.interpolate(tick), (float) this.vZ.interpolate(tick));
             entity.setFallDistance((float) this.fall.interpolate(tick));
+
+            Pair<Keyframe, Keyframe> x = this.x.findSegment(tick);
+            Vector2d xx = this.getPrev(x, tick, entity.getPrevX());
+            Pair<Keyframe, Keyframe> y = this.y.findSegment(tick);
+            Vector2d yy = this.getPrev(y, tick, entity.getPrevY());
+            Pair<Keyframe, Keyframe> z = this.z.findSegment(tick);
+            Vector2d zz = this.getPrev(z, tick, entity.getPrevZ());
+
+            entity.setPosition(xx.x, yy.x, zz.x);
+            entity.setPrevX(xx.y);
+            entity.setPrevY(yy.y);
+            entity.setPrevZ(zz.y);
         }
 
         if (rotation)
         {
-            entity.setYaw((float) this.yaw.interpolate(tick));
-            entity.setPitch((float) this.pitch.interpolate(tick));
-            entity.setHeadYaw((float) this.headYaw.interpolate(tick));
-            entity.setBodyYaw((float) this.bodyYaw.interpolate(tick));
+            Pair<Keyframe, Keyframe> yaw = this.yaw.findSegment(tick);
+            Vector2d yyaw = this.getPrev(yaw, tick, entity.getPrevYaw());
+            Pair<Keyframe, Keyframe> pitch = this.pitch.findSegment(tick);
+            Vector2d ppitch = this.getPrev(pitch, tick, entity.getPrevPitch());
+            Pair<Keyframe, Keyframe> headYaw = this.headYaw.findSegment(tick);
+            Vector2d hheadYaw = this.getPrev(headYaw, tick, entity.getPrevHeadYaw());
+            Pair<Keyframe, Keyframe> bodyYaw = this.bodyYaw.findSegment(tick);
+            Vector2d bbodyYaw = this.getPrev(bodyYaw, tick, entity.getPrevBodyYaw());
+
+            entity.setYaw((float) yyaw.x);
+            entity.setPitch((float) ppitch.x);
+            entity.setHeadYaw((float) hheadYaw.x);
+            entity.setBodyYaw((float) bbodyYaw.x);
+
+            entity.setPrevYaw((float) yyaw.y);
+            entity.setPrevPitch((float) ppitch.y);
+            entity.setPrevHeadYaw((float) hheadYaw.y);
+            entity.setPrevBodyYaw((float) bbodyYaw.y);
         }
 
         /* Motion and fall distance */
@@ -215,5 +244,30 @@ public class ReplayKeyframes extends ValueGroup
             sticks[8] = (float) this.extra2X.interpolate(tick);
             sticks[9] = (float) this.extra2Y.interpolate(tick);
         }
+    }
+
+    /**
+     * Force teleportation for the previous keyframe being constant
+     */
+    private Vector2d getPrev(Pair<Keyframe, Keyframe> frame, int tick, double prev)
+    {
+        if (frame != null && frame.b != null)
+        {
+            /* Special case for when there is no keyframe afterwards */
+            if (frame.a == frame.b && frame.b.next == frame.b && frame.a.prev != frame.a)
+            {
+                if (frame.a.prev.getInterpolation() == KeyframeInterpolation.CONST && frame.a.getTick() == tick)
+                {
+                    return new Vector2d(frame.a.getValue(), frame.a.getValue());
+                }
+            }
+
+            if (frame.a.getInterpolation() == KeyframeInterpolation.CONST && frame.b.getTick() == tick)
+            {
+                return new Vector2d(frame.b.getValue(), frame.b.getValue());
+            }
+        }
+
+        return new Vector2d(KeyframeChannel.compute(frame, tick), prev);
     }
 }

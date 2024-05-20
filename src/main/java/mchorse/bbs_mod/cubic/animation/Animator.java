@@ -5,6 +5,7 @@ import mchorse.bbs_mod.cubic.data.animation.Animation;
 import mchorse.bbs_mod.cubic.data.animation.Animations;
 import mchorse.bbs_mod.cubic.data.model.Model;
 import mchorse.bbs_mod.forms.entities.IEntity;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,7 +18,7 @@ import java.util.List;
  * This class is responsible for applying currently running actions onto 
  * form (more specifically onto an armature).
  */
-public class Animator
+public class Animator implements IAnimator
 {
     /* Actions */
     public ActionPlayback idle;
@@ -49,6 +50,7 @@ public class Animator
 
     private CubicModel model;
 
+    @Override
     public List<String> getActions()
     {
         return Arrays.asList(
@@ -57,6 +59,7 @@ public class Animator
         );
     }
 
+    @Override
     public void setup(CubicModel model, ActionsConfig actions)
     {
         this.model = model;
@@ -132,6 +135,7 @@ public class Animator
      * Update animator. This method is responsible for updating action 
      * pipeline and also change current actions based on entity's state.
      */
+    @Override
     public void update(IEntity target)
     {
         /* Fix issue with forms sudden running action */
@@ -178,8 +182,9 @@ public class Animator
      */
     protected void controlActions(IEntity target)
     {
-        double dx = target.getX() - this.prevX;
-        double dz = target.getZ() - this.prevZ;
+        Vec3d velocity = target.getVelocity();
+        double dx = velocity.x;
+        double dz = velocity.z;
         final float threshold = 0.05F;
         boolean moves = Math.abs(dx) > threshold || Math.abs(dz) > threshold;
 
@@ -218,7 +223,7 @@ public class Animator
             {
                 this.setActiveAction(!moves ? this.crouchingIdle : this.crouching);
             }
-            else if (!target.isOnGround() && target.getVelocity().y < 0 && target.getFallDistance() > 1.25)
+            else if (!target.isOnGround() && velocity.y < 0 && target.getFallDistance() > 1.25)
             {
                 this.setActiveAction(this.falling);
             }
@@ -237,7 +242,7 @@ public class Animator
             }
         }
 
-        if (!target.isOnGround() && this.wasOnGround && Math.abs(target.getVelocity().y) > 0.2F)
+        if (!target.isOnGround() && this.wasOnGround && Math.abs(velocity.y) > 0.2F)
         {
             this.addAction(this.jump);
             this.wasOnGround = false;
@@ -250,7 +255,7 @@ public class Animator
 
         this.prevX = target.getX();
         this.prevZ = target.getZ();
-        this.prevMY = target.getVelocity().y;
+        this.prevMY = velocity.y;
 
         this.wasOnGround = target.isOnGround();
     }
@@ -313,6 +318,7 @@ public class Animator
     /**
      * Apply currently running action pipeline onto given armature
      */
+    @Override
     public void applyActions(IEntity target, Model armature, float transition)
     {
         if (this.lastActive != null && this.active.isFading())

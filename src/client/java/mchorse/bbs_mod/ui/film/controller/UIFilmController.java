@@ -5,6 +5,7 @@ import com.mojang.blaze3d.systems.VertexSorter;
 import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.camera.controller.RunnerCameraController;
+import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.client.BBSShaders;
 import mchorse.bbs_mod.data.types.BaseType;
 import mchorse.bbs_mod.film.Film;
@@ -22,6 +23,7 @@ import mchorse.bbs_mod.graphics.window.Window;
 import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.mixin.client.MinecraftClientInvoker;
 import mchorse.bbs_mod.morphing.Morph;
+import mchorse.bbs_mod.network.ClientNetwork;
 import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
 import mchorse.bbs_mod.ui.Keys;
@@ -197,6 +199,13 @@ public class UIFilmController extends UIElement
 
     private void setMouseMode(int mode)
     {
+        if (!ClientNetwork.isIsBBSModOnServer() && mode == 0)
+        {
+            mode = 1;
+
+            this.getContext().notify(UIKeys.FILM_CONTROLLER_SERVER_WARNING, Colors.RED | Colors.A100);
+        }
+
         this.mouseMode = mode;
 
         if (this.controlled != null)
@@ -254,15 +263,20 @@ public class UIFilmController extends UIElement
                 this.entities.add(entity);
             }
         }
+
+        this.panel.getRunner().getContext().entities.clear();
+        this.panel.getRunner().getContext().entities.addAll(this.entities);
     }
 
     /* Character control state */
 
     public void toggleControl()
     {
+        boolean replacePlayer = ClientNetwork.isIsBBSModOnServer();
+
         if (this.controlled != null)
         {
-            if (this.previousEntity != null)
+            if (replacePlayer && this.previousEntity != null)
             {
                 this.controlled.setForm(this.playerForm);
 
@@ -276,7 +290,7 @@ public class UIFilmController extends UIElement
         {
             this.controlled = this.getCurrentEntity();
 
-            if (this.controlled != null)
+            if (replacePlayer && this.controlled != null)
             {
                 MCEntity player = Morph.getMorph(MinecraftClient.getInstance().player).entity;
 
@@ -290,6 +304,7 @@ public class UIFilmController extends UIElement
             }
         }
 
+        this.setMouseMode(this.mouseMode);
         this.toggleMousePointer(this.controlled != null);
 
         if (this.controlled == null && this.recording)
@@ -342,6 +357,10 @@ public class UIFilmController extends UIElement
             else if (groups.contains(ReplayKeyframes.GROUP_EXTRA2))
             {
                 this.setMouseMode(5);
+            }
+            else
+            {
+                this.setMouseMode(0);
             }
         }
 
@@ -402,7 +421,7 @@ public class UIFilmController extends UIElement
             this.recordingOld = null;
         }
 
-        this.setMouseMode(0);
+        this.setMouseMode(ClientNetwork.isIsBBSModOnServer() ? 0 : 1);
     }
 
     /* Input handling */
@@ -494,8 +513,6 @@ public class UIFilmController extends UIElement
     {
         if (this.canControl())
         {
-            int key = context.getKeyCode();
-
             if (context.getKeyAction() == KeyAction.PRESSED && context.getKeyCode() >= GLFW.GLFW_KEY_1 && context.getKeyCode() <= GLFW.GLFW_KEY_6)
             {
                 /* Switch mouse input mode */
@@ -527,6 +544,11 @@ public class UIFilmController extends UIElement
 
     private boolean canControlWithKeyboard(InputUtil.Key utilKey)
     {
+        if (!ClientNetwork.isIsBBSModOnServer())
+        {
+            return false;
+        }
+
         GameOptions options = MinecraftClient.getInstance().options;
 
         return options.forwardKey.getDefaultKey() == utilKey
@@ -786,8 +808,11 @@ public class UIFilmController extends UIElement
 
             if (CollectionUtils.inRange(replays, i))
             {
+                /* Plus 1 is necessary because apparently the render ticks comes before
+                 * the update tick, so in order to force the correct animation, I have to
+                 * increment the tick, so it would appear correctly */
                 Replay replay = replays.get(i);
-                int ticks = runner.ticks;
+                int ticks = runner.ticks + (runner.isRunning() ? 1 : 0);
 
                 if (entity != this.controlled || (this.recording && this.recordingCountdown <= 0 && this.recordingGroups != null))
                 {
@@ -989,7 +1014,7 @@ public class UIFilmController extends UIElement
 
         if (this.canControl())
         {
-            if (this.isMouseLookMode())
+            if (this.isMouseLookMode() && ClientNetwork.isIsBBSModOnServer())
             {
                 float cursorDeltaX = (x - this.lastMouse.x) / 2F;
                 float cursorDeltaY = (y - this.lastMouse.y) / 2F;
@@ -1112,8 +1137,8 @@ public class UIFilmController extends UIElement
         this.stencil.setup(Link.bbs("stencil_film"));
 
         Texture mainTexture = this.stencil.getFramebuffer().getMainTexture();
-        int w = BBSSettings.videoWidth.get();
-        int h = BBSSettings.videoHeight.get();
+        int w = BBSRendering.getVideoWidth();
+        int h = BBSRendering.getVideoHeight();
 
         if (mainTexture.width != w || mainTexture.height != h)
         {

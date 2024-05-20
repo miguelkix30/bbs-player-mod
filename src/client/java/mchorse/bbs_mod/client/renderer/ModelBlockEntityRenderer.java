@@ -14,8 +14,14 @@ import mchorse.bbs_mod.ui.model_blocks.UIModelBlockPanel;
 import mchorse.bbs_mod.utils.MatrixStackUtils;
 import mchorse.bbs_mod.utils.pose.Transform;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.GameRenderer;
+import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
@@ -74,22 +80,41 @@ public class ModelBlockEntityRenderer implements BlockEntityRenderer<ModelBlockE
         matrices.push();
         matrices.translate(0.5F, 0F, 0.5F);
 
-        if (MinecraftClient.getInstance().options.debugEnabled)
-        {
-            Draw.renderBox(matrices, -0.5D, 0, -0.5D, 1, 1, 1, 0, 0.5F, 1F, 0.5F);
-        }
-
-        MatrixStackUtils.applyTransform(matrices, transform);
-        int lightAbove = WorldRenderer.getLightmapCoordinates(entity.getWorld(), pos.add((int) transform.translate.x, (int) transform.translate.y, (int) transform.translate.z));
-        Camera camera = MinecraftClient.getInstance().gameRenderer.getCamera();
-
         if (properties.getForm() != null && this.canRender(entity))
         {
+            matrices.push();
+
+            MatrixStackUtils.applyTransform(matrices, transform);
+
+            int lightAbove = WorldRenderer.getLightmapCoordinates(entity.getWorld(), pos.add((int) transform.translate.x, (int) transform.translate.y, (int) transform.translate.z));
+            Camera camera = MinecraftClient.getInstance().gameRenderer.getCamera();
+
             RenderSystem.enableDepthTest();
             FormUtilsClient.render(properties.getForm(), FormRenderingContext
                 .set(entity.getEntity(), matrices, lightAbove, tickDelta)
                 .camera(camera));
             RenderSystem.disableDepthTest();
+
+            if (this.canRenderAxes(entity))
+            {
+                BufferBuilder builder = Tessellator.getInstance().getBuffer();
+
+                builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
+                Draw.axes(builder, matrices, 0.5F, 0.01F);
+
+                RenderSystem.disableDepthTest();
+                RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+                BufferRenderer.drawWithGlobalProgram(builder.end());
+            }
+
+            matrices.pop();
+        }
+
+        RenderSystem.disableDepthTest();
+
+        if (MinecraftClient.getInstance().options.debugEnabled)
+        {
+            Draw.renderBox(matrices, -0.5D, 0, -0.5D, 1, 1, 1, 0, 0.5F, 1F, 0.5F);
         }
 
         matrices.pop();
@@ -107,12 +132,26 @@ public class ModelBlockEntityRenderer implements BlockEntityRenderer<ModelBlockE
         }
     }
 
+    @Override
+    public int getRenderDistance()
+    {
+        return 196;
+    }
+
+    private boolean canRenderAxes(ModelBlockEntity entity)
+    {
+        if (UIScreen.getCurrentMenu() instanceof UIDashboard dashboard)
+        {
+            return dashboard.getPanels().panel instanceof UIModelBlockPanel modelBlockPanel;
+        }
+
+        return false;
+    }
+
     private boolean canRender(ModelBlockEntity entity)
     {
-        if (
-            MinecraftClient.getInstance().currentScreen instanceof UIScreen screen &&
-            screen.getMenu() instanceof UIDashboard dashboard
-        ) {
+        if (UIScreen.getCurrentMenu() instanceof UIDashboard dashboard)
+        {
             if (dashboard.getPanels().panel instanceof UIModelBlockPanel modelBlockPanel)
             {
                 if (!modelBlockPanel.isEditing(entity))

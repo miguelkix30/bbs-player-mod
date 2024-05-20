@@ -24,6 +24,7 @@ import mchorse.bbs_mod.ui.framework.elements.overlay.UIOverlay;
 import mchorse.bbs_mod.ui.model_blocks.UIModelBlockPanel;
 import mchorse.bbs_mod.ui.morphing.UIMorphingPanel;
 import mchorse.bbs_mod.ui.particles.UIParticleSchemePanel;
+import mchorse.bbs_mod.ui.selectors.UISelectorsOverlayPanel;
 import mchorse.bbs_mod.ui.supporters.UISupportersPanel;
 import mchorse.bbs_mod.ui.utility.UIUtilityOverlayPanel;
 import mchorse.bbs_mod.ui.utils.UIDataUtils;
@@ -47,6 +48,7 @@ public class UIDashboard extends UIBaseMenu
     private UIDashboardPanels panels;
 
     public UIIcon settings;
+    public UIIcon selectors;
 
     /* Camera data */
     public final UIOrbitCamera orbitUI = new UIOrbitCamera(() -> this.panels.panel.getOrbitViewport());
@@ -67,16 +69,7 @@ public class UIDashboard extends UIBaseMenu
         this.panels.getEvents().register(UIDashboardPanels.PanelEvent.class, (e) ->
         {
             this.orbitUI.setControl(this.panels.isFlightSupported());
-
-            Entity cameraEntity = MinecraftClient.getInstance().getCameraEntity();
-            Vec3d eyePos = cameraEntity.getEyePos();
-            Camera camera = new Camera();
-
-            camera.position.set(eyePos.getX(), eyePos.getY(), eyePos.getZ());
-            camera.rotation.set(MathUtils.toRad(cameraEntity.getPitch()), MathUtils.toRad(cameraEntity.getHeadYaw() - 180), 0);
-            camera.fov = MathUtils.toRad(MinecraftClient.getInstance().options.getFov().getValue().floatValue());
-
-            this.orbit.setup(camera);
+            this.copyCurrentEntityCamera();
         });
         this.panels.relative(this.viewport).full();
         this.registerPanels();
@@ -90,8 +83,13 @@ public class UIDashboard extends UIBaseMenu
             UIOverlay.addOverlayRight(this.context, this.settingsPanel, 240);
         });
         this.settings.tooltip(UIKeys.CONFIG_TITLE, Direction.TOP);
+        this.selectors = new UIIcon(Icons.PROPERTIES, (b) ->
+        {
+            UIOverlay.addOverlayRight(this.context, new UISelectorsOverlayPanel(), 240);
+        });
+        this.selectors.tooltip(UIKeys.SELECTORS_TITLE, Direction.TOP);
 
-        this.panels.pinned.add(this.settings);
+        this.panels.pinned.add(this.settings, this.selectors);
         this.getRoot().prepend(this.orbitUI);
 
         /* Register keys */
@@ -114,6 +112,20 @@ public class UIDashboard extends UIBaseMenu
 
             UIOverlay.addOverlay(this.context, new UIUtilityOverlayPanel(UIKeys.UTILITY_TITLE, null), 240, 160);
         });
+    }
+
+    public void copyCurrentEntityCamera()
+    {
+        Entity cameraEntity = MinecraftClient.getInstance().getCameraEntity();
+        Vec3d eyePos = cameraEntity.getEyePos();
+        Camera camera = new Camera();
+
+        camera.position.set(eyePos.getX(), eyePos.getY(), eyePos.getZ());
+        camera.rotation.set(MathUtils.toRad(cameraEntity.getPitch()), MathUtils.toRad(cameraEntity.getHeadYaw() - 180), 0);
+        camera.fov = MathUtils.toRad(MinecraftClient.getInstance().options.getFov().getValue().floatValue());
+
+        this.orbit.setup(camera);
+        this.camera.setup(BBSModClient.getCameraController().camera, 0F);
     }
 
     private void cyclePanels()

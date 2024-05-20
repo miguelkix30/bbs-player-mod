@@ -31,18 +31,30 @@ Beside that, here is a list to finish:
 In this stage, I'll implement any missing features from my mods that are core 
 experience. Like following:
 
+- [ ] Vanilla animation system for models
+  - [ ] Basic properties like looking, swinging (+inverted), swiping, leaning pitch
+  - [ ] Item anchors
+  - [ ] Editor
+- [ ] Drag and drop system
+  - [ ] Images (.jpg, .gif, .webp) -> png
+  - [ ] PNG skins 64x32 to 64x64
+  - [ ] Audio (.mp3, .aiff) -> .wav mono 16bit
+  - [ ] .geo.json + .animation.json -> .bbs.json
+  - [ ] .mp4 -> .wav
+- [ ] Mob form
+- [ ] Emoticons and S&B
 - [ ] Action system
   - [ ] In-game recording
 - [ ] Damage control
-- [ ] Emoticons and S&B
-- [ ] BB gun?
-- [ ] Vanilla integrations
-  - [ ] Item holding
-  - [ ] Swimming
-  - [ ] Vanilla-like animator
 - [ ] Audio editor
 - [ ] Structure form
-- [ ] Mob form
+- [ ] BB gun?
+- [ ] 白某人是个萌新's suggestion about mouse travel
+- [ ] Video recording
+  - [ ] Export audio
+  - [x] Movies folder location
+  - [x] Presets
+  - [x] ffmpeg motion blur
 
 ## Missing features
 
@@ -58,56 +70,7 @@ Once all of these stages are passed, and people are happy with the tools for the
 part. It's time preparing for the release. For the release, I need to record a tutorial 
 series that teaches how to practically use BBS mod to record machinimas by examples.
 
-- [ ] What is BBS mod
-- [ ] Obtain the mod and setup
-- [ ] Recording characters
-- [ ] Setting up cameras
-
 ### Miscellaneous
-
-Bugs:
-
-- [x] Reset camera when switching to another dimension
-- [ ] Save films somehwere when the server doesn't have BBS mod
-
-Useful user suggestions:
-
-- [ ] Bezier support for Blockbench models
-- [ ] Sample lighting value at (model block)
-- [ ] Add gizmos to model block
-- [ ] Kirah's suggestions model block screen
-- [ ] Add gizmos to film editor
-- [ ] Rethink keyframe addition and removal
-- [ ] Async model and texture loading
-- [ ] Update model forms when models get reloaded
-- [ ] In-game mode of recording (like in Blockbuster mod)
-- [ ] Lighting option
-- [ ] Model block hitbox
-- [ ] Add additional vertical mode camera
-- [ ] Thumbnail of the form
-- [ ] Demorph key bind (in the world)
-- [ ] Add /bbs morph generation from a form
-- [x] Flight mode speed
-- [x] Change moving around to left click and mouse wheel button to fov and roll
-- [x] Add button to toggle orbit mode, orbit perspective and make context menu for perspectives
-- [ ] Add an icon when in orbit mode
-- [ ] Add loop option to /bbs film play
-- [ ] Add /bbs film stop
-- [ ] Teleport to model block
-- [ ] Morph entity selectors 
-- [ ] Base form options for shadows (vanilla and iris)
-- [ ] Add color to extruded form
-- [ ] Add step interpolation / break down a segment into more
-- [ ] Model block form per transformation type (on the ground, third person, first person, etc.)
-
-Considerations:
-
-- [ ] Direction XYZ Snowstorm
-- [ ] Benchbuster
-- [ ] Wave files cues
-- [ ] mp3/mp4 to wav via drag and dropping
-- [ ] Blockbench like interface (moving panels around)
-- [ ] .geo.json + .animation.json import
 
 Epic features
 
