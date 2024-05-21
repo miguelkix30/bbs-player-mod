@@ -51,8 +51,8 @@ public class UIUserFormCategory extends UIFormCategory
 
                 menu.action(Icons.PASTE, UIKeys.FORMS_CATEGORIES_CONTEXT_PASTE_FORM, () ->
                 {
-                    this.category.forms.add(form);
-                    userForms.writeUserCategories();
+                    this.category.addForm(form);
+                    userForms.writeUserCategories((UserFormCategory) this.category);
                 });
             }
             catch (Exception e)
@@ -62,32 +62,36 @@ public class UIUserFormCategory extends UIFormCategory
             {
                 menu.action(Icons.REMOVE, UIKeys.FORMS_CATEGORIES_CONTEXT_REMOVE_FORM, () ->
                 {
-                    this.category.forms.remove(this.selected);
+                    this.category.removeForm(this.selected);
                     this.select(null, false);
+                    userForms.writeUserCategories((UserFormCategory) this.category);
+                });
+            }
+            else
+            {
+                menu.action(Icons.TRASH, UIKeys.FORMS_CATEGORIES_CONTEXT_REMOVE_CATEGORY, () ->
+                {
+                    UIConfirmOverlayPanel panel = new UIConfirmOverlayPanel(
+                        UIKeys.FORMS_CATEGORIES_REMOVE_CATEGORY_TITLE.format(this.category.title),
+                        UIKeys.FORMS_CATEGORIES_REMOVE_CATEGORY_DESCRIPTION,
+                        (confirm) ->
+                        {
+                            if (confirm)
+                            {
+                                userForms.removeUserCategory((UserFormCategory) this.category);
+
+                                UIElement parent = this.getParentContainer();
+
+                                this.removeFromParent();
+                                parent.resize();
+                            }
+                        }
+                    );
+
+                    UIOverlay.addOverlay(this.getContext(), panel);
                     userForms.writeUserCategories();
                 });
             }
-
-            menu.action(Icons.TRASH, UIKeys.FORMS_CATEGORIES_CONTEXT_REMOVE_CATEGORY, () ->
-            {
-                UIConfirmOverlayPanel panel = new UIConfirmOverlayPanel(
-                    UIKeys.FORMS_CATEGORIES_REMOVE_CATEGORY_TITLE.format(this.category.title),
-                    UIKeys.FORMS_CATEGORIES_REMOVE_CATEGORY_DESCRIPTION,
-                    (confirm) ->
-                    {
-                        userForms.removeUserCategory((UserFormCategory) this.category);
-                        userForms.writeUserCategories();
-
-                        UIElement parent = this.getParentContainer();
-
-                        this.removeFromParent();
-                        parent.resize();
-                    }
-                );
-
-                UIOverlay.addOverlay(this.getContext(), panel);
-                userForms.writeUserCategories();
-            });
         });
     }
 

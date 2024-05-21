@@ -57,7 +57,7 @@ public class ModelBlockEntityRenderer implements BlockEntityRenderer<ModelBlockE
 
         double distance = MinecraftClient.getInstance().getEntityRenderDispatcher().getSquaredDistanceToCamera(x, y, z);
 
-        opacity = (float) (1D - distance / 256D * opacity);
+        opacity = (float) ((1D - distance / 256D) * opacity);
 
         matrices.push();
         matrices.translate(tx, ty, tz);
@@ -69,6 +69,12 @@ public class ModelBlockEntityRenderer implements BlockEntityRenderer<ModelBlockE
 
     public ModelBlockEntityRenderer(BlockEntityRendererFactory.Context ctx)
     {}
+
+    @Override
+    public boolean rendersOutsideBoundingBox(ModelBlockEntity blockEntity)
+    {
+        return blockEntity.getProperties().isGlobal();
+    }
 
     @Override
     public void render(ModelBlockEntity entity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay)
@@ -91,7 +97,7 @@ public class ModelBlockEntityRenderer implements BlockEntityRenderer<ModelBlockE
 
             RenderSystem.enableDepthTest();
             FormUtilsClient.render(properties.getForm(), FormRenderingContext
-                .set(entity.getEntity(), matrices, lightAbove, tickDelta)
+                .set(entity.getEntity(), matrices, lightAbove, overlay, tickDelta)
                 .camera(camera));
             RenderSystem.disableDepthTest();
 
