@@ -5,6 +5,7 @@ import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.client.BBSShaders;
 import mchorse.bbs_mod.cubic.CubicModel;
 import mchorse.bbs_mod.cubic.CubicModelAnimator;
+import mchorse.bbs_mod.cubic.animation.ActionsConfig;
 import mchorse.bbs_mod.cubic.animation.Animator;
 import mchorse.bbs_mod.cubic.animation.IAnimator;
 import mchorse.bbs_mod.cubic.animation.ProceduralAnimator;
@@ -12,6 +13,7 @@ import mchorse.bbs_mod.cubic.data.model.ModelGroup;
 import mchorse.bbs_mod.cubic.render.CubicCubeRenderer;
 import mchorse.bbs_mod.cubic.render.CubicMatrixRenderer;
 import mchorse.bbs_mod.cubic.render.CubicRenderer;
+import mchorse.bbs_mod.forms.CustomVertexConsumerProvider;
 import mchorse.bbs_mod.forms.FormUtilsClient;
 import mchorse.bbs_mod.forms.ITickable;
 import mchorse.bbs_mod.forms.entities.IEntity;
@@ -25,7 +27,7 @@ import mchorse.bbs_mod.utils.MatrixStackUtils;
 import mchorse.bbs_mod.utils.StringUtils;
 import mchorse.bbs_mod.utils.colors.Color;
 import mchorse.bbs_mod.utils.joml.Vectors;
-import mchorse.bbs_mod.utils.math.MathUtils;
+import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.pose.Pose;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BufferBuilder;
@@ -36,7 +38,10 @@ import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.RotationAxis;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
@@ -46,6 +51,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITickable
 {
@@ -53,6 +59,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
 
     private Map<String, Matrix4f> bones = new HashMap<>();
 
+    private ActionsConfig lastConfigs;
     private IAnimator animator;
     private long lastCheck;
 
@@ -107,15 +114,25 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
     public void ensureAnimator()
     {
         CubicModel model = this.getModel();
+        ActionsConfig actionsConfig = this.form.actions.get();
 
         if (model == null || this.lastCheck >= model.loadTime)
         {
+            /* Update the config */
+            if (this.animator != null && !Objects.equals(actionsConfig, this.lastConfigs))
+            {
+                this.animator.setup(model, actionsConfig, true);
+
+                this.lastConfigs = actionsConfig;
+            }
+
             return;
         }
 
         this.animator = model.procedural ? new ProceduralAnimator() : new Animator();
-        this.animator.setup(model, this.form.actions.get());
+        this.animator.setup(model, actionsConfig, false);
 
+        this.lastConfigs = actionsConfig;
         this.lastCheck = model.loadTime;
     }
 
@@ -161,11 +178,9 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
             RenderSystem.depthFunc(GL11.GL_LEQUAL);
             RenderSystem.setShader(GameRenderer::getRenderTypeEntityTranslucentCullProgram);
 
-            this.renderModel(stack, model, LightmapTextureManager.pack(15, 15), OverlayTexture.DEFAULT_UV, color, true, false);
+            this.renderModel(this.entity, stack, model, LightmapTextureManager.pack(15, 15), OverlayTexture.DEFAULT_UV, color, true, false);
 
             /* Render body parts */
-            this.captureMatrices(model);
-
             stack.push();
             stack.peek().getNormalMatrix().getScale(Vectors.EMPTY_3F);
             stack.peek().getNormalMatrix().scale(1F / Vectors.EMPTY_3F.x, -1F / Vectors.EMPTY_3F.y, 1F / Vectors.EMPTY_3F.z);
@@ -179,7 +194,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
         }
     }
 
-    private void renderModel(MatrixStack stack, CubicModel model, int light, int overlay, Color color, boolean ui, boolean picking)
+    private void renderModel(IEntity target, MatrixStack stack, CubicModel model, int light, int overlay, Color color, boolean ui, boolean picking)
     {
         if (!model.culling)
         {
@@ -187,6 +202,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
         }
 
         RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
         BufferBuilder builder = Tessellator.getInstance().getBuffer();
         GameRenderer gameRenderer = MinecraftClient.getInstance().gameRenderer;
 
@@ -222,6 +238,47 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
         {
             RenderSystem.enableCull();
         }
+
+        /* Render items */
+        this.captureMatrices(model);
+
+        this.renderItems(target, stack, EquipmentSlot.MAINHAND, ModelTransformationMode.THIRD_PERSON_RIGHT_HAND, model.itemsMain, overlay, light);
+        this.renderItems(target, stack, EquipmentSlot.OFFHAND, ModelTransformationMode.THIRD_PERSON_LEFT_HAND, model.itemsOff, overlay, light);
+    }
+
+    private void renderItems(IEntity target, MatrixStack stack, EquipmentSlot slot, ModelTransformationMode mode, List<String> items, int overlay, int light)
+    {
+        ItemStack itemStack = target.getEquipmentStack(slot);
+
+        if (itemStack != null && itemStack.isEmpty())
+        {
+            return;
+        }
+
+        for (String groupName : items)
+        {
+            Matrix4f matrix = this.bones.get(groupName);
+
+            if (matrix != null)
+            {
+                CustomVertexConsumerProvider consumers = FormUtilsClient.getProvider();
+
+                stack.push();
+                MatrixStackUtils.multiply(stack, matrix);
+
+                stack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(90F));
+                stack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180F));
+                stack.translate(0F, 0.125F, 0F);
+
+                MinecraftClient.getInstance().getItemRenderer().renderItem(null, itemStack, mode, mode == ModelTransformationMode.THIRD_PERSON_LEFT_HAND, stack, consumers, target.getWorld(), light, overlay, 0);
+                consumers.draw();
+                consumers.clearRunnables();
+
+                stack.pop();
+
+                RenderSystem.enableDepthTest();
+            }
+        }
     }
 
     @Override
@@ -249,9 +306,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
                 GameRenderer::getRenderTypeEntityTranslucentProgram,
                 BBSShaders::getPickerModelsProgram));
 
-            this.renderModel(context.stack, model, context.light, context.overlay, color, false, context.isPicking());
-
-            this.captureMatrices(model);
+            this.renderModel(context.entity, context.stack, model, context.light, context.overlay, color, false, context.isPicking());
         }
     }
 

@@ -10,6 +10,8 @@ import mchorse.bbs_mod.client.renderer.ModelBlockEntityRenderer;
 import mchorse.bbs_mod.client.renderer.ModelBlockItemRenderer;
 import mchorse.bbs_mod.cubic.model.ModelManager;
 import mchorse.bbs_mod.film.Films;
+import mchorse.bbs_mod.film.Recorder;
+import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.FormCategories;
 import mchorse.bbs_mod.graphics.FramebufferManager;
 import mchorse.bbs_mod.graphics.texture.TextureManager;
@@ -46,6 +48,7 @@ import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.util.Window;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
@@ -73,6 +76,7 @@ public class BBSModClient implements ClientModInitializer
     private static KeyBinding keyDashboard;
     private static KeyBinding keyModelBlockEditor;
     private static KeyBinding keyFilms;
+    private static KeyBinding keyRecordReplay;
     /* private static KeyBinding keyToggleRecording; */
 
     private static UIDashboard dashboard;
@@ -82,6 +86,7 @@ public class BBSModClient implements ClientModInitializer
     private static Films films;
 
     private static boolean requestToggleRecording;
+    private static float originalFramebufferScale;
 
     public static TextureManager getTextures()
     {
@@ -163,6 +168,11 @@ public class BBSModClient implements ClientModInitializer
         }
 
         return scale;
+    }
+
+    public static float getOriginalFramebufferScale()
+    {
+        return originalFramebufferScale;
     }
 
     @Override
@@ -249,6 +259,13 @@ public class BBSModClient implements ClientModInitializer
 
         keyFilms = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key." + BBSMod.MOD_ID + ".films",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_RIGHT_CONTROL,
+            "category." + BBSMod.MOD_ID + ".main"
+        ));
+
+        keyRecordReplay = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key." + BBSMod.MOD_ID + ".record_replay",
             InputUtil.Type.KEYSYM,
             GLFW.GLFW_KEY_RIGHT_ALT,
             "category." + BBSMod.MOD_ID + ".main"
@@ -341,6 +358,31 @@ public class BBSModClient implements ClientModInitializer
                 UIScreen.open(new UIFilmsMenu());
             }
 
+            while (keyRecordReplay.wasPressed())
+            {
+                UIDashboard dashboard = getDashboard();
+
+                if (dashboard != null && dashboard.getPanels().panel instanceof UIFilmPanel panel && panel.getData() != null)
+                {
+                    Recorder recorder = getFilms().getRecorder();
+
+                    if (recorder != null)
+                    {
+                        UIScreen.open(getDashboard());
+                    }
+                    else
+                    {
+                        Replay replay = panel.replayEditor.getReplay();
+                        int index = panel.getFilm().replays.getList().indexOf(replay);
+
+                        if (index >= 0)
+                        {
+                            getFilms().startRecording(panel.getFilm(), index);
+                        }
+                    }
+                }
+            }
+
             /* while (keyToggleRecording.wasPressed())
             {
                 requestToggleRecording = true;
@@ -355,6 +397,13 @@ public class BBSModClient implements ClientModInitializer
         ClientLifecycleEvents.CLIENT_STOPPING.register((e) ->
         {
             watchDog.stop();
+        });
+
+        ClientLifecycleEvents.CLIENT_STARTED.register((e) ->
+        {
+            Window window = MinecraftClient.getInstance().getWindow();
+
+            originalFramebufferScale = window.getFramebufferWidth() / window.getWidth();
         });
 
         BBSRendering.setup();

@@ -13,5 +13,5 @@ public interface IAxisConverter
 
     public void updateField(UITrackpad element);
 
-    public boolean forceInteger(Keyframe keyframe, Selection selection, boolean forceInteger);
+    public boolean forceInteger(Keyframe keyframe, boolean forceInteger);
 }

@@ -6,9 +6,9 @@ import mchorse.bbs_mod.ui.Keys;
 import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.utils.keys.KeyCombo;
 import mchorse.bbs_mod.utils.Factor;
+import mchorse.bbs_mod.utils.MathUtils;
+import mchorse.bbs_mod.utils.interps.Lerps;
 import mchorse.bbs_mod.utils.joml.Matrices;
-import mchorse.bbs_mod.utils.math.Interpolations;
-import mchorse.bbs_mod.utils.math.MathUtils;
 import org.joml.Matrix3f;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
@@ -25,7 +25,6 @@ public class OrbitCamera
 {
     public Vector3d position = new Vector3d();
     public Vector3f rotation = new Vector3f();
-    public final Factor distance = new Factor();
     public final Factor speed = new Factor(20, 1, 40, (x) ->
     {
         if (x <= 10) return x / 100D;
@@ -60,8 +59,6 @@ public class OrbitCamera
         this.position.set(camera.position);
         this.rotation.set(camera.rotation);
         this.fov = camera.fov;
-
-        this.distance.setX(0);
     }
 
     public Vector3i getVelocityPosition()
@@ -151,7 +148,7 @@ public class OrbitCamera
      */
     public Vector3d getFinalPosition()
     {
-        return this.finalPosition.set(this.position).add(this.rotateVector(0, 0, -1).mul((float) this.distance.getValue()));
+        return this.finalPosition.set(this.position);
     }
 
     /**
@@ -164,7 +161,7 @@ public class OrbitCamera
 
     protected float getAngleSpeed()
     {
-        return (1 / 180F) * Interpolations.lerp(1F, (float) this.speed.getValue(), 0.8F);
+        return (1 / 180F) * Lerps.lerp(1F, (float) this.speed.getValue(), 0.8F);
     }
 
     protected float getSpeed()
@@ -241,25 +238,11 @@ public class OrbitCamera
 
     public boolean scroll(int scroll)
     {
-        if (Window.isAltPressed())
-        {
-            int factor = this.speed.getX();
+        int factor = this.speed.getX();
 
-            this.speed.addX(scroll);
+        this.speed.addX(scroll);
 
-            return this.speed.getX() != factor;
-        }
-
-        if (this.dragging >= 0)
-        {
-            return false;
-        }
-
-        int factor = this.distance.getX();
-
-        this.distance.addX(scroll);
-
-        return this.distance.getX() != factor;
+        return this.speed.getX() != factor;
     }
 
     public boolean keyPressed(UIContext context)
@@ -267,17 +250,15 @@ public class OrbitCamera
         int x = this.getFactor(context, Keys.FLIGHT_LEFT, Keys.FLIGHT_RIGHT, this.velocityPosition.x);
         int y = this.getFactor(context, Keys.FLIGHT_UP, Keys.FLIGHT_DOWN, this.velocityPosition.y);
         int z = this.getFactor(context, Keys.FLIGHT_FORWARD, Keys.FLIGHT_BACKWARD, this.velocityPosition.z);
-        boolean same = this.velocityPosition.x == x && this.velocityPosition.y == y && this.velocityPosition.z == z;
 
         int pitch = this.getFactor(context, Keys.FLIGHT_TILT_UP, Keys.FLIGHT_TILT_DOWN, this.velocityAngle.x);
         int yaw = this.getFactor(context, Keys.FLIGHT_PAN_LEFT, Keys.FLIGHT_PAN_RIGHT, this.velocityAngle.y);
-        same = same && this.velocityAngle.x == pitch && this.velocityAngle.y == yaw;
 
         this.velocityPosition.set(x, y, z);
         this.velocityAngle.x = pitch;
         this.velocityAngle.y = yaw;
 
-        return !same;
+        return x != 0 || y != 0 || z != 0 || pitch != 0 || yaw != 0;
     }
 
     protected int getFactor(UIContext context, KeyCombo positive, KeyCombo negative, int x)

@@ -10,11 +10,13 @@ import mchorse.bbs_mod.settings.values.ValueLanguage;
 import mchorse.bbs_mod.settings.values.ValueLink;
 import mchorse.bbs_mod.settings.values.ValueString;
 import mchorse.bbs_mod.settings.values.ValueVideoSettings;
+import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.colors.Colors;
-import mchorse.bbs_mod.utils.math.MathUtils;
 
 public class BBSSettings
 {
+    public static ValueString version;
+
     public static ValueColors favoriteColors;
     public static ValueLanguage language;
     public static ValueInt primaryColor;
@@ -28,7 +30,6 @@ public class BBSSettings
     public static ValueBoolean enableCursorRendering;
     public static ValueBoolean enableMouseButtonRendering;
     public static ValueBoolean enableKeystrokeRendering;
-    public static ValueBoolean enableChalkboard;
     public static ValueInt keystrokeOffset;
     public static ValueInt keystrokeMode;
 
@@ -37,6 +38,7 @@ public class BBSSettings
 
     public static ValueInt scrollbarShadow;
     public static ValueInt scrollbarWidth;
+    public static ValueFloat scrollingSensitivity;
 
     public static ValueBoolean multiskinMultiThreaded;
 
@@ -90,6 +92,9 @@ public class BBSSettings
     {
         builder.category("appearance");
 
+        version = builder.getString("version", "");
+        version.invisible();
+
         language = new ValueLanguage("language");
         builder.register(language);
         primaryColor = builder.getInt("primary_color", Colors.ACTIVE).color();
@@ -106,7 +111,6 @@ public class BBSSettings
         enableCursorRendering = builder.category("tutorials").getBoolean("cursor", false);
         enableMouseButtonRendering = builder.getBoolean("mouse_buttons", false);
         enableKeystrokeRendering = builder.getBoolean("keystrokes", false);
-        enableChalkboard = builder.getBoolean("chalkboard", false);
         keystrokeOffset = builder.getInt("keystrokes_offset", 10, 0, 20);
         keystrokeMode = builder.getInt("keystrokes_position", 1);
 
@@ -115,6 +119,7 @@ public class BBSSettings
 
         scrollbarShadow = builder.category("scrollbars").getInt("shadow", Colors.A50).colorAlpha();
         scrollbarWidth = builder.getInt("width", 4, 2, 10);
+        scrollingSensitivity = builder.getFloat("sensitivity", 1F, 0F, 10F);
 
         multiskinMultiThreaded = builder.category("multiskin").getBoolean("multithreaded", true);
 

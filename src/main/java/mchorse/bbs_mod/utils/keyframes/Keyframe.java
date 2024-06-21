@@ -2,38 +2,43 @@ package mchorse.bbs_mod.utils.keyframes;
 
 import mchorse.bbs_mod.data.types.BaseType;
 import mchorse.bbs_mod.data.types.MapType;
-import mchorse.bbs_mod.settings.values.base.BaseValue;
+import mchorse.bbs_mod.settings.values.ValueGroup;
+import mchorse.bbs_mod.utils.interps.Interpolation;
+import mchorse.bbs_mod.utils.interps.Interpolations;
+import mchorse.bbs_mod.utils.keyframes.factories.IKeyframeFactory;
 
-public class Keyframe extends BaseValue
+public class Keyframe <T> extends ValueGroup
 {
-    public Keyframe prev;
-    public Keyframe next;
-
     private long tick;
-    private double value;
+    private T value;
 
-    private KeyframeInterpolation interp = KeyframeInterpolation.LINEAR;
-    private KeyframeEasing easing = KeyframeEasing.IN;
+    /**
+     * Forced duration that would be used instead of the difference
+     * between two keyframes, if not 0
+     */
+    private int duration;
+    private final Interpolation interp = new Interpolation("interp", Interpolations.MAP);
 
-    private float rx = 5;
-    private float ry;
-    private float lx = 5;
-    private float ly;
+    private final IKeyframeFactory<T> factory;
 
-    public Keyframe(String id, long tick, double value)
+    public Keyframe(String id, IKeyframeFactory<T> factory, long tick, T value)
     {
-        this(id);
+        this(id, factory);
 
         this.tick = tick;
         this.value = value;
     }
 
-    public Keyframe(String id)
+    public Keyframe(String id, IKeyframeFactory<T> factory)
     {
         super(id);
 
-        this.prev = this;
-        this.next = this;
+        this.factory = factory;
+    }
+
+    public IKeyframeFactory<T> getFactory()
+    {
+        return this.factory;
     }
 
     public long getTick()
@@ -48,127 +53,46 @@ public class Keyframe extends BaseValue
         this.postNotifyParent();
     }
 
-    public double getValue()
+    public int getDuration()
+    {
+        return this.duration;
+    }
+
+    public void setDuration(int duration)
+    {
+        this.preNotifyParent();
+        this.duration = duration;
+        this.postNotifyParent();
+    }
+
+    public T getValue()
     {
         return this.value;
     }
 
-    public void setValue(double value)
+    public double getY(int index)
+    {
+        return this.factory.getY(this.value, index);
+    }
+
+    public void setValue(T value)
     {
         this.preNotifyParent();
         this.value = value;
         this.postNotifyParent();
     }
 
-    public KeyframeInterpolation getInterpolation()
+    public Interpolation getInterpolation()
     {
         return this.interp;
     }
 
-    public void setInterpolation(KeyframeInterpolation interp)
-    {
-        this.preNotifyParent();
-        this.interp = interp;
-        this.postNotifyParent();
-    }
-
-    public void setInterpolation(KeyframeInterpolation interp, KeyframeEasing easing)
-    {
-        this.preNotifyParent();
-        this.interp = interp;
-        this.easing = easing;
-        this.postNotifyParent();
-    }
-
-    public KeyframeEasing getEasing()
-    {
-        return this.easing;
-    }
-
-    public void setEasing(KeyframeEasing easing)
-    {
-        this.preNotifyParent();
-        this.easing = easing;
-        this.postNotifyParent();
-    }
-
-    public float getRx()
-    {
-        return this.rx;
-    }
-
-    public void setRx(float rx)
-    {
-        this.preNotifyParent();
-        this.rx = rx;
-        this.postNotifyParent();
-    }
-
-    public float getRy()
-    {
-        return this.ry;
-    }
-
-    public void setRy(float ry)
-    {
-        this.preNotifyParent();
-        this.ry = ry;
-        this.postNotifyParent();
-    }
-
-    public float getLx()
-    {
-        return this.lx;
-    }
-
-    public void setLx(float lx)
-    {
-        this.preNotifyParent();
-        this.lx = lx;
-        this.postNotifyParent();
-    }
-
-    public float getLy()
-    {
-        return this.ly;
-    }
-
-    public void setLy(float ly)
-    {
-        this.preNotifyParent();
-        this.ly = ly;
-        this.postNotifyParent();
-    }
-
-    public double interpolateTicks(Keyframe frame, double ticks)
-    {
-        return this.interp.interpolate(this, frame, (ticks - this.tick) / (frame.tick - this.tick));
-    }
-
-    public double interpolate(Keyframe frame, double x)
-    {
-        return this.interp.interpolate(this, frame, x);
-    }
-
-    public Keyframe copy()
-    {
-        Keyframe frame = new Keyframe("", this.tick, this.value);
-
-        frame.copy(this);
-
-        return frame;
-    }
-
-    public void copy(Keyframe keyframe)
+    public void copy(Keyframe<T> keyframe)
     {
         this.tick = keyframe.tick;
-        this.value = keyframe.value;
-        this.interp = keyframe.interp;
-        this.easing = keyframe.easing;
-        this.lx = keyframe.lx;
-        this.ly = keyframe.ly;
-        this.rx = keyframe.rx;
-        this.ry = keyframe.ry;
+        this.duration = keyframe.duration;
+        this.value = this.factory.copy(keyframe.value);
+        this.interp.copy(keyframe.interp);
     }
 
     @Override
@@ -177,14 +101,9 @@ public class Keyframe extends BaseValue
         MapType data = new MapType();
 
         data.putLong("tick", this.tick);
-        data.putDouble("value", this.value);
-
-        if (this.interp != KeyframeInterpolation.LINEAR) data.putInt("interp", this.interp.ordinal());
-        if (this.easing != KeyframeEasing.IN) data.putInt("easing", this.easing.ordinal());
-        if (this.rx != 5) data.putFloat("rx", this.rx);
-        if (this.ry != 0) data.putFloat("ry", this.ry);
-        if (this.lx != 5) data.putFloat("lx", this.lx);
-        if (this.ly != 0) data.putFloat("ly", this.ly);
+        data.putInt("duration", this.duration);
+        data.put("value", this.factory.toData(this.value));
+        data.put("interp", this.interp.toData());
 
         return data;
     }
@@ -200,12 +119,8 @@ public class Keyframe extends BaseValue
         MapType map = data.asMap();
 
         if (map.has("tick")) this.tick = map.getLong("tick");
-        if (map.has("value")) this.value = map.getDouble("value");
-        if (map.has("interp")) this.interp = KeyframeInterpolation.values()[map.getInt("interp")];
-        if (map.has("easing")) this.easing = KeyframeEasing.values()[map.getInt("easing")];
-        if (map.has("rx")) this.rx = map.getFloat("rx");
-        if (map.has("ry")) this.ry = map.getFloat("ry");
-        if (map.has("lx")) this.lx = map.getFloat("lx");
-        if (map.has("ly")) this.ly = map.getFloat("ly");
+        if (map.has("duration")) this.duration = map.getInt("duration");
+        if (map.has("value")) this.value = this.factory.fromData(map.get("value"));
+        if (map.has("interp")) this.interp.fromData(map.get("interp"));
     }
 }

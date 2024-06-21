@@ -28,14 +28,22 @@ public class UIClipsPanel extends UIElement implements IUIClipsDelegate
     private IFactory<Clip, ClipFactoryData> factory;
     private UIClip panel;
 
+    private UIElement target;
+
     public UIClipsPanel(UIFilmPanel panel, IFactory<Clip, ClipFactoryData> factory)
     {
         this.filmPanel = panel;
         this.factory = factory;
         this.clips = new UIClips(this, factory);
 
-        this.clips.relative(this).full();
-        this.add(this.clips);
+        this.add(this.clips.full(this));
+    }
+
+    public UIClipsPanel target(UIElement target)
+    {
+        this.target = target;
+
+        return this;
     }
 
     public void open()
@@ -112,28 +120,28 @@ public class UIClipsPanel extends UIElement implements IUIClipsDelegate
         {
             if (this.panel != null)
             {
-                scrolls.put(this.panel.getClass(), this.panel.panels.scroll.scroll);
+                scrolls.put(this.panel.getClass(), (int) this.panel.panels.scroll.scroll);
             }
 
             this.clips.embedView(null);
 
-            UIClip panel = UIClip.createPanel(clip, this);
-
-            this.panel = panel;
-            this.panel.relative(this).x(1F, -160).w(160).h(1F);
+            this.panel = UIClip.createPanel(clip, this);
             this.add(this.panel);
 
-            this.panel.fillData();
-
-            Integer scroll = scrolls.get(this.filmPanel.getClass());
-
-            if (scroll != null)
+            if (this.target == null)
             {
-                this.panel.panels.scroll.scroll = scroll;
-                this.panel.panels.scroll.clamp();
+                this.panel.relative(this).x(1F, -160).w(160).h(1F);
+            }
+            else
+            {
+                this.panel.full(this.target);
             }
 
-            if (!this.filmPanel.isFlightDisabled())
+            this.resize();
+            this.panel.fillData();
+            this.panel.panels.scroll.scrollTo(scrolls.getOrDefault(this.panel.getClass(), 0));
+
+            if (this.filmPanel.isFlying())
             {
                 this.setCursor(clip.tick.get());
             }
@@ -143,7 +151,7 @@ public class UIClipsPanel extends UIElement implements IUIClipsDelegate
             e.printStackTrace();
         }
 
-        this.clips.w(1F, -160);
+        this.clips.w(1F, this.target == null ? -160 : 0);
         this.resize();
     }
 
@@ -195,7 +203,7 @@ public class UIClipsPanel extends UIElement implements IUIClipsDelegate
     @Override
     public void markLastUndoNoMerging()
     {
-        this.filmPanel.cacheMarkLastUndoNoMerging = true;
+        this.filmPanel.getUndoHandler().cacheMarkLastUndoNoMerging();
     }
 
     @Override

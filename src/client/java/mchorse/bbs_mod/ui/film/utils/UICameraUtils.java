@@ -2,7 +2,6 @@ package mchorse.bbs_mod.ui.film.utils;
 
 import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.camera.data.Angle;
-import mchorse.bbs_mod.camera.data.InterpolationType;
 import mchorse.bbs_mod.camera.data.Point;
 import mchorse.bbs_mod.camera.data.Position;
 import mchorse.bbs_mod.camera.values.ValueAngle;
@@ -18,8 +17,9 @@ import mchorse.bbs_mod.ui.utils.context.ContextAction;
 import mchorse.bbs_mod.ui.utils.context.ContextMenuManager;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.utils.colors.Colors;
-import mchorse.bbs_mod.utils.math.Interpolation;
+import mchorse.bbs_mod.utils.interps.IInterp;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -31,33 +31,11 @@ public class UICameraUtils
 
     /* Interpolations context menu */
 
-    public static void interps(UIContext context, Interpolation current, Consumer<Interpolation> consumer)
+    public static void interps(UIContext context, Collection<IInterp> values, IInterp current, Consumer<IInterp> consumer)
     {
         context.replaceContextMenu((menu) ->
         {
-            for (Interpolation interpolation : Interpolation.values())
-            {
-                ContextAction action;
-
-                if (interpolation == current)
-                {
-                    action = menu.action(Icons.ADD, InterpolationUtils.getName(interpolation), BBSSettings.primaryColor.get(), () -> consumer.accept(interpolation));
-                }
-                else
-                {
-                    action = menu.action(Icons.ADD, InterpolationUtils.getName(interpolation), () -> consumer.accept(interpolation));
-                }
-
-                InterpolationUtils.setupKeybind(interpolation, action, KEYS_CATEGORY);
-            }
-        });
-    }
-
-    public static void interpTypes(UIContext context, InterpolationType current, Consumer<InterpolationType> consumer)
-    {
-        context.replaceContextMenu((menu) ->
-        {
-            for (InterpolationType interpolation : InterpolationType.values())
+            for (IInterp interpolation : values)
             {
                 ContextAction action;
 

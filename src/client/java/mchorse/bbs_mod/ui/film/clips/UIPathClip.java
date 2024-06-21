@@ -1,7 +1,6 @@
 package mchorse.bbs_mod.ui.film.clips;
 
 import mchorse.bbs_mod.camera.clips.overwrite.PathClip;
-import mchorse.bbs_mod.camera.data.InterpolationType;
 import mchorse.bbs_mod.camera.data.Position;
 import mchorse.bbs_mod.camera.values.ValuePosition;
 import mchorse.bbs_mod.graphics.window.Window;
@@ -14,13 +13,11 @@ import mchorse.bbs_mod.ui.film.clips.modules.UIPointsModule;
 import mchorse.bbs_mod.ui.film.utils.UICameraUtils;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIToggle;
+import mchorse.bbs_mod.ui.framework.elements.context.UIInterpolationContextMenu;
 import mchorse.bbs_mod.ui.framework.elements.input.UITrackpad;
 import mchorse.bbs_mod.ui.framework.tooltips.InterpolationTooltip;
 import mchorse.bbs_mod.ui.utils.UI;
-import mchorse.bbs_mod.utils.keyframes.KeyframeInterpolations;
-import mchorse.bbs_mod.utils.math.IInterpolation;
-import mchorse.bbs_mod.utils.math.Interpolation;
-import mchorse.bbs_mod.utils.math.MathUtils;
+import mchorse.bbs_mod.utils.MathUtils;
 import org.joml.Vector2d;
 
 /**
@@ -60,14 +57,14 @@ public class UIPathClip extends UIClip<PathClip>
         this.angle = new UIAngleModule(editor);
         this.interpPoint = new UIButton(UIKeys.CAMERA_PANELS_POINT, (b) ->
         {
-            UICameraUtils.interpTypes(this.getContext(), this.clip.interpolationPoint.get(), this.clip.interpolationPoint::set);
+            this.getContext().replaceContextMenu(new UIInterpolationContextMenu(this.clip.interpolationPoint));
         });
-        this.interpPoint.tooltip(new InterpolationTooltip(1F, 0.5F, () -> this.getInterp(this.clip.interpolationPoint.get())));
+        this.interpPoint.tooltip(new InterpolationTooltip(1F, 0.5F, () -> this.clip.interpolationPoint.wrap()));
         this.interpAngle = new UIButton(UIKeys.CAMERA_PANELS_ANGLE, (b) ->
         {
-            UICameraUtils.interpTypes(this.getContext(), this.clip.interpolationAngle.get(), this.clip.interpolationAngle::set);
+            this.getContext().replaceContextMenu(new UIInterpolationContextMenu(this.clip.interpolationAngle));
         });
-        this.interpAngle.tooltip(new InterpolationTooltip(1F, 0.5F, () -> this.getInterp(this.clip.interpolationAngle.get())));
+        this.interpAngle.tooltip(new InterpolationTooltip(1F, 0.5F, () -> this.clip.interpolationAngle.wrap()));
 
         this.autoCenter = new UIToggle(UIKeys.CAMERA_PANELS_AUTO_CENTER, (b) ->
         {
@@ -103,22 +100,6 @@ public class UIPathClip extends UIClip<PathClip>
         this.panels.add(this.point.marginTop(12), this.angle.marginTop(6));
         this.panels.add(UIClip.label(UIKeys.CAMERA_PANELS_CIRCULAR).marginTop(6), this.autoCenter, UI.row(this.circularX, this.circularZ));
         this.panels.context((menu) -> UICameraUtils.positionContextMenu(menu, editor, this.position));
-    }
-
-    private IInterpolation getInterp(InterpolationType type)
-    {
-        IInterpolation function = type.function;
-
-        if (type == InterpolationType.HERMITE)
-        {
-            function = KeyframeInterpolations.HERMITE;
-        }
-        else if (type == InterpolationType.CUBIC)
-        {
-            function = Interpolation.CUBIC_INOUT;
-        }
-
-        return function;
     }
 
     private void updateSpeedPanel()

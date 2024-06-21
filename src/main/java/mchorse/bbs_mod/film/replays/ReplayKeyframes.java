@@ -2,10 +2,11 @@ package mchorse.bbs_mod.film.replays;
 
 import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.settings.values.ValueGroup;
-import mchorse.bbs_mod.utils.Pair;
-import mchorse.bbs_mod.utils.keyframes.Keyframe;
+import mchorse.bbs_mod.utils.interps.IInterp;
+import mchorse.bbs_mod.utils.interps.Interpolations;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
-import mchorse.bbs_mod.utils.keyframes.KeyframeInterpolation;
+import mchorse.bbs_mod.utils.keyframes.KeyframeSegment;
+import mchorse.bbs_mod.utils.keyframes.factories.KeyframeFactories;
 import org.joml.Vector2d;
 
 import java.util.Arrays;
@@ -23,37 +24,37 @@ public class ReplayKeyframes extends ValueGroup
 
     public static final List<String> CURATED_CHANNELS = Arrays.asList("x", "y", "z", "pitch", "yaw", "headYaw", "bodyYaw", "sneaking", "sprinting", "stick_lx", "stick_ly", "stick_rx", "stick_ry", "trigger_l", "trigger_r", "extra1_x", "extra1_y", "extra2_x", "extra2_y", "grounded", "damage", "vX", "vY", "vZ");
 
-    public final KeyframeChannel x = new KeyframeChannel("x");
-    public final KeyframeChannel y = new KeyframeChannel("y");
-    public final KeyframeChannel z = new KeyframeChannel("z");
+    public final KeyframeChannel<Double> x = new KeyframeChannel<>("x", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> y = new KeyframeChannel<>("y", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> z = new KeyframeChannel<>("z", KeyframeFactories.DOUBLE);
 
-    public final KeyframeChannel vX = new KeyframeChannel("vX");
-    public final KeyframeChannel vY = new KeyframeChannel("vY");
-    public final KeyframeChannel vZ = new KeyframeChannel("vZ");
+    public final KeyframeChannel<Double> vX = new KeyframeChannel<>("vX", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> vY = new KeyframeChannel<>("vY", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> vZ = new KeyframeChannel<>("vZ", KeyframeFactories.DOUBLE);
 
-    public final KeyframeChannel yaw = new KeyframeChannel("yaw");
-    public final KeyframeChannel pitch = new KeyframeChannel("pitch");
-    public final KeyframeChannel headYaw = new KeyframeChannel("headYaw");
-    public final KeyframeChannel bodyYaw = new KeyframeChannel("bodyYaw");
+    public final KeyframeChannel<Double> yaw = new KeyframeChannel<>("yaw", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> pitch = new KeyframeChannel<>("pitch", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> headYaw = new KeyframeChannel<>("headYaw", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> bodyYaw = new KeyframeChannel<>("bodyYaw", KeyframeFactories.DOUBLE);
 
-    public final KeyframeChannel sneaking = new KeyframeChannel("sneaking");
-    public final KeyframeChannel sprinting = new KeyframeChannel("sprinting");
-    public final KeyframeChannel grounded = new KeyframeChannel("grounded");
-    public final KeyframeChannel fall = new KeyframeChannel("fall");
-    public final KeyframeChannel damage = new KeyframeChannel("damage");
+    public final KeyframeChannel<Double> sneaking = new KeyframeChannel<>("sneaking", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> sprinting = new KeyframeChannel<>("sprinting", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> grounded = new KeyframeChannel<>("grounded", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> fall = new KeyframeChannel<>("fall", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> damage = new KeyframeChannel<>("damage", KeyframeFactories.DOUBLE);
 
-    public final KeyframeChannel stickLeftX = new KeyframeChannel("stick_lx");
-    public final KeyframeChannel stickLeftY = new KeyframeChannel("stick_ly");
-    public final KeyframeChannel stickRightX = new KeyframeChannel("stick_rx");
-    public final KeyframeChannel stickRightY = new KeyframeChannel("stick_ry");
-    public final KeyframeChannel triggerLeft = new KeyframeChannel("trigger_l");
-    public final KeyframeChannel triggerRight = new KeyframeChannel("trigger_r");
+    public final KeyframeChannel<Double> stickLeftX = new KeyframeChannel<>("stick_lx", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> stickLeftY = new KeyframeChannel<>("stick_ly", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> stickRightX = new KeyframeChannel<>("stick_rx", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> stickRightY = new KeyframeChannel<>("stick_ry", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> triggerLeft = new KeyframeChannel<>("trigger_l", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> triggerRight = new KeyframeChannel<>("trigger_r", KeyframeFactories.DOUBLE);
 
     /* Miscellaneous animatable keyframe channels */
-    public final KeyframeChannel extra1X = new KeyframeChannel("extra1_x");
-    public final KeyframeChannel extra1Y = new KeyframeChannel("extra1_y");
-    public final KeyframeChannel extra2X = new KeyframeChannel("extra2_x");
-    public final KeyframeChannel extra2Y = new KeyframeChannel("extra2_y");
+    public final KeyframeChannel<Double> extra1X = new KeyframeChannel<>("extra1_x", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> extra1Y = new KeyframeChannel<>("extra1_y", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> extra2X = new KeyframeChannel<>("extra2_x", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> extra2Y = new KeyframeChannel<>("extra2_y", KeyframeFactories.DOUBLE);
 
     public ReplayKeyframes(String id)
     {
@@ -108,52 +109,52 @@ public class ReplayKeyframes extends ValueGroup
             this.vY.insert(tick, entity.getVelocity().y);
             this.vZ.insert(tick, entity.getVelocity().z);
 
-            this.fall.insert(tick, entity.getFallDistance());
+            this.fall.insert(tick, (double) entity.getFallDistance());
         }
 
         this.sneaking.insert(tick, entity.isSneaking() ? 1D : 0D);
         this.sprinting.insert(tick, entity.isSprinting() ? 1D : 0D);
         this.grounded.insert(tick, entity.isOnGround() ? 1D : 0D);
-        this.damage.insert(tick, entity.getHurtTimer());
+        this.damage.insert(tick, (double) entity.getHurtTimer());
 
         if (rotation)
         {
-            this.yaw.insert(tick, entity.getYaw());
-            this.pitch.insert(tick, entity.getPitch());
-            this.headYaw.insert(tick, entity.getHeadYaw());
-            this.bodyYaw.insert(tick, entity.getBodyYaw());
+            this.yaw.insert(tick, (double) entity.getYaw());
+            this.pitch.insert(tick, (double) entity.getPitch());
+            this.headYaw.insert(tick, (double) entity.getHeadYaw());
+            this.bodyYaw.insert(tick, (double) entity.getBodyYaw());
         }
 
         float[] sticks = entity.getExtraVariables();
 
         if (leftStick)
         {
-            this.stickLeftX.insert(tick, sticks[0]);
-            this.stickLeftY.insert(tick, sticks[1]);
+            this.stickLeftX.insert(tick, (double) sticks[0]);
+            this.stickLeftY.insert(tick, (double) sticks[1]);
         }
 
         if (rightStick)
         {
-            this.stickRightX.insert(tick, sticks[2]);
-            this.stickRightY.insert(tick, sticks[3]);
+            this.stickRightX.insert(tick, (double) sticks[2]);
+            this.stickRightY.insert(tick, (double) sticks[3]);
         }
 
         if (triggers)
         {
-            this.triggerLeft.insert(tick, sticks[4]);
-            this.triggerRight.insert(tick, sticks[5]);
+            this.triggerLeft.insert(tick, (double) sticks[4]);
+            this.triggerRight.insert(tick, (double) sticks[5]);
         }
 
         if (extra1)
         {
-            this.extra1X.insert(tick, sticks[6]);
-            this.extra1Y.insert(tick, sticks[7]);
+            this.extra1X.insert(tick, (double) sticks[6]);
+            this.extra1Y.insert(tick, (double) sticks[7]);
         }
 
         if (extra2)
         {
-            this.extra2X.insert(tick, sticks[8]);
-            this.extra2Y.insert(tick, sticks[9]);
+            this.extra2X.insert(tick, (double) sticks[8]);
+            this.extra2Y.insert(tick, (double) sticks[9]);
         }
     }
 
@@ -173,15 +174,15 @@ public class ReplayKeyframes extends ValueGroup
 
         if (position)
         {
-            entity.setVelocity((float) this.vX.interpolate(tick), (float) this.vY.interpolate(tick), (float) this.vZ.interpolate(tick));
-            entity.setFallDistance((float) this.fall.interpolate(tick));
+            entity.setVelocity(this.vX.interpolate(tick).floatValue(), this.vY.interpolate(tick).floatValue(), this.vZ.interpolate(tick).floatValue());
+            entity.setFallDistance(this.fall.interpolate(tick).floatValue());
 
-            Pair<Keyframe, Keyframe> x = this.x.findSegment(tick);
-            Vector2d xx = this.getPrev(x, tick, entity.getPrevX());
-            Pair<Keyframe, Keyframe> y = this.y.findSegment(tick);
-            Vector2d yy = this.getPrev(y, tick, entity.getPrevY());
-            Pair<Keyframe, Keyframe> z = this.z.findSegment(tick);
-            Vector2d zz = this.getPrev(z, tick, entity.getPrevZ());
+            KeyframeSegment<Double> x = this.x.findSegment(tick);
+            Vector2d xx = this.getPrev(x, entity.getPrevX());
+            KeyframeSegment<Double> y = this.y.findSegment(tick);
+            Vector2d yy = this.getPrev(y, entity.getPrevY());
+            KeyframeSegment<Double> z = this.z.findSegment(tick);
+            Vector2d zz = this.getPrev(z, entity.getPrevZ());
 
             entity.setPosition(xx.x, yy.x, zz.x);
             entity.setPrevX(xx.y);
@@ -191,14 +192,14 @@ public class ReplayKeyframes extends ValueGroup
 
         if (rotation)
         {
-            Pair<Keyframe, Keyframe> yaw = this.yaw.findSegment(tick);
-            Vector2d yyaw = this.getPrev(yaw, tick, entity.getPrevYaw());
-            Pair<Keyframe, Keyframe> pitch = this.pitch.findSegment(tick);
-            Vector2d ppitch = this.getPrev(pitch, tick, entity.getPrevPitch());
-            Pair<Keyframe, Keyframe> headYaw = this.headYaw.findSegment(tick);
-            Vector2d hheadYaw = this.getPrev(headYaw, tick, entity.getPrevHeadYaw());
-            Pair<Keyframe, Keyframe> bodyYaw = this.bodyYaw.findSegment(tick);
-            Vector2d bbodyYaw = this.getPrev(bodyYaw, tick, entity.getPrevBodyYaw());
+            KeyframeSegment<Double> yaw = this.yaw.findSegment(tick);
+            Vector2d yyaw = this.getPrev(yaw, entity.getPrevYaw());
+            KeyframeSegment<Double> pitch = this.pitch.findSegment(tick);
+            Vector2d ppitch = this.getPrev(pitch, entity.getPrevPitch());
+            KeyframeSegment<Double> headYaw = this.headYaw.findSegment(tick);
+            Vector2d hheadYaw = this.getPrev(headYaw, entity.getPrevHeadYaw());
+            KeyframeSegment<Double> bodyYaw = this.bodyYaw.findSegment(tick);
+            Vector2d bbodyYaw = this.getPrev(bodyYaw, entity.getPrevBodyYaw());
 
             entity.setYaw((float) yyaw.x);
             entity.setPitch((float) ppitch.x);
@@ -215,63 +216,64 @@ public class ReplayKeyframes extends ValueGroup
         entity.setSneaking(this.sneaking.interpolate(tick) != 0D);
         entity.setSprinting(this.sprinting.interpolate(tick) != 0D);
         entity.setOnGround(this.grounded.interpolate(tick) != 0D);
-        entity.setHurtTimer((int) this.damage.interpolate(tick));
+        entity.setHurtTimer(this.damage.interpolate(tick).intValue());
 
         float[] sticks = entity.getExtraVariables();
 
         if (leftStick)
         {
-            sticks[0] = (float) this.stickLeftX.interpolate(tick);
-            sticks[1] = (float) this.stickLeftY.interpolate(tick);
+            sticks[0] = this.stickLeftX.interpolate(tick).floatValue();
+            sticks[1] = this.stickLeftY.interpolate(tick).floatValue();
         }
 
         if (rightStick)
         {
-            sticks[2] = (float) this.stickRightX.interpolate(tick);
-            sticks[3] = (float) this.stickRightY.interpolate(tick);
+            sticks[2] = this.stickRightX.interpolate(tick).floatValue();
+            sticks[3] = this.stickRightY.interpolate(tick).floatValue();
         }
 
         if (triggers)
         {
-            sticks[4] = (float) this.triggerLeft.interpolate(tick);
-            sticks[5] = (float) this.triggerRight.interpolate(tick);
+            sticks[4] = this.triggerLeft.interpolate(tick).floatValue();
+            sticks[5] = this.triggerRight.interpolate(tick).floatValue();
         }
 
         if (extra1)
         {
-            sticks[6] = (float) this.extra1X.interpolate(tick);
-            sticks[7] = (float) this.extra1Y.interpolate(tick);
+            sticks[6] = this.extra1X.interpolate(tick).floatValue();
+            sticks[7] = this.extra1Y.interpolate(tick).floatValue();
         }
 
         if (extra2)
         {
-            sticks[8] = (float) this.extra2X.interpolate(tick);
-            sticks[9] = (float) this.extra2Y.interpolate(tick);
+            sticks[8] = this.extra2X.interpolate(tick).floatValue();
+            sticks[9] = this.extra2Y.interpolate(tick).floatValue();
         }
     }
 
     /**
      * Force teleportation for the previous keyframe being constant
      */
-    private Vector2d getPrev(Pair<Keyframe, Keyframe> frame, int tick, double prev)
+    private Vector2d getPrev(KeyframeSegment<Double> frame, double prev)
     {
-        if (frame != null && frame.b != null)
+        if (frame == null)
         {
-            /* Special case for when there is no keyframe afterwards */
-            if (frame.a == frame.b && frame.b.next == frame.b && frame.a.prev != frame.a)
-            {
-                if (frame.a.prev.getInterpolation() == KeyframeInterpolation.CONST && frame.a.getTick() == tick)
-                {
-                    return new Vector2d(frame.a.getValue(), frame.a.getValue());
-                }
-            }
-
-            if (frame.a.getInterpolation() == KeyframeInterpolation.CONST && frame.b.getTick() == tick)
-            {
-                return new Vector2d(frame.b.getValue(), frame.b.getValue());
-            }
+            return new Vector2d(prev, prev);
         }
 
-        return new Vector2d(KeyframeChannel.compute(frame, tick), prev);
+        IInterp interp = frame.a.getInterpolation().getInterp();
+        Double interpolated = frame.createInterpolated();
+
+        if (interp == Interpolations.CONST || interp == Interpolations.STEP)
+        {
+            if (interpolated != null)
+            {
+                prev = interpolated;
+            }
+
+            return new Vector2d(prev, prev);
+        }
+
+        return new Vector2d(interpolated == null ? prev : interpolated, prev);
     }
 }

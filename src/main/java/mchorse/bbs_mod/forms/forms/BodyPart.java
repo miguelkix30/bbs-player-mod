@@ -5,7 +5,7 @@ import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.forms.FormUtils;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.entities.StubEntity;
-import mchorse.bbs_mod.utils.math.IInterpolation;
+import mchorse.bbs_mod.utils.interps.IInterp;
 import mchorse.bbs_mod.utils.pose.Transform;
 
 import java.util.Objects;
@@ -80,18 +80,6 @@ public class BodyPart implements IMapSerializable
         part.fromData(this.toData());
 
         return part;
-    }
-
-    public void tween(BodyPart part, int duration, IInterpolation interpolation, int offset, boolean playing)
-    {
-        if (this.form != null && part.form != null)
-        {
-            this.form.tween(part.form, duration, interpolation, offset, playing);
-        }
-
-        this.transform.copy(part.transform);
-        this.bone = part.bone;
-        this.useTarget = part.useTarget;
     }
 
     @Override

@@ -12,7 +12,7 @@ import mchorse.bbs_mod.forms.properties.FloatProperty;
 import mchorse.bbs_mod.forms.properties.IFormProperty;
 import mchorse.bbs_mod.forms.properties.StringProperty;
 import mchorse.bbs_mod.forms.properties.TransformProperty;
-import mchorse.bbs_mod.utils.math.IInterpolation;
+import mchorse.bbs_mod.utils.interps.IInterp;
 import mchorse.bbs_mod.utils.pose.Transform;
 
 import java.util.Collections;
@@ -166,23 +166,6 @@ public abstract class Form implements IMapSerializable
 //            entity.basic.eyeHeight = this.hitboxEyeHeight.get();
 //            entity.basic.sneakMultiplier = this.hitboxSneakMultiplier.get();
         }
-    }
-
-    /* Tweening */
-
-    public void tween(Form form, int duration, IInterpolation interpolation, int offset, boolean playing)
-    {
-        for (IFormProperty property : this.properties.values())
-        {
-            IFormProperty formProperty = form.properties.get(property.getKey());
-
-            if (formProperty != null)
-            {
-                property.tween(formProperty.get(), property.get(), duration, interpolation, offset, playing);
-            }
-        }
-
-        this.parts.tween(form.parts, duration, interpolation, offset, playing);
     }
 
     /* Data comparison and (de)serialization */

@@ -149,15 +149,15 @@ public class UIFormEditor extends UIElement implements IUIFormList
         this.transform.verticalCompactNoIcons();
 
         this.editArea = new UIElement();
-        this.editArea.relative(this).full();
+        this.editArea.full(this);
 
         this.renderer = new UIPickableFormRenderer(this);
-        this.renderer.relative(this.editArea).full();
+        this.renderer.full(this.editArea);
 
         this.finish = new UIIcon(Icons.IN, (b) -> this.palette.exit());
         this.finish.tooltip(UIKeys.FORMS_EDITOR_FINISH, Direction.RIGHT).relative(this.editArea).xy(0, 1F).anchorY(1F);
 
-        this.toggleSidebar = new UIIcon(Icons.LEFTLOAD, (b) ->
+        this.toggleSidebar = new UIIcon(() -> this.formsArea.isVisible() ? Icons.LEFTLOAD : Icons.RIGHTLOAD, (b) ->
         {
             this.toggleSidebar();
 
@@ -193,7 +193,6 @@ public class UIFormEditor extends UIElement implements IUIFormList
     private void toggleSidebar()
     {
         this.formsArea.toggleVisible();
-        this.toggleSidebar.both(this.formsArea.isVisible() ? Icons.LEFTLOAD : Icons.RIGHTLOAD);
     }
 
     private void createFormContextMenu(ContextMenuManager menu)
@@ -286,7 +285,7 @@ public class UIFormEditor extends UIElement implements IUIFormList
         list.setSelected(current);
         this.callback = callback;
 
-        list.relative(this).full();
+        list.full(this);
         list.resize();
         this.add(list);
     }
@@ -358,8 +357,7 @@ public class UIFormEditor extends UIElement implements IUIFormList
 
         this.editor.setEditor(this);
         this.editor.startEdit(form);
-        this.editor.relative(this.editArea).full();
-        this.editor.resize();
+        this.editor.full(this.editArea).resize();
 
         this.renderer.removeFromParent();
         this.renderer.resize();

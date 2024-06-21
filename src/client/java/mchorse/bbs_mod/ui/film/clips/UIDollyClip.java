@@ -10,6 +10,7 @@ import mchorse.bbs_mod.ui.film.clips.modules.UIPointModule;
 import mchorse.bbs_mod.ui.film.utils.UICameraUtils;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIIcon;
+import mchorse.bbs_mod.ui.framework.elements.context.UIInterpolationContextMenu;
 import mchorse.bbs_mod.ui.framework.elements.input.UITrackpad;
 import mchorse.bbs_mod.ui.framework.tooltips.InterpolationTooltip;
 import mchorse.bbs_mod.ui.utils.UI;
@@ -50,9 +51,9 @@ public class UIDollyClip extends UIClip<DollyClip>
 
         this.interp = new UIButton(UIKeys.CAMERA_PANELS_INTERPOLATION, (b) ->
         {
-            UICameraUtils.interps(this.getContext(), this.clip.interp.get(), (i) -> this.clip.interp.set(i));
+            this.getContext().replaceContextMenu(new UIInterpolationContextMenu(this.clip.interp));
         });
-        this.interp.tooltip(new InterpolationTooltip(1F, 0.5F, () -> this.clip.interp.get()));
+        this.interp.tooltip(new InterpolationTooltip(1F, 0.5F, () -> this.clip.interp.wrap()));
     }
 
     @Override

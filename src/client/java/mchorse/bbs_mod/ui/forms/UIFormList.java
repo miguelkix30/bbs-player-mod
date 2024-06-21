@@ -45,13 +45,14 @@ public class UIFormList extends UIElement
         this.palette = palette;
 
         this.forms = UI.scrollView(0, 0);
+        this.forms.scroll.cancelScrolling();
         this.bar = new UIElement();
         this.search = new UITextbox(100, this::search).placeholder(UIKeys.FORMS_LIST_SEARCH);
         this.edit = new UIIcon(Icons.EDIT, this::edit);
         this.edit.tooltip(UIKeys.FORMS_LIST_EDIT, Direction.TOP);
         this.close = new UIIcon(Icons.CLOSE, this::close);
 
-        this.forms.relative(this).full();
+        this.forms.full(this);
         this.bar.relative(this).x(10).y(1F, -30).w(1F, -20).h(20).row().height(20);
         this.close.w(20);
 
@@ -198,7 +199,7 @@ public class UIFormList extends UIElement
 
         if (this.lastUpdate != categories.getLastUpdate())
         {
-            this.lastScroll = this.forms.scroll.scroll;
+            this.lastScroll = (int) this.forms.scroll.scroll;
 
             Form selected = this.getSelected();
 

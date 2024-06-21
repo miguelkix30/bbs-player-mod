@@ -6,11 +6,11 @@ import mchorse.bbs_mod.graphics.window.Window;
 import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.ui.film.IUIClipsDelegate;
 import mchorse.bbs_mod.ui.framework.UIContext;
-import mchorse.bbs_mod.ui.utils.ScrollArea;
+import mchorse.bbs_mod.ui.utils.Scroll;
 import mchorse.bbs_mod.ui.utils.ScrollDirection;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.utils.colors.Colors;
-import mchorse.bbs_mod.utils.math.MathUtils;
+import mchorse.bbs_mod.utils.MathUtils;
 
 import java.util.function.Consumer;
 
@@ -27,7 +27,7 @@ public class UIPointsModule extends UIAbstractModule
     public Consumer<Integer> picker;
 
     /* GUI */
-    public ScrollArea scroll = new ScrollArea(this.area, 20);
+    public Scroll scroll = new Scroll(this.area, 20);
 
     /**
      * Currently selected button (shouldn't be deselected, i.e. can't be -1)
@@ -224,7 +224,7 @@ public class UIPointsModule extends UIAbstractModule
         for (int i = 0; i < c; i++)
         {
             String label = String.valueOf(i);
-            int xx = this.area.x + i * this.scroll.scrollItemSize - this.scroll.scroll;
+            int xx = this.area.x + i * this.scroll.scrollItemSize - (int) this.scroll.scroll;
             int w = context.batcher.getFont().getWidth(label);
 
             context.batcher.box(xx, y, xx + 20, y + 20, this.index == i ? 0xffcc1170 : 0xffff2280);
@@ -236,7 +236,7 @@ public class UIPointsModule extends UIAbstractModule
 
         /* Display scroll bar */
         int mw = this.area.w;
-        int scroll = this.scroll.getScrollBar(mw);
+        int scroll = this.scroll.getScrollbar();
 
         if (scroll != 0)
         {
@@ -246,7 +246,6 @@ public class UIPointsModule extends UIAbstractModule
             context.batcher.box(bx, by, bx + scroll, by + 2, Colors.A50);
         }
 
-        /* Overlay "shadows" for informing the user that  */
         if (this.scroll.scroll > 0 && this.scroll.scrollSize >= this.area.w - 40)
         {
             context.batcher.gradientHBox(x, y, x + 4, y + this.area.h, Colors.A50, 0);

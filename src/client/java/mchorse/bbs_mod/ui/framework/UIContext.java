@@ -15,7 +15,7 @@ import mchorse.bbs_mod.ui.utils.Area;
 import mchorse.bbs_mod.ui.utils.ScrollDirection;
 import mchorse.bbs_mod.ui.utils.context.ContextMenuManager;
 import mchorse.bbs_mod.ui.utils.keys.KeyAction;
-import mchorse.bbs_mod.utils.math.MathUtils;
+import mchorse.bbs_mod.utils.MathUtils;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -37,7 +37,7 @@ public class UIContext implements IViewportStack
     public int mouseX;
     public int mouseY;
     public int mouseButton;
-    public int mouseWheel;
+    public double mouseWheel;
 
     /* Keyboard states */
     private int keyCode;
@@ -99,7 +99,7 @@ public class UIContext implements IViewportStack
         this.mouseButton = mouseButton;
     }
 
-    public void setMouseWheel(int mouseX, int mouseY, int mouseWheel)
+    public void setMouseWheel(int mouseX, int mouseY, double mouseWheel)
     {
         this.setMouse(mouseX, mouseY);
         this.mouseWheel = mouseWheel;

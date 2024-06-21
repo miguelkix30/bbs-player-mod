@@ -3,12 +3,13 @@ package mchorse.bbs_mod.ui.film.clips.widgets;
 import mchorse.bbs_mod.camera.utils.TimeUtils;
 import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.ui.film.clips.UIClip;
-import mchorse.bbs_mod.ui.film.utils.UICameraUtils;
-import mchorse.bbs_mod.ui.film.utils.keyframes.UICameraDopeSheetEditor;
+import mchorse.bbs_mod.ui.film.utils.keyframes.UIFilmKeyframes;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIToggle;
+import mchorse.bbs_mod.ui.framework.elements.context.UIInterpolationContextMenu;
 import mchorse.bbs_mod.ui.framework.elements.input.UITrackpad;
+import mchorse.bbs_mod.ui.framework.elements.input.keyframes.UIKeyframeEditor;
 import mchorse.bbs_mod.ui.framework.tooltips.InterpolationTooltip;
 import mchorse.bbs_mod.ui.utils.UI;
 import mchorse.bbs_mod.utils.Direction;
@@ -29,7 +30,7 @@ public class UIEnvelope extends UIElement
 
     public UIToggle keyframes;
     public UIButton editKeyframes;
-    public UICameraDopeSheetEditor channel;
+    public UIKeyframeEditor channel;
 
     public UIEnvelope(UIClip<? extends Clip> panel)
     {
@@ -37,8 +38,8 @@ public class UIEnvelope extends UIElement
 
         this.panel = panel;
 
-        InterpolationTooltip preTooltip = new InterpolationTooltip(0F, 0.5F, () -> this.get().pre.get());
-        InterpolationTooltip postTooltip = new InterpolationTooltip(0F, 0.5F, () -> this.get().post.get());
+        InterpolationTooltip preTooltip = new InterpolationTooltip(0F, 0.5F, () -> this.get().pre.wrap());
+        InterpolationTooltip postTooltip = new InterpolationTooltip(0F, 0.5F, () -> this.get().post.wrap());
 
         this.enabled = new UIToggle(UIKeys.CAMERA_PANELS_ENABLED, (b) ->
         {
@@ -46,18 +47,12 @@ public class UIEnvelope extends UIElement
         });
         this.pre = new UIButton(UIKeys.CAMERA_PANELS_ENVELOPES_PRE, (b) ->
         {
-            UICameraUtils.interps(this.getContext(), this.get().pre.get(), (v) ->
-            {
-                this.panel.editor.editMultiple(this.get().pre, (value) -> value.set(v));
-            });
+            this.getContext().replaceContextMenu(new UIInterpolationContextMenu(this.get().pre));
         });
         this.pre.tooltip(preTooltip);
         this.post = new UIButton(UIKeys.CAMERA_PANELS_ENVELOPES_POST, (b) ->
         {
-            UICameraUtils.interps(this.getContext(), this.get().post.get(), (v) ->
-            {
-                this.panel.editor.editMultiple(this.get().post, (value) -> value.set(v));
-            });
+            this.getContext().replaceContextMenu(new UIInterpolationContextMenu(this.get().post));
         });
         this.post.tooltip(postTooltip);
 
@@ -79,11 +74,11 @@ public class UIEnvelope extends UIElement
         });
         this.editKeyframes = new UIButton(UIKeys.CAMERA_PANELS_EDIT_KEYFRAMES, (b) ->
         {
-            this.channel.keyframes.editSheet(this.channel.keyframes.sheets.get(0));
             this.panel.editor.embedView(this.channel);
-            this.channel.resetView();
+            this.channel.view.resetView();
         });
-        this.channel = new UICameraDopeSheetEditor(panel.editor);
+        this.channel = new UIKeyframeEditor((consumer) -> new UIFilmKeyframes(this.panel.editor, consumer));
+        this.channel.view.duration(() -> this.panel.clip.duration.get());
 
         this.column().vertical().stretch();
     }
@@ -118,8 +113,7 @@ public class UIEnvelope extends UIElement
 
     public void initiate()
     {
-        this.updateDuration();
-        this.channel.resetView();
+        this.channel.view.resetView();
         this.channel.updateConverter();
 
         TimeUtilsClient.configure(this.fadeIn, 0);
@@ -146,16 +140,6 @@ public class UIEnvelope extends UIElement
 
         this.fadeIn.setValue(TimeUtils.toTime(envelope.fadeIn.get().intValue()));
         this.fadeOut.setValue(TimeUtils.toTime(envelope.fadeOut.get().intValue()));
-    }
-
-    public void updateDuration()
-    {
-        this.channel.keyframes.duration = this.getDuration();
-    }
-
-    public int getDuration()
-    {
-        return this.panel.clip.duration.get();
     }
 
     public Envelope get()

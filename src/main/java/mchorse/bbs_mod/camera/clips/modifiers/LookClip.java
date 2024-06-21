@@ -1,5 +1,6 @@
 package mchorse.bbs_mod.camera.clips.modifiers;
 
+import mchorse.bbs_mod.camera.clips.misc.AudioClip;
 import mchorse.bbs_mod.camera.data.Angle;
 import mchorse.bbs_mod.camera.data.Point;
 import mchorse.bbs_mod.camera.data.Position;
@@ -8,7 +9,7 @@ import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.settings.values.ValueBoolean;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.clips.ClipContext;
-import mchorse.bbs_mod.utils.math.Interpolations;
+import mchorse.bbs_mod.utils.interps.Lerps;
 
 import java.util.List;
 
@@ -78,9 +79,9 @@ public class LookClip extends EntityClip
 
             for (IEntity entity : entities)
             {
-                x += Interpolations.lerp(entity.getPrevX(), entity.getX(), context.transition) / size;
-                y += Interpolations.lerp(entity.getPrevY(), entity.getY(), context.transition) / size;
-                z += Interpolations.lerp(entity.getPrevZ(), entity.getZ(), context.transition) / size;
+                x += Lerps.lerp(entity.getPrevX(), entity.getX(), context.transition) / size;
+                y += Lerps.lerp(entity.getPrevY(), entity.getY(), context.transition) / size;
+                z += Lerps.lerp(entity.getPrevZ(), entity.getZ(), context.transition) / size;
             }
         }
 

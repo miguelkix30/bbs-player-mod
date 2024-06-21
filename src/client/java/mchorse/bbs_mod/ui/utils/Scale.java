@@ -1,11 +1,11 @@
 package mchorse.bbs_mod.ui.utils;
 
 import mchorse.bbs_mod.ui.framework.UIContext;
-import mchorse.bbs_mod.utils.math.Interpolations;
-import mchorse.bbs_mod.utils.math.MathUtils;
+import mchorse.bbs_mod.utils.MathUtils;
+import mchorse.bbs_mod.utils.interps.Lerps;
 
 /**
- * This class represents a scale of an axis 
+ * This class represents a scale of an axis
  */
 public class Scale
 {
@@ -212,16 +212,16 @@ public class Scale
     /**
      * Convert on-screen coordinate to value
      */
-    public double from(double coordinate)
+    public double from(double mouse)
     {
         if (this.area != null)
         {
-            coordinate -= this.direction.getPosition(this.area, this.anchor);
+            mouse -= this.direction.getPosition(this.area, this.anchor);
         }
 
         return this.inverse
-            ? -(coordinate / this.getZoom() - this.shift)
-            : coordinate / this.getZoom() + this.shift;
+            ? -(mouse / this.getZoom() - this.shift)
+            : mouse / this.getZoom() + this.shift;
     }
 
     public double getMinValue()
@@ -239,6 +239,11 @@ public class Scale
     }
 
     /* Viewport manipulation methods */
+
+    public boolean isInView(double value)
+    {
+        return value >= this.getMinValue() && value <= this.getMaxValue();
+    }
 
     public void view(double min, double max)
     {
@@ -286,7 +291,15 @@ public class Scale
 
     public void shift(double min, double max)
     {
-        this.shift = Interpolations.lerp(min, max, this.inverse ? 1 - this.anchor : this.anchor);
+        this.shift = Lerps.lerp(min, max, this.inverse ? 1 - this.anchor : this.anchor);
+    }
+
+    public void shiftIntoMiddle(double x)
+    {
+        if (!this.isInView(x))
+        {
+            this.setShift(x - (this.getMaxValue() - this.getMinValue()) / 2);
+        }
     }
 
     public void shiftInto(double value)
@@ -338,6 +351,11 @@ public class Scale
         this.anchor = newAnchor;
 
         this.zoom(amount, min, max);
+
+        double diff = this.from(this.direction.getPosition(this.area, newAnchor)) - this.from(this.direction.getPosition(this.area, 0F));
+
+        this.shift -= diff;
+        this.anchor = 0F;
     }
 
     public double getZoomFactor()

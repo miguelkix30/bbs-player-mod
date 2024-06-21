@@ -2,8 +2,8 @@ package mchorse.bbs_mod.forms.properties;
 
 import mchorse.bbs_mod.data.IMapSerializable;
 import mchorse.bbs_mod.forms.forms.Form;
-import mchorse.bbs_mod.utils.keyframes.generic.GenericKeyframeChannel;
-import mchorse.bbs_mod.utils.math.IInterpolation;
+import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
+import mchorse.bbs_mod.utils.interps.IInterp;
 
 public interface IFormProperty <T> extends IMapSerializable
 {
@@ -46,7 +46,7 @@ public interface IFormProperty <T> extends IMapSerializable
     /**
      * Tween this property to new value. Some properties may not fully support tweening!
      */
-    public void tween(T newValue, T oldValue, int duration, IInterpolation interpolation, int offset, boolean playing);
+    public void tween(T preValue, T oldValue, T newValue, T postValue, int duration, IInterp interpolation, int offset, boolean playing);
 
     /**
      * Check whether this property is in progress of tweening.
@@ -71,5 +71,5 @@ public interface IFormProperty <T> extends IMapSerializable
     /**
      * Create a generic keyframe channel that can be used with this property
      */
-    public GenericKeyframeChannel createChannel(String key);
+    public KeyframeChannel createChannel(String key);
 }

@@ -3,8 +3,8 @@ package mchorse.bbs_mod.ui.film.utils.undo;
 import mchorse.bbs_mod.settings.values.ValueGroup;
 import mchorse.bbs_mod.ui.film.UIClips;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
+import mchorse.bbs_mod.ui.framework.elements.input.keyframes.KeyframeState;
 import mchorse.bbs_mod.utils.undo.IUndo;
-import org.joml.Vector2i;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,27 +18,20 @@ public abstract class FilmEditorUndo implements IUndo<ValueGroup>
     public int panel;
 
     /* Replays */
-    private KeyframeSelection keyframesBefore = new KeyframeSelection();
-    private KeyframeSelection keyframesAfter = new KeyframeSelection();
-    private KeyframeSelection propertiesBefore = new KeyframeSelection();
-    private KeyframeSelection propertiesAfter = new KeyframeSelection();
+    private KeyframeState propertiesBefore = new KeyframeState();
+    private KeyframeState propertiesAfter = new KeyframeState();
 
-    public KeyframeSelection getKeyframeSelection(boolean redo)
-    {
-        return redo ? this.keyframesAfter : this.keyframesBefore;
-    }
-
-    public KeyframeSelection getPropertiesSelection(boolean redo)
+    public KeyframeState getPropertiesSelection(boolean redo)
     {
         return redo ? this.propertiesAfter : this.propertiesBefore;
     }
 
     public void editor(UIFilmPanel editor)
     {
-        UIClips cameraClips = editor.cameraClips.clips;
-        UIClips voiceLineClips = editor.screenplay.editor.clips;
+        UIClips cameraClips = editor.cameraEditor.clips;
+        UIClips voiceLineClips = editor.screenplayEditor.editor.clips;
 
-        if (editor.screenplay.isVisible())
+        if (editor.screenplayEditor.isVisible())
         {
             this.panel = 2;
         }
@@ -55,16 +48,13 @@ public abstract class FilmEditorUndo implements IUndo<ValueGroup>
         this.cameraClips = new ClipsData(cameraClips);
         this.voiceLinesClips = new ClipsData(voiceLineClips);
 
-        this.keyframesBefore = this.keyframesAfter = editor.replayEditor.keyframeEditor == null
-            ? new KeyframeSelection()
-            : editor.replayEditor.keyframeEditor.keyframes.createSelection();
-
-        this.propertiesBefore = this.propertiesAfter = editor.replayEditor.propertyEditor == null
-            ? new KeyframeSelection()
-            : editor.replayEditor.propertyEditor.properties.createSelection();
+        if (editor.replayEditor.keyframeEditor != null)
+        {
+            this.propertiesBefore = this.propertiesAfter = editor.replayEditor.keyframeEditor.view.cacheState();
+        }
     }
 
-    public void selectedBefore(List<Integer> cameraClipsSelection, List<Integer> voiceLineSelection, KeyframeSelection keyframe, KeyframeSelection properties)
+    public void selectedBefore(List<Integer> cameraClipsSelection, List<Integer> voiceLineSelection, KeyframeState properties)
     {
         this.cameraClips.selectedBefore.clear();
         this.cameraClips.selectedBefore.addAll(cameraClipsSelection);
@@ -72,16 +62,7 @@ public abstract class FilmEditorUndo implements IUndo<ValueGroup>
         this.voiceLinesClips.selectedBefore.clear();
         this.voiceLinesClips.selectedBefore.addAll(voiceLineSelection);
 
-        this.keyframesBefore = keyframe;
         this.propertiesBefore = properties;
-    }
-
-    public static class KeyframeSelection
-    {
-        public List<List<Integer>> selected = new ArrayList<>();
-        public Vector2i current = new Vector2i(-1, -1);
-        public double min;
-        public double max;
     }
 
     public static class ClipsData
@@ -97,7 +78,7 @@ public abstract class FilmEditorUndo implements IUndo<ValueGroup>
         {
             this.viewMin = clips.scale.getMinValue();
             this.viewMax = clips.scale.getMaxValue();
-            this.scroll = clips.vertical.scroll;
+            this.scroll = (int) clips.vertical.scroll;
 
             this.selectedAfter.addAll(clips.getSelection());
             this.selectedBefore.addAll(this.selectedAfter);

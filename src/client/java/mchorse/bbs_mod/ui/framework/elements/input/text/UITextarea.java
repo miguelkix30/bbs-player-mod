@@ -12,13 +12,12 @@ import mchorse.bbs_mod.ui.framework.elements.utils.Batcher2D;
 import mchorse.bbs_mod.ui.framework.elements.utils.FontRenderer;
 import mchorse.bbs_mod.ui.framework.elements.utils.ITextColoring;
 import mchorse.bbs_mod.ui.utils.Area;
-import mchorse.bbs_mod.ui.utils.ScrollArea;
+import mchorse.bbs_mod.ui.utils.Scroll;
 import mchorse.bbs_mod.ui.utils.ScrollDirection;
 import mchorse.bbs_mod.ui.utils.StringGroupMatcher;
-import mchorse.bbs_mod.ui.utils.UIUtils;
 import mchorse.bbs_mod.utils.Pair;
 import mchorse.bbs_mod.utils.colors.Colors;
-import mchorse.bbs_mod.utils.math.MathUtils;
+import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.undo.UndoManager;
 import org.joml.Vector2d;
 import org.lwjgl.glfw.GLFW;
@@ -31,8 +30,8 @@ import java.util.stream.Collectors;
 
 public class UITextarea <T extends TextLine> extends UIElement implements IFocusedUIElement, ITextColoring
 {
-    public ScrollArea horizontal = new ScrollArea(new Area());
-    public ScrollArea vertical = new ScrollArea(this.area);
+    public Scroll horizontal = new Scroll(new Area());
+    public Scroll vertical = new Scroll(this.area);
 
     public Consumer<String> callback;
 
@@ -165,8 +164,8 @@ public class UITextarea <T extends TextLine> extends UIElement implements IFocus
 
         this.cursor.set(0, 0);
         this.selection.set(-1, 0);
-        this.horizontal.scroll = 0;
-        this.vertical.scroll = 0;
+        this.horizontal.scrollTo(0);
+        this.vertical.scrollTo(0);
         this.undo = new UndoManager<UITextarea>(100).simpleMerge();
 
         if (this.area.w > 0)
@@ -1374,8 +1373,8 @@ public class UITextarea <T extends TextLine> extends UIElement implements IFocus
         {
             T textLine = this.text.get(i);
             String line = textLine.text;
-            int newX = x - this.horizontal.scroll + this.getShiftX();
-            int newY = y - this.vertical.scroll;
+            int newX = x - (int) this.horizontal.scroll + this.getShiftX();
+            int newY = y - (int) this.vertical.scroll;
 
             if (newY > this.area.ey())
             {
@@ -1504,11 +1503,8 @@ public class UITextarea <T extends TextLine> extends UIElement implements IFocus
 
         if (this.dragging == 3)
         {
-            this.horizontal.scroll += this.lastMX - context.mouseX;
-            this.horizontal.clamp();
-
-            this.vertical.scroll += this.lastMY - context.mouseY;
-            this.vertical.clamp();
+            this.horizontal.scrollBy(this.lastMX - context.mouseX);
+            this.vertical.scrollBy(this.lastMY - context.mouseY);
 
             this.lastMX = context.mouseX;
             this.lastMY = context.mouseY;

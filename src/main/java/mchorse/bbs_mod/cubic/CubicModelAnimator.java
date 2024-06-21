@@ -2,12 +2,13 @@ package mchorse.bbs_mod.cubic;
 
 import mchorse.bbs_mod.cubic.data.animation.Animation;
 import mchorse.bbs_mod.cubic.data.animation.AnimationChannel;
+import mchorse.bbs_mod.cubic.data.animation.AnimationInterpolation;
 import mchorse.bbs_mod.cubic.data.animation.AnimationPart;
 import mchorse.bbs_mod.cubic.data.animation.AnimationVector;
 import mchorse.bbs_mod.cubic.data.model.Model;
 import mchorse.bbs_mod.cubic.data.model.ModelGroup;
 import mchorse.bbs_mod.utils.Axis;
-import mchorse.bbs_mod.utils.math.Interpolations;
+import mchorse.bbs_mod.utils.interps.Lerps;
 import mchorse.bbs_mod.utils.pose.Transform;
 import org.joml.Vector3d;
 
@@ -83,17 +84,17 @@ public class CubicModelAnimator
         Transform initial = group.initial;
         Transform current = group.current;
 
-        current.translate.x = Interpolations.lerp(current.translate.x, (float) position.x + initial.translate.x, blend);
-        current.translate.y = Interpolations.lerp(current.translate.y, (float) position.y + initial.translate.y, blend);
-        current.translate.z = Interpolations.lerp(current.translate.z, (float) position.z + initial.translate.z, blend);
+        current.translate.x = Lerps.lerp(current.translate.x, (float) position.x + initial.translate.x, blend);
+        current.translate.y = Lerps.lerp(current.translate.y, (float) position.y + initial.translate.y, blend);
+        current.translate.z = Lerps.lerp(current.translate.z, (float) position.z + initial.translate.z, blend);
 
-        current.scale.x = Interpolations.lerp(current.scale.x, (float) scale.x + initial.scale.x, blend);
-        current.scale.y = Interpolations.lerp(current.scale.y, (float) scale.y + initial.scale.y, blend);
-        current.scale.z = Interpolations.lerp(current.scale.z, (float) scale.z + initial.scale.z, blend);
+        current.scale.x = Lerps.lerp(current.scale.x, (float) scale.x + initial.scale.x, blend);
+        current.scale.y = Lerps.lerp(current.scale.y, (float) scale.y + initial.scale.y, blend);
+        current.scale.z = Lerps.lerp(current.scale.z, (float) scale.z + initial.scale.z, blend);
 
-        current.rotate.x = Interpolations.lerp(current.rotate.x, (float) rotation.x + initial.rotate.x, blend);
-        current.rotate.y = Interpolations.lerp(current.rotate.y, (float) rotation.y + initial.rotate.y, blend);
-        current.rotate.z = Interpolations.lerp(current.rotate.z, (float) rotation.z + initial.rotate.z, blend);
+        current.rotate.x = Lerps.lerp(current.rotate.x, (float) rotation.x + initial.rotate.x, blend);
+        current.rotate.y = Lerps.lerp(current.rotate.y, (float) rotation.y + initial.rotate.y, blend);
+        current.rotate.z = Lerps.lerp(current.rotate.z, (float) rotation.z + initial.rotate.z, blend);
     }
 
     private static Vector3d interpolateList(Vector3d vector, AnimationChannel channel, float frame, MolangHelper.Component component)
@@ -123,7 +124,7 @@ public class CubicModelAnimator
             return output;
         }
 
-        double duration = 0;
+        double duration = first.time * 20;
 
         for (AnimationVector vector : keyframes)
         {
@@ -133,9 +134,9 @@ public class CubicModelAnimator
             {
                 double factor = (frame - duration) / length;
 
-                output.x = vector.interp.interpolate(vector, component, Axis.X, factor);
-                output.y = vector.interp.interpolate(vector, component, Axis.Y, factor);
-                output.z = vector.interp.interpolate(vector, component, Axis.Z, factor);
+                output.x = AnimationInterpolation.interpolate(vector, component, Axis.X, factor);
+                output.y = AnimationInterpolation.interpolate(vector, component, Axis.Y, factor);
+                output.z = AnimationInterpolation.interpolate(vector, component, Axis.Z, factor);
 
                 return output;
             }

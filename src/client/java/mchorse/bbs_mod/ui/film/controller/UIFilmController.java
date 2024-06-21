@@ -2,6 +2,7 @@ package mchorse.bbs_mod.ui.film.controller;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.systems.VertexSorter;
+import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.camera.controller.RunnerCameraController;
@@ -32,6 +33,7 @@ import mchorse.bbs_mod.ui.film.UIFilmPanel;
 import mchorse.bbs_mod.ui.film.replays.UIRecordOverlayPanel;
 import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
+import mchorse.bbs_mod.ui.framework.elements.buttons.UIIcon;
 import mchorse.bbs_mod.ui.framework.elements.overlay.UIOverlay;
 import mchorse.bbs_mod.ui.framework.elements.utils.FontRenderer;
 import mchorse.bbs_mod.ui.framework.elements.utils.StencilMap;
@@ -42,13 +44,13 @@ import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.ui.utils.keys.KeyAction;
 import mchorse.bbs_mod.utils.AABB;
 import mchorse.bbs_mod.utils.CollectionUtils;
+import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.MatrixStackUtils;
 import mchorse.bbs_mod.utils.Pair;
 import mchorse.bbs_mod.utils.RayTracing;
 import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.joml.Matrices;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
-import mchorse.bbs_mod.utils.math.MathUtils;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.Mouse;
@@ -96,12 +98,13 @@ public class UIFilmController extends UIElement
     private BaseType recordingOld;
 
     /* Replay and group picking */
-    private IEntity hoveredEntity;
+    private List<IEntity> hoveredEntities = new ArrayList<>();
     private StencilFormFramebuffer stencil = new StencilFormFramebuffer();
     private StencilMap stencilMap = new StencilMap();
 
     public final OrbitFilmCameraController orbit = new OrbitFilmCameraController(this);
     private int pov;
+    private int lastTick;
 
     private WorldRenderContext worldRenderContext;
 
@@ -115,12 +118,11 @@ public class UIFilmController extends UIElement
 
         this.keys().register(Keys.FILM_CONTROLLER_START_RECORDING, this::pickRecording).active(hasActor).category(category);
         this.keys().register(Keys.FILM_CONTROLLER_INSERT_FRAME, this::insertFrame).active(hasActor).category(category);
-        this.keys().register(Keys.FILM_CONTROLLER_TOGGLE_ORBIT, this::toggleOrbit).category(category);
         this.keys().register(Keys.FILM_CONTROLLER_TOGGLE_CONTROL, this::toggleControl).category(category);
         this.keys().register(Keys.FILM_CONTROLLER_TOGGLE_ORBIT_MODE, this::toggleOrbitMode).category(category);
         this.keys().register(Keys.FILM_CONTROLLER_MOVE_REPLAY_TO_CURSOR, () ->
         {
-            Area area = this.panel.getFramebufferViewport();
+            Area area = this.panel.preview.getViewport();
             UIContext context = this.getContext();
             World world = MinecraftClient.getInstance().world;
             Camera camera = this.panel.getCamera();
@@ -184,12 +186,13 @@ public class UIFilmController extends UIElement
 
     private int getPovMode()
     {
-        return this.pov % 4;
+        return this.pov % 5;
     }
 
     public void setPov(int pov)
     {
         this.pov = pov;
+        this.orbit.enabled = this.getPovMode() != 0;
     }
 
     private int getMouseMode()
@@ -270,6 +273,11 @@ public class UIFilmController extends UIElement
 
     /* Character control state */
 
+    public boolean isControlling()
+    {
+        return this.controlled != null;
+    }
+
     public void toggleControl()
     {
         boolean replacePlayer = ClientNetwork.isIsBBSModOnServer();
@@ -321,6 +329,11 @@ public class UIFilmController extends UIElement
     }
 
     /* Recording */
+
+    public boolean isPlaying()
+    {
+        return !UIOverlay.has(this.getContext()) && this.panel.isRunning();
+    }
 
     public boolean isRecording()
     {
@@ -405,9 +418,9 @@ public class UIFilmController extends UIElement
         {
             for (BaseValue value : replay.keyframes.getAll())
             {
-                if (value instanceof KeyframeChannel)
+                if (value instanceof KeyframeChannel channel)
                 {
-                    ((KeyframeChannel) value).simplify();
+                    channel.simplify();
                 }
             }
 
@@ -444,23 +457,32 @@ public class UIFilmController extends UIElement
 
         if (context.mouseButton == 0)
         {
-            if (this.hoveredEntity != null)
+            /* Alt pick the replay */
+            if (this.hoveredEntities.size() == 1)
             {
-                int index = this.entities.indexOf(this.hoveredEntity);
+                this.pickEntity(this.hoveredEntities.get(0));
 
-                this.panel.replayEditor.setReplay(this.panel.getData().replays.getList().get(index));
-
-                if (!this.panel.replayEditor.isVisible())
+                return true;
+            }
+            else if (!this.hoveredEntities.isEmpty())
+            {
+                this.getContext().replaceContextMenu((menu) ->
                 {
-                    this.panel.showPanel(this.panel.replayEditor);
-                }
+                    for (IEntity entity : this.hoveredEntities)
+                    {
+                        Form form = entity.getForm();
+                        String name = form == null ? "-" : form.getIdOrName();
+
+                        menu.action(Icons.POSE, IKey.raw(name), () -> this.pickEntity(entity));
+                    }
+                });
 
                 return true;
             }
         }
         else if (context.mouseButton == 2)
         {
-            Area area = this.panel.getFramebufferViewport();
+            Area area = this.panel.preview.getViewport();
 
             if (area.isInside(context) && this.orbit.enabled)
             {
@@ -473,10 +495,22 @@ public class UIFilmController extends UIElement
         return super.subMouseClicked(context);
     }
 
+    private void pickEntity(IEntity entity)
+    {
+        int index = this.entities.indexOf(entity);
+
+        this.panel.replayEditor.setReplay(this.panel.getData().replays.getList().get(index));
+
+        if (!this.panel.replayEditor.isVisible())
+        {
+            this.panel.showPanel(this.panel.replayEditor);
+        }
+    }
+
     @Override
     protected boolean subMouseScrolled(UIContext context)
     {
-        Area area = this.panel.getFramebufferViewport();
+        Area area = this.panel.preview.getViewport();
 
         if (area.isInside(context) && this.orbit.enabled)
         {
@@ -579,28 +613,49 @@ public class UIFilmController extends UIElement
 
         this.toggleMousePointer(false);
 
-        UIOverlay.addOverlay(this.getContext(), new UIRecordOverlayPanel(
+        UIRecordOverlayPanel panel = new UIRecordOverlayPanel(
             UIKeys.FILM_CONTROLLER_RECORD_TITLE,
             UIKeys.FILM_CONTROLLER_RECORD_DESCRIPTION,
             this::startRecording
-        ));
+        );
+
+        UIIcon recordOutside = new UIIcon(Icons.UPLOAD, (b) -> this.recordOutside());
+        recordOutside.tooltip(UIKeys.FILM_CONTROLLER_RECORD_OUTSIDE);
+
+        panel.bar.add(recordOutside);
+        UIOverlay.addOverlay(this.getContext(), panel);
     }
 
-    public void toggleOrbit()
+    public void recordOutside()
     {
-        this.orbit.enabled = !this.orbit.enabled;
+        int index = this.panel.replayEditor.replays.replays.getIndex();
+
+        if (index >= 0)
+        {
+            this.panel.dashboard.closeThisMenu();
+
+            BBSModClient.getFilms().startRecording(this.panel.getData(), index);
+        }
     }
 
     public void toggleOrbitMode()
     {
+        if (this.controlled != null)
+        {
+            this.setPov(this.pov + (Window.isShiftPressed() ? -1 : 1));
+
+            return;
+        }
+
         this.getContext().replaceContextMenu((menu) ->
         {
             int color = BBSSettings.primaryColor(0);
 
-            menu.action(Icons.ORBIT, UIKeys.FILM_REPLAY_ORBIT_ORBIT, this.pov == 0 ? color : 0, () -> this.setPov(0));
-            menu.action(Icons.VISIBLE, UIKeys.FILM_REPLAY_ORBIT_FIRST_PERSON, this.pov == 1 ? color : 0, () -> this.setPov(1));
-            menu.action(Icons.POSE, UIKeys.FILM_REPLAY_ORBIT_THIRD_PERSON_FRONT, this.pov == 2 ? color : 0, () -> this.setPov(2));
-            menu.action(Icons.POSE, UIKeys.FILM_REPLAY_ORBIT_THIRD_PERSON_BACK, this.pov == 3 ? color : 0, () -> this.setPov(3));
+            menu.autoKeys().action(Icons.CAMERA, UIKeys.FILM_REPLAY_ORBIT_CAMERA, this.pov == 0 ? color : 0, () -> this.setPov(0));
+            menu.action(Icons.ORBIT, UIKeys.FILM_REPLAY_ORBIT_ORBIT, this.pov == 1 ? color : 0, () -> this.setPov(1));
+            menu.action(Icons.VISIBLE, UIKeys.FILM_REPLAY_ORBIT_FIRST_PERSON, this.pov == 2 ? color : 0, () -> this.setPov(2));
+            menu.action(Icons.POSE, UIKeys.FILM_REPLAY_ORBIT_THIRD_PERSON_FRONT, this.pov == 3 ? color : 0, () -> this.setPov(3));
+            menu.action(Icons.POSE, UIKeys.FILM_REPLAY_ORBIT_THIRD_PERSON_BACK, this.pov == 4 ? color : 0, () -> this.setPov(4));
         });
     }
 
@@ -608,7 +663,7 @@ public class UIFilmController extends UIElement
     {
         if (this.orbit.enabled)
         {
-            int mode = this.getPovMode();
+            int mode = this.getPovMode() - 1;
 
             if (mode == 0)
             {
@@ -787,20 +842,21 @@ public class UIFilmController extends UIElement
 
     private void updateEntities(Film film, RunnerCameraController runner, UIContext context)
     {
+        boolean isPlaying = this.isPlaying();
+        int ticks = runner.ticks + (runner.isRunning() ? 1 : 0);
+
         for (int i = 0; i < this.entities.size(); i++)
         {
             IEntity entity = this.entities.get(i);
+            boolean isActor = !(entity instanceof MCEntity);
 
-            if (context == null || !UIOverlay.has(context))
+            if (isPlaying && isActor)
             {
-                if (!(entity instanceof MCEntity))
-                {
-                    entity.update();
+                entity.update();
 
-                    if (entity.getForm() != null)
-                    {
-                        entity.getForm().update(entity);
-                    }
+                if (entity.getForm() != null)
+                {
+                    entity.getForm().update(entity);
                 }
             }
 
@@ -812,7 +868,6 @@ public class UIFilmController extends UIElement
                  * the update tick, so in order to force the correct animation, I have to
                  * increment the tick, so it would appear correctly */
                 Replay replay = replays.get(i);
-                int ticks = runner.ticks + (runner.isRunning() ? 1 : 0);
 
                 if (entity != this.controlled || (this.recording && this.recordingCountdown <= 0 && this.recordingGroups != null))
                 {
@@ -821,12 +876,40 @@ public class UIFilmController extends UIElement
 
                 if (entity == this.controlled && this.recording && runner.isRunning())
                 {
-                    replay.keyframes.record(ticks, entity, this.recordingGroups);
+                    replay.keyframes.record(runner.ticks, entity, this.recordingGroups);
                 }
 
                 replay.applyProperties(ticks, entity.getForm(), runner.isRunning());
             }
+
+            /* Special pausing logic */
+            if (!isPlaying && isActor)
+            {
+                entity.setPrevX(entity.getX());
+                entity.setPrevY(entity.getY());
+                entity.setPrevZ(entity.getZ());
+                entity.setPrevYaw(entity.getYaw());
+                entity.setPrevHeadYaw(entity.getHeadYaw());
+                entity.setPrevBodyYaw(entity.getBodyYaw());
+                entity.setPrevPitch(entity.getPitch());
+
+                int diff = Math.abs(this.lastTick - ticks);
+
+                while (diff > 0)
+                {
+                    entity.update();
+
+                    if (entity.getForm() != null)
+                    {
+                        entity.getForm().update(entity);
+                    }
+
+                    diff -= 1;
+                }
+            }
         }
+
+        this.lastTick = ticks;
     }
 
     private void updateControls()
@@ -906,11 +989,9 @@ public class UIFilmController extends UIElement
                     context.batcher.textCard(String.valueOf(this.recordingCountdown / 20F), x + 3, y + 4, Colors.WHITE, Colors.A50);
                 }
             }
-
-            context.batcher.outlinedIcon(Icons.POSE, area.ex() - 5, area.y + 5, 1F, 0F);
         }
 
-        if (!this.panel.isFlightDisabled())
+        if (this.panel.isFlying())
         {
             String label = UIKeys.FILM_CONTROLLER_SPEED.format(this.panel.dashboard.orbit.speed.getValue()).get();
             int w = font.getWidth(label);
@@ -927,7 +1008,7 @@ public class UIFilmController extends UIElement
 
     private void renderPickingPreview(UIContext context, Area area)
     {
-        if (!this.panel.isFlightDisabled())
+        if (this.panel.isFlying())
         {
             return;
         }
@@ -992,18 +1073,20 @@ public class UIFilmController extends UIElement
 
     public void renderFrame(WorldRenderContext context)
     {
+        boolean isPlaying = this.isPlaying();
+
         this.worldRenderContext = context;
 
         RenderSystem.enableDepthTest();
 
         for (IEntity entity : this.entities)
         {
-            if (this.getPovMode() == 1 && entity == getCurrentEntity() && this.orbit.enabled)
+            if (this.getPovMode() == 2 && entity == getCurrentEntity() && this.orbit.enabled)
             {
                 continue;
             }
 
-            FilmController.renderEntity(this.entities, context, entity, null);
+            FilmController.renderEntity(this.entities, context, entity, null, isPlaying ? context.tickDelta() : 0F);
         }
 
         this.rayTraceEntity(context);
@@ -1042,15 +1125,15 @@ public class UIFilmController extends UIElement
 
     private void rayTraceEntity(WorldRenderContext context)
     {
-        this.hoveredEntity = null;
+        this.hoveredEntities.clear();
 
-        if (!Window.isAltPressed() || this.panel.recorder.isRecording())
+        if (!Window.isAltPressed() || this.panel.recorder.isRecording() || this.panel.isFlying())
         {
             return;
         }
 
         UIContext c = this.getContext();
-        Area area = this.panel.getFramebufferViewport();
+        Area area = this.panel.preview.getViewport();
 
         if (!area.isInside(c))
         {
@@ -1081,12 +1164,12 @@ public class UIFilmController extends UIElement
                 return (int) (distanceA - distanceB);
             });
 
-            this.hoveredEntity = entities.get(0);
+            this.hoveredEntities.addAll(entities);
         }
 
-        if (this.hoveredEntity != null)
+        for (IEntity entity : this.hoveredEntities)
         {
-            AABB aabb = this.hoveredEntity.getPickingHitbox();
+            AABB aabb = entity.getPickingHitbox();
 
             context.matrixStack().push();
             context.matrixStack().translate(aabb.x - camera.position.x, aabb.y - camera.position.y, aabb.z - camera.position.z);
@@ -1099,7 +1182,7 @@ public class UIFilmController extends UIElement
 
     private void renderStencil(WorldRenderContext renderContext, UIContext context)
     {
-        Area viewport = this.panel.getFramebufferViewport();
+        Area viewport = this.panel.preview.getViewport();
 
         if (!viewport.isInside(context) || this.controlled != null)
         {
@@ -1117,11 +1200,12 @@ public class UIFilmController extends UIElement
 
         this.ensureStencilFramebuffer();
 
+        boolean isPlaying = this.isPlaying();
         Texture mainTexture = this.stencil.getFramebuffer().getMainTexture();
 
         this.stencilMap.setup();
         this.stencil.apply();
-        FilmController.renderEntity(this.entities, renderContext, entity, this.stencilMap);
+        FilmController.renderEntity(this.entities, renderContext, entity, this.stencilMap, isPlaying ? renderContext.tickDelta() : 0);
 
         int x = (int) ((context.mouseX - viewport.x) / (float) viewport.w * mainTexture.width);
         int y = (int) ((1F - (context.mouseY - viewport.y) / (float) viewport.h) * mainTexture.height);

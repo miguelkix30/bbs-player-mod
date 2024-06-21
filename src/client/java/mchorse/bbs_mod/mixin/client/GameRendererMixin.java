@@ -2,6 +2,8 @@ package mchorse.bbs_mod.mixin.client;
 
 import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.camera.controller.CameraController;
+import mchorse.bbs_mod.camera.controller.ICameraController;
+import mchorse.bbs_mod.camera.controller.PlayCameraController;
 import mchorse.bbs_mod.client.BBSRendering;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.util.math.MatrixStack;
@@ -35,7 +37,7 @@ public class GameRendererMixin
     {
         CameraController controller = BBSModClient.getCameraController();
 
-        if (controller.getCurrent() != null)
+        if (controller.getCurrent() != null && !BBSRendering.isIrisShadowPass())
         {
             info.setReturnValue(controller.getFOV());
         }
@@ -49,10 +51,21 @@ public class GameRendererMixin
     {
         CameraController controller = BBSModClient.getCameraController();
 
-        if (controller.getCurrent() != null)
+        if (controller.getCurrent() != null && !BBSRendering.isIrisShadowPass())
         {
             matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(controller.getRoll()));
 
+            info.cancel();
+        }
+    }
+
+    @Inject(method = "renderHand", at = @At("HEAD"), cancellable = true)
+    public void onRenderHand(CallbackInfo info)
+    {
+        ICameraController current = BBSModClient.getCameraController().getCurrent();
+
+        if (current instanceof PlayCameraController)
+        {
             info.cancel();
         }
     }

@@ -24,9 +24,9 @@ public class IdleToKeyframeConverter implements IClipConverter<IdleClip, Keyfram
         return keyframeClip;
     }
 
-    private void insert(KeyframeChannel channel, double value)
+    private void insert(KeyframeChannel<Double> channel, double value)
     {
-        channel.getKeyframes().clear();
+        channel.removeAll();
         channel.insert(0, value);
     }
 }

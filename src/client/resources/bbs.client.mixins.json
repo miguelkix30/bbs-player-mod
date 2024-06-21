@@ -16,7 +16,10 @@
         "LanguageManagerMixin",
         "LivingEntityMixin",
         "LivingEntityUpdateMixin",
-        "LivingEntityRendererMixin"
+        "LivingEntityRendererMixin",
+        "iris.SystemTimeUniformsTimerMixin",
+        "InGameHudMixin",
+        "KeyboardMixin"
     ],
     "injectors": {
         "defaultRequire": 1

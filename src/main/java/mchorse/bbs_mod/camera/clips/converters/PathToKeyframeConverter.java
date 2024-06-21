@@ -3,8 +3,6 @@ package mchorse.bbs_mod.camera.clips.converters;
 import mchorse.bbs_mod.camera.clips.overwrite.KeyframeClip;
 import mchorse.bbs_mod.camera.clips.overwrite.PathClip;
 import mchorse.bbs_mod.camera.data.Position;
-import mchorse.bbs_mod.utils.keyframes.KeyframeEasing;
-import mchorse.bbs_mod.utils.keyframes.KeyframeInterpolation;
 
 public class PathToKeyframeConverter implements IClipConverter<PathClip, KeyframeClip>
 {
@@ -17,34 +15,27 @@ public class PathToKeyframeConverter implements IClipConverter<PathClip, Keyfram
         KeyframeClip keyframe = new KeyframeClip();
 
         keyframe.copy(path);
-        KeyframeInterpolation pos = path.interpolationPoint.get().interp;
-        KeyframeInterpolation angle = path.interpolationAngle.get().interp;
-        KeyframeEasing posEasing = path.interpolationPoint.get().easing;
-        KeyframeEasing angleEasing = path.interpolationAngle.get().easing;
-
-        long x;
 
         for (int i = 0; i < path.size(); i++)
         {
             Position point = path.points.get(i);
+            long x = (int) (i / (c - 1F) * duration);
 
-            x = (int) (i / (c - 1F) * duration);
+            int index = keyframe.x.insert(x, point.point.x);
+            keyframe.y.insert(x, point.point.y);
+            keyframe.z.insert(x, point.point.z);
+            keyframe.yaw.insert(x, (double) point.angle.yaw);
+            keyframe.pitch.insert(x, (double) point.angle.pitch);
+            keyframe.roll.insert(x, (double) point.angle.roll);
+            keyframe.fov.insert(x, (double) point.angle.fov);
 
-            int index = keyframe.x.insert(x, (float) point.point.x);
-            keyframe.y.insert(x, (float) point.point.y);
-            keyframe.z.insert(x, (float) point.point.z);
-            keyframe.yaw.insert(x, point.angle.yaw);
-            keyframe.pitch.insert(x, point.angle.pitch);
-            keyframe.roll.insert(x, point.angle.roll);
-            keyframe.fov.insert(x, point.angle.fov);
-
-            keyframe.x.get(index).setInterpolation(pos, posEasing);
-            keyframe.y.get(index).setInterpolation(pos, posEasing);
-            keyframe.z.get(index).setInterpolation(pos, posEasing);
-            keyframe.yaw.get(index).setInterpolation(angle, angleEasing);
-            keyframe.pitch.get(index).setInterpolation(angle, angleEasing);
-            keyframe.roll.get(index).setInterpolation(angle, angleEasing);
-            keyframe.fov.get(index).setInterpolation(angle, angleEasing);
+            keyframe.x.get(index).getInterpolation().copy(path.interpolationPoint);
+            keyframe.y.get(index).getInterpolation().copy(path.interpolationPoint);
+            keyframe.z.get(index).getInterpolation().copy(path.interpolationPoint);
+            keyframe.yaw.get(index).getInterpolation().copy(path.interpolationAngle);
+            keyframe.pitch.get(index).getInterpolation().copy(path.interpolationAngle);
+            keyframe.roll.get(index).getInterpolation().copy(path.interpolationAngle);
+            keyframe.fov.get(index).getInterpolation().copy(path.interpolationAngle);
         }
 
         return keyframe;

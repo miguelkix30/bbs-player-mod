@@ -17,7 +17,7 @@ import mchorse.bbs_mod.ui.utils.UIDataUtils;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.utils.RayTracing;
 import mchorse.bbs_mod.utils.colors.Colors;
-import mchorse.bbs_mod.utils.math.MathUtils;
+import mchorse.bbs_mod.utils.MathUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -116,10 +116,10 @@ public class UIReplayList extends UIList<Replay>
         replay.keyframes.y.insert(0, position.y);
         replay.keyframes.z.insert(0, position.z);
 
-        replay.keyframes.pitch.insert(0, pitch);
-        replay.keyframes.yaw.insert(0, yaw);
-        replay.keyframes.headYaw.insert(0, yaw);
-        replay.keyframes.bodyYaw.insert(0, yaw);
+        replay.keyframes.pitch.insert(0, (double) pitch);
+        replay.keyframes.yaw.insert(0, (double) yaw);
+        replay.keyframes.headYaw.insert(0, (double) yaw);
+        replay.keyframes.bodyYaw.insert(0, (double) yaw);
 
         this.update();
         this.panel.replayEditor.setReplay(replay);

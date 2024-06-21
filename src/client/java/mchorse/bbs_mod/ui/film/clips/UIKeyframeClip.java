@@ -4,13 +4,14 @@ import mchorse.bbs_mod.camera.clips.overwrite.KeyframeClip;
 import mchorse.bbs_mod.camera.data.Position;
 import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.ui.film.IUIClipsDelegate;
-import mchorse.bbs_mod.ui.film.utils.keyframes.UICameraDopeSheetEditor;
+import mchorse.bbs_mod.ui.film.utils.keyframes.UIFilmKeyframes;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
+import mchorse.bbs_mod.ui.framework.elements.input.keyframes.UIKeyframeEditor;
 
 public class UIKeyframeClip extends UIClip<KeyframeClip>
 {
     public UIButton edit;
-    public UICameraDopeSheetEditor dope;
+    public UIKeyframeEditor keyframes;
 
     public UIKeyframeClip(KeyframeClip clip, IUIClipsDelegate editor)
     {
@@ -22,12 +23,13 @@ public class UIKeyframeClip extends UIClip<KeyframeClip>
     {
         super.registerUI();
 
-        this.dope = new UICameraDopeSheetEditor(this.editor);
+        this.keyframes = new UIKeyframeEditor((consumer) -> new UIFilmKeyframes(this.editor, consumer));
+        this.keyframes.view.duration(() -> this.clip.duration.get());
 
         this.edit = new UIButton(UIKeys.GENERAL_EDIT, (b) ->
         {
-            this.editor.embedView(this.dope);
-            this.dope.resetView();
+            this.editor.embedView(this.keyframes);
+            this.keyframes.view.resetView();
         });
     }
 
@@ -45,8 +47,7 @@ public class UIKeyframeClip extends UIClip<KeyframeClip>
     {
         super.updateDuration(duration);
 
-        this.dope.updateConverter();
-        this.dope.keyframes.setDuration(duration);
+        this.keyframes.updateConverter();
     }
 
     @Override
@@ -57,10 +58,10 @@ public class UIKeyframeClip extends UIClip<KeyframeClip>
         this.clip.x.insert(tick, position.point.x);
         this.clip.y.insert(tick, position.point.y);
         this.clip.z.insert(tick, position.point.z);
-        this.clip.yaw.insert(tick, position.angle.yaw);
-        this.clip.pitch.insert(tick, position.angle.pitch);
-        this.clip.roll.insert(tick, position.angle.roll);
-        this.clip.fov.insert(tick, position.angle.fov);
+        this.clip.yaw.insert(tick, (double) position.angle.yaw);
+        this.clip.pitch.insert(tick, (double) position.angle.pitch);
+        this.clip.roll.insert(tick, (double) position.angle.roll);
+        this.clip.fov.insert(tick, (double) position.angle.fov);
     }
 
     @Override
@@ -69,6 +70,6 @@ public class UIKeyframeClip extends UIClip<KeyframeClip>
         super.fillData();
 
         this.updateDuration(this.clip.duration.get());
-        this.dope.setClip(this.clip);
+        this.keyframes.setClip(this.clip);
     }
 }

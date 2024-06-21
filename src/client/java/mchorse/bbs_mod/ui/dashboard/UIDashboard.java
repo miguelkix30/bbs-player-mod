@@ -1,5 +1,6 @@
 package mchorse.bbs_mod.ui.dashboard;
 
+import mchorse.bbs_mod.BBSMod;
 import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.camera.Camera;
@@ -16,10 +17,12 @@ import mchorse.bbs_mod.ui.dashboard.panels.UIDashboardPanels;
 import mchorse.bbs_mod.ui.dashboard.textures.UITextureManagerPanel;
 import mchorse.bbs_mod.ui.dashboard.utils.UIGraphPanel;
 import mchorse.bbs_mod.ui.dashboard.utils.UIOrbitCamera;
+import mchorse.bbs_mod.ui.dashboard.utils.UIOrbitCameraKeys;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
 import mchorse.bbs_mod.ui.framework.UIBaseMenu;
 import mchorse.bbs_mod.ui.framework.UIRenderingContext;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIIcon;
+import mchorse.bbs_mod.ui.framework.elements.overlay.UIMessageOverlayPanel;
 import mchorse.bbs_mod.ui.framework.elements.overlay.UIOverlay;
 import mchorse.bbs_mod.ui.model_blocks.UIModelBlockPanel;
 import mchorse.bbs_mod.ui.morphing.UIMorphingPanel;
@@ -32,9 +35,10 @@ import mchorse.bbs_mod.ui.utils.UIUtils;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.ui.utils.keys.KeyCombo;
 import mchorse.bbs_mod.utils.Direction;
+import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.colors.Colors;
-import mchorse.bbs_mod.utils.math.MathUtils;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.Perspective;
 import net.minecraft.entity.Entity;
@@ -51,7 +55,8 @@ public class UIDashboard extends UIBaseMenu
     public UIIcon selectors;
 
     /* Camera data */
-    public final UIOrbitCamera orbitUI = new UIOrbitCamera(() -> this.panels.panel.getOrbitViewport());
+    public final UIOrbitCamera orbitUI = new UIOrbitCamera();
+    public final UIOrbitCameraKeys orbitKeysUI = new UIOrbitCameraKeys(this.orbitUI);
     public final OrbitCamera orbit = this.orbitUI.orbit;
     public final OrbitCameraController camera = new OrbitCameraController(this.orbit, 5);
 
@@ -71,7 +76,7 @@ public class UIDashboard extends UIBaseMenu
             this.orbitUI.setControl(this.panels.isFlightSupported());
             this.copyCurrentEntityCamera();
         });
-        this.panels.relative(this.viewport).full();
+        this.panels.full(this.viewport);
         this.registerPanels();
 
         this.main.add(this.panels);
@@ -91,6 +96,7 @@ public class UIDashboard extends UIBaseMenu
 
         this.panels.pinned.add(this.settings, this.selectors);
         this.getRoot().prepend(this.orbitUI);
+        this.getRoot().add(this.orbitKeysUI);
 
         /* Register keys */
         IKey category = UIKeys.DASHBOARD_CATEGORY;
@@ -112,6 +118,23 @@ public class UIDashboard extends UIBaseMenu
 
             UIOverlay.addOverlay(this.context, new UIUtilityOverlayPanel(UIKeys.UTILITY_TITLE, null), 240, 160);
         });
+
+        this.checkSignificantVersion();
+    }
+
+    private void checkSignificantVersion()
+    {
+        String version = BBSMod.SIGNIFICANT_VERSION;
+
+        if (!version.equals(BBSSettings.version.get()))
+        {
+            UIOverlay.addOverlay(this.context, new UIMessageOverlayPanel(
+                UIKeys.DASHBOARD_VERSION_WARNING_TITLE,
+                UIKeys.DASHBOARD_VERSION_WARNING_DESCRIPTION
+            ));
+
+            BBSSettings.version.set(version);
+        }
     }
 
     public void copyCurrentEntityCamera()
@@ -213,6 +236,11 @@ public class UIDashboard extends UIBaseMenu
         this.panels.registerPanel(new UIParticleSchemePanel(this), UIKeys.PANELS_PARTICLES, Icons.PARTICLE).marginLeft(10);
         this.panels.registerPanel(new UITextureManagerPanel(this), UIKeys.TEXTURES_TOOLTIP, Icons.MATERIAL);
         this.panels.registerPanel(new UIGraphPanel(this), UIKeys.GRAPH_TOOLTIP, Icons.GRAPH);
+
+        if (FabricLoader.getInstance().isDevelopmentEnvironment())
+        {
+            this.panels.registerPanel(new UIDebugPanel(this), IKey.raw("Sandbox"), Icons.CODE);
+        }
 
         this.setPanel(this.getPanel(UISupportersPanel.class));
     }

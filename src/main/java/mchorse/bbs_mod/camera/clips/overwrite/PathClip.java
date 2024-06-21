@@ -4,18 +4,18 @@ import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.camera.clips.CameraClip;
 import mchorse.bbs_mod.camera.clips.CameraClipContext;
 import mchorse.bbs_mod.camera.data.Angle;
-import mchorse.bbs_mod.camera.data.InterpolationType;
 import mchorse.bbs_mod.camera.data.Point;
 import mchorse.bbs_mod.camera.data.Position;
-import mchorse.bbs_mod.camera.values.ValueInterpolationType;
 import mchorse.bbs_mod.camera.values.ValuePositions;
 import mchorse.bbs_mod.settings.values.ValueBoolean;
 import mchorse.bbs_mod.settings.values.ValueDouble;
+import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.clips.ClipContext;
-import mchorse.bbs_mod.utils.math.Interpolation;
-import mchorse.bbs_mod.utils.math.Interpolations;
-import mchorse.bbs_mod.utils.math.MathUtils;
+import mchorse.bbs_mod.utils.interps.IInterp;
+import mchorse.bbs_mod.utils.interps.Interpolation;
+import mchorse.bbs_mod.utils.interps.Interpolations;
+import mchorse.bbs_mod.utils.interps.Lerps;
 import org.joml.Vector2d;
 
 import java.util.ArrayList;
@@ -36,8 +36,8 @@ public class PathClip extends CameraClip
      */
     public final ValuePositions points = new ValuePositions("points");
 
-    public final ValueInterpolationType interpolationPoint = new ValueInterpolationType("interpPoint");
-    public final ValueInterpolationType interpolationAngle = new ValueInterpolationType("interpAngle");
+    public final Interpolation interpolationPoint = new Interpolation("interpPoint", Interpolations.MAP);
+    public final Interpolation interpolationAngle = new Interpolation("interpAngle", Interpolations.MAP);
 
     public final ValueBoolean circularAutoCenter = new ValueBoolean("circularAutoCenter", true);
     public final ValueDouble circularX = new ValueDouble("circularX", 0D);
@@ -137,22 +137,7 @@ public class PathClip extends CameraClip
         Position p2 = this.getPoint(index + 1);
         Position p3 = this.getPoint(index + 2);
 
-        /* Interpolating the position */
-        InterpolationType interp = this.interpolationPoint.get();
-
-        if (interp == InterpolationType.CUBIC)
-        {
-            x = Interpolations.cubic(p0.point.x, p1.point.x, p2.point.x, p3.point.x, progress);
-            y = Interpolations.cubic(p0.point.y, p1.point.y, p2.point.y, p3.point.y, progress);
-            z = Interpolations.cubic(p0.point.z, p1.point.z, p2.point.z, p3.point.z, progress);
-        }
-        else if (interp == InterpolationType.HERMITE)
-        {
-            x = Interpolations.cubicHermite(p0.point.x, p1.point.x, p2.point.x, p3.point.x, progress);
-            y = Interpolations.cubicHermite(p0.point.y, p1.point.y, p2.point.y, p3.point.y, progress);
-            z = Interpolations.cubicHermite(p0.point.z, p1.point.z, p2.point.z, p3.point.z, progress);
-        }
-        else if (interp == InterpolationType.CIRCULAR)
+        if (this.interpolationPoint.getInterp() == Interpolations.CIRCULAR)
         {
             int size = this.size();
 
@@ -180,23 +165,21 @@ public class PathClip extends CameraClip
                 Vector2d a2 = this.calculateCircular(mx, mz, index + 1);
                 Vector2d a3 = this.calculateCircular(mx, mz, index + 2);
 
-                double a = Interpolations.cubicHermite(a0.x, a1.x, a2.x, a3.x, progress);
-                double d = Interpolations.cubicHermite(a0.y, a1.y, a2.y, a3.y, progress);
+                double a = Lerps.cubicHermite(a0.x, a1.x, a2.x, a3.x, progress);
+                double d = Lerps.cubicHermite(a0.y, a1.y, a2.y, a3.y, progress);
 
                 a = a / 180 * Math.PI;
 
                 x = mx + Math.cos(a) * d;
-                y = Interpolations.cubicHermite(p0.point.y, p1.point.y, p2.point.y, p3.point.y, progress);
+                y = Lerps.cubicHermite(p0.point.y, p1.point.y, p2.point.y, p3.point.y, progress);
                 z = mz + Math.sin(a) * d;
             }
         }
-        else if (interp.interp != null)
+        else
         {
-            Interpolation func = interp.function;
-
-            x = func.interpolate(p1.point.x, p2.point.x, progress);
-            y = func.interpolate(p1.point.y, p2.point.y, progress);
-            z = func.interpolate(p1.point.z, p2.point.z, progress);
+            x = this.interpolationPoint.interpolate(IInterp.context.set(p0.point.x, p1.point.x, p2.point.x, p3.point.x, progress));
+            y = this.interpolationPoint.interpolate(IInterp.context.set(p0.point.y, p1.point.y, p2.point.y, p3.point.y, progress));
+            z = this.interpolationPoint.interpolate(IInterp.context.set(p0.point.z, p1.point.z, p2.point.z, p3.point.z, progress));
         }
 
         point.set(x, y, z);
@@ -238,7 +221,7 @@ public class PathClip extends CameraClip
 
             if (Math.abs(a - lastA) > 180)
             {
-                a = Interpolations.normalizeYaw(lastA, a);
+                a = Lerps.normalizeYaw(lastA, a);
             }
 
             if (i == index)
@@ -289,39 +272,16 @@ public class PathClip extends CameraClip
      */
     private void applyAngle(Angle angle, int index, float progress)
     {
-        float yaw, pitch, roll, fov;
-
         Position p0 = this.getPoint(index - 1);
         Position p1 = this.getPoint(index);
         Position p2 = this.getPoint(index + 1);
         Position p3 = this.getPoint(index + 2);
 
         /* Interpolating the angle */
-        InterpolationType interp = this.interpolationAngle.get();
-
-        if (interp == InterpolationType.CUBIC)
-        {
-            yaw = Interpolations.cubic(p0.angle.yaw, p1.angle.yaw, p2.angle.yaw, p3.angle.yaw, progress);
-            pitch = Interpolations.cubic(p0.angle.pitch, p1.angle.pitch, p2.angle.pitch, p3.angle.pitch, progress);
-            roll = Interpolations.cubic(p0.angle.roll, p1.angle.roll, p2.angle.roll, p3.angle.roll, progress);
-            fov = Interpolations.cubic(p0.angle.fov, p1.angle.fov, p2.angle.fov, p3.angle.fov, progress);
-        }
-        else if (interp == InterpolationType.HERMITE)
-        {
-            yaw = (float) Interpolations.cubicHermite(p0.angle.yaw, p1.angle.yaw, p2.angle.yaw, p3.angle.yaw, progress);
-            pitch = (float) Interpolations.cubicHermite(p0.angle.pitch, p1.angle.pitch, p2.angle.pitch, p3.angle.pitch, progress);
-            roll = (float) Interpolations.cubicHermite(p0.angle.roll, p1.angle.roll, p2.angle.roll, p3.angle.roll, progress);
-            fov = (float) Interpolations.cubicHermite(p0.angle.fov, p1.angle.fov, p2.angle.fov, p3.angle.fov, progress);
-        }
-        else
-        {
-            Interpolation func = interp.function == null ? Interpolation.LINEAR : interp.function;
-
-            yaw = func.interpolate(p1.angle.yaw, p2.angle.yaw, progress);
-            pitch = func.interpolate(p1.angle.pitch, p2.angle.pitch, progress);
-            roll = func.interpolate(p1.angle.roll, p2.angle.roll, progress);
-            fov = func.interpolate(p1.angle.fov, p2.angle.fov, progress);
-        }
+        float yaw   = (float) this.interpolationAngle.interpolate(IInterp.context.set(p0.angle.yaw, p1.angle.yaw, p2.angle.yaw, p3.angle.yaw, progress));
+        float pitch = (float) this.interpolationAngle.interpolate(IInterp.context.set(p0.angle.pitch, p1.angle.pitch, p2.angle.pitch, p3.angle.pitch, progress));
+        float roll  = (float) this.interpolationAngle.interpolate(IInterp.context.set(p0.angle.roll, p1.angle.roll, p2.angle.roll, p3.angle.roll, progress));
+        float fov   = (float) this.interpolationAngle.interpolate(IInterp.context.set(p0.angle.fov, p1.angle.fov, p2.angle.fov, p3.angle.fov, progress));
 
         angle.set(yaw, pitch, roll, fov);
     }

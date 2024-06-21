@@ -8,12 +8,10 @@ import mchorse.bbs_mod.ui.dashboard.panels.overlay.UICRUDOverlayPanel;
 import mchorse.bbs_mod.ui.dashboard.panels.overlay.UIDataOverlayPanel;
 import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
-import mchorse.bbs_mod.ui.framework.elements.UIScrollView;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIIcon;
-import mchorse.bbs_mod.ui.utils.UI;
 import mchorse.bbs_mod.ui.utils.UIDataUtils;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
-import mchorse.bbs_mod.utils.math.Interpolation;
+import mchorse.bbs_mod.utils.interps.Interpolations;
 
 import java.util.Collection;
 
@@ -23,6 +21,8 @@ public abstract class UIDataDashboardPanel <T extends ValueGroup> extends UICRUD
 
     protected T data;
     protected boolean save;
+
+    private boolean openedBefore;
 
     public UIDataDashboardPanel(UIDashboard dashboard)
     {
@@ -92,13 +92,17 @@ public abstract class UIDataDashboardPanel <T extends ValueGroup> extends UICRUD
         this.overlay.namesList.setCurrentFile(value);
     }
 
-    protected UIScrollView createScrollEditor()
+    @Override
+    public void resize()
     {
-        UIScrollView scrollEditor = UI.scrollView(5, 10);
+        super.resize();
 
-        scrollEditor.relative(this.editor).full();
+        if (!this.openedBefore)
+        {
+            this.openOverlay.clickItself();
 
-        return scrollEditor;
+            this.openedBefore = true;
+        }
     }
 
     @Override
@@ -173,7 +177,7 @@ public abstract class UIDataDashboardPanel <T extends ValueGroup> extends UICRUD
             double ticks = context.getTickTransition() % 15D;
             double factor = Math.abs(ticks / 15D * 2 - 1F);
 
-            int x = this.openOverlay.area.x - 10 + (int) Interpolation.SINE_INOUT.interpolate(-10, 0, factor);
+            int x = this.openOverlay.area.x - 10 + (int) Interpolations.SINE_INOUT.interpolate(-10, 0, factor);
             int y = this.openOverlay.area.my();
 
             context.batcher.icon(Icons.ARROW_RIGHT, x, y, 0.5F, 0.5F);

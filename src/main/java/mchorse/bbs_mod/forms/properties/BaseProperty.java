@@ -2,9 +2,9 @@ package mchorse.bbs_mod.forms.properties;
 
 import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.forms.forms.Form;
-import mchorse.bbs_mod.utils.keyframes.generic.GenericKeyframeChannel;
-import mchorse.bbs_mod.utils.math.IInterpolation;
-import mchorse.bbs_mod.utils.math.Interpolation;
+import mchorse.bbs_mod.utils.interps.IInterp;
+import mchorse.bbs_mod.utils.interps.Interpolations;
+import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
 
 import java.util.Objects;
 
@@ -12,13 +12,15 @@ public abstract class BaseProperty <T> implements IFormProperty<T>
 {
     protected Form form;
     protected String key;
+    protected T preValue;
     protected T value;
     protected T lastValue;
+    protected T postValue;
 
     private boolean playing = true;
     protected int ticks = -1;
     protected int duration;
-    protected IInterpolation interpolation = Interpolation.LINEAR;
+    protected IInterp interpolation = Interpolations.LINEAR;
 
     protected boolean canAnimate = true;
 
@@ -49,7 +51,10 @@ public abstract class BaseProperty <T> implements IFormProperty<T>
     @Override
     public void set(T value)
     {
+        this.preValue = value;
+        this.postValue = value;
         this.value = value;
+        this.lastValue = value;
 
         this.ticks = -1;
     }
@@ -82,13 +87,15 @@ public abstract class BaseProperty <T> implements IFormProperty<T>
     }
 
     @Override
-    public void tween(T newValue, T oldValue, int duration, IInterpolation interpolation, int offset, boolean playing)
+    public void tween(T preValue, T oldValue, T newValue, T postValue, int duration, IInterp interpolation, int offset, boolean playing)
     {
+        this.preValue = preValue == null ? oldValue : preValue;
         this.lastValue = oldValue;
         this.value = newValue;
+        this.postValue = postValue == null ? newValue : postValue;
 
         this.ticks = this.duration = duration;
-        this.interpolation = interpolation == null ? Interpolation.LINEAR : interpolation;
+        this.interpolation = interpolation == null ? Interpolations.LINEAR : interpolation;
         this.playing = playing;
 
         this.ticks -= offset;
@@ -126,7 +133,7 @@ public abstract class BaseProperty <T> implements IFormProperty<T>
     }
 
     @Override
-    public GenericKeyframeChannel createChannel(String key)
+    public KeyframeChannel createChannel(String key)
     {
         return null;
     }

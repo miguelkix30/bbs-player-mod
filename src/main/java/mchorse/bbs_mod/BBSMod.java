@@ -87,6 +87,7 @@ import java.util.function.Consumer;
 public class BBSMod implements ModInitializer
 {
     public static final String MOD_ID = "bbs";
+    public static final String SIGNIFICANT_VERSION = "ea7";
 
     /* Important folders */
     private static File gameFolder;
@@ -146,12 +147,10 @@ public class BBSMod implements ModInitializer
         BillboardForm form = new BillboardForm();
         ModelBlockEntity.Properties properties = entity.getProperties();
 
+        form.transform.get().translate.set(0F, 0.5F, 0F);
         form.texture.set(texture);
         properties.setForm(form);
-        properties.getTransform().translate.set(0F, 0.5F, 0F);
-        properties.getTransformThirdPerson().translate.set(0F, 0.5F, 0.025F);
-        properties.getTransformInventory().translate.set(0F, 0.5F, 0F);
-        properties.getTransformFirstPerson().translate.set(0F, 0.5F, -0.25F);
+        properties.getTransformFirstPerson().translate.set(0F, 0F, -0.25F);
 
         NbtCompound compound = entity.createNbtWithId();
 
