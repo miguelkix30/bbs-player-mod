@@ -72,10 +72,13 @@ public class GeoCubicModelLoader implements IModelLoader
 
                     modelAnimations.animations.put(key, GeoAnimationParser.parse(models.parser, key, animation));
                 }
+
+                stream.close();
             }
 
-            Model modelModel = GeoModelParser.parse(modelJson, models.parser);
+            geoStream.close();
 
+            Model modelModel = GeoModelParser.parse(modelJson, models.parser);
             CubicModel newModel = new CubicModel(id, modelModel, modelAnimations, modelTexture);
 
             if (newModel.model == null || newModel.model.topGroups.isEmpty())

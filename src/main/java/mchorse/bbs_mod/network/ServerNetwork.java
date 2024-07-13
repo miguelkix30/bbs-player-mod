@@ -12,6 +12,8 @@ import mchorse.bbs_mod.film.FilmManager;
 import mchorse.bbs_mod.forms.FormUtils;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.morphing.Morph;
+import mchorse.bbs_mod.utils.CollectionUtils;
+import mchorse.bbs_mod.utils.clips.Clips;
 import mchorse.bbs_mod.utils.repos.RepositoryOperation;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
@@ -39,6 +41,8 @@ public class ServerNetwork
     public static final Identifier SERVER_MODEL_BLOCK_TRANSFORMS_PACKET = new Identifier(BBSMod.MOD_ID, "s2");
     public static final Identifier SERVER_PLAYER_FORM_PACKET = new Identifier(BBSMod.MOD_ID, "s3");
     public static final Identifier SERVER_MANAGER_DATA_PACKET = new Identifier(BBSMod.MOD_ID, "s4");
+    public static final Identifier SERVER_ACTION_RECORDING = new Identifier(BBSMod.MOD_ID, "s5");
+    public static final Identifier SERVER_ACTION_PLAY = new Identifier(BBSMod.MOD_ID, "s6");
 
     public static void setup()
     {
@@ -46,6 +50,8 @@ public class ServerNetwork
         ServerPlayNetworking.registerGlobalReceiver(SERVER_MODEL_BLOCK_TRANSFORMS_PACKET, (server, player, handler, buf, responder) -> handleModelBlockTransformsPacket(server, player, buf));
         ServerPlayNetworking.registerGlobalReceiver(SERVER_PLAYER_FORM_PACKET, (server, player, handler, buf, responder) -> handlePlayerFormPacket(server, player, buf));
         ServerPlayNetworking.registerGlobalReceiver(SERVER_MANAGER_DATA_PACKET, (server, player, handler, buf, responder) -> handleManagerDataPacket(server, player, buf));
+        ServerPlayNetworking.registerGlobalReceiver(SERVER_ACTION_RECORDING, (server, player, handler, buf, responder) -> handleActionRecording(server, player, buf));
+        ServerPlayNetworking.registerGlobalReceiver(SERVER_ACTION_PLAY, (server, player, handler, buf, responder) -> handleActionPlay(server, player, buf));
     }
 
     /* Handlers */
@@ -157,6 +163,51 @@ public class ServerNetwork
         else if (op == RepositoryOperation.DELETE_FOLDER)
         {
             sendManagerData(player, callbackId, op, new ByteType(films.deleteFolder(data.getString("folder"))));
+        }
+    }
+
+    private static void handleActionRecording(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
+    {
+        String filmId = buf.readString();
+        int replayId = buf.readInt();
+        int tick = buf.readInt();
+        boolean recording = buf.readBoolean();
+
+        if (recording)
+        {
+            Film film = BBSMod.getFilms().load(filmId);
+
+            if (film != null)
+            {
+                BBSMod.getActions().startRecording(film, player, tick);
+                BBSMod.getActions().play(player.getServerWorld(), film, tick, replayId);
+            }
+        }
+        else
+        {
+            Clips clips = BBSMod.getActions().stopRecording(player);
+            Film film = BBSMod.getFilms().load(filmId);
+
+            if (clips != null && film != null && CollectionUtils.inRange(film.replays.getList(), replayId))
+            {
+                film.replays.getList().get(replayId).actions.fromData(clips.toData());
+            }
+        }
+    }
+
+    private static void handleActionPlay(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
+    {
+        String filmId = buf.readString();
+
+        try
+        {
+            Film film = BBSMod.getFilms().load(filmId);
+
+            BBSMod.getActions().play(player.getServerWorld(), film, 0, -1);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
         }
     }
 

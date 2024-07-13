@@ -8,12 +8,10 @@ import mchorse.bbs_mod.data.DataStorageUtils;
 import mchorse.bbs_mod.data.types.BaseType;
 import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.film.Film;
-import mchorse.bbs_mod.film.FilmController;
 import mchorse.bbs_mod.film.Films;
 import mchorse.bbs_mod.forms.FormUtils;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.morphing.Morph;
-import mchorse.bbs_mod.ui.ContentType;
 import mchorse.bbs_mod.ui.dashboard.UIDashboard;
 import mchorse.bbs_mod.ui.framework.UIBaseMenu;
 import mchorse.bbs_mod.ui.framework.UIScreen;
@@ -190,6 +188,14 @@ public class ClientNetwork
         ClientPlayNetworking.send(ServerNetwork.SERVER_MODEL_BLOCK_TRANSFORMS_PACKET, buf);
     }
 
+    public static void sendManagerDataLoad(String id, Consumer<BaseType> consumer)
+    {
+        MapType mapType = new MapType();
+
+        mapType.putString("id", id);
+        ClientNetwork.sendManagerData(RepositoryOperation.LOAD, mapType, consumer);
+    }
+
     public static void sendManagerData(RepositoryOperation op, BaseType data, Consumer<BaseType> consumer)
     {
         int id = ids;
@@ -209,5 +215,26 @@ public class ClientNetwork
         DataStorageUtils.writeToPacket(buf, data);
 
         ClientPlayNetworking.send(ServerNetwork.SERVER_MANAGER_DATA_PACKET, buf);
+    }
+
+    public static void sendActionRecording(String filmId, int replayId, int tick, boolean state)
+    {
+        PacketByteBuf buf = PacketByteBufs.create();
+
+        buf.writeString(filmId);
+        buf.writeInt(replayId);
+        buf.writeInt(tick);
+        buf.writeBoolean(state);
+
+        ClientPlayNetworking.send(ServerNetwork.SERVER_ACTION_RECORDING, buf);
+    }
+
+    public static void sendActionPlay(String id)
+    {
+        PacketByteBuf buf = PacketByteBufs.create();
+
+        buf.writeString(id);
+
+        ClientPlayNetworking.send(ServerNetwork.SERVER_ACTION_PLAY, buf);
     }
 }

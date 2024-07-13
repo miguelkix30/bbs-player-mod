@@ -998,8 +998,7 @@ public class UIClips extends UIElement
             }
             else
             {
-
-                this.scale.zoomAnchor(Scale.getAnchorX(context, this.area), Math.copySign(this.scale.getZoomFactor(), context.mouseWheel), 0.001D, 1000D);
+                this.scale.zoomAnchor(Scale.getAnchorX(context, this.area), Math.copySign(this.scale.getZoomFactor(), context.mouseWheel));
             }
 
             return true;
@@ -1102,11 +1101,11 @@ public class UIClips extends UIElement
                     /* Detect clips collisions */
                     for (Clip other : others)
                     {
-                        int otherLeft = other.tick.get();
-                        int otherRight = otherLeft + other.duration.get();
+                        int otherTick = other.tick.get();
+                        int otherRight = otherTick + other.duration.get();
 
-                        int clipRight = newTick + clip.duration.get();
-                        boolean intersect = newTick < otherRight && otherLeft < clipRight;
+                        int newRight = newTick + clip.duration.get();
+                        boolean intersect = MathUtils.isInside(newTick, newRight, otherTick, otherRight);
 
                         if (intersect && other.layer.get() == newLayer) relativeX = relativeY = 0;
                     }

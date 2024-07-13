@@ -7,6 +7,7 @@ import mchorse.bbs_mod.audio.Waveform;
 import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.camera.CameraUtils;
 import mchorse.bbs_mod.camera.clips.misc.AudioClip;
+import mchorse.bbs_mod.camera.utils.TimeUtils;
 import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.film.replays.ReplayKeyframes;
@@ -39,6 +40,7 @@ import mchorse.bbs_mod.utils.Pair;
 import mchorse.bbs_mod.utils.RayTracing;
 import mchorse.bbs_mod.utils.StringUtils;
 import mchorse.bbs_mod.utils.clips.Clip;
+import mchorse.bbs_mod.utils.clips.Clips;
 import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.keyframes.Keyframe;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
@@ -121,6 +123,55 @@ public class UIReplaysEditor extends UIElement
         ICONS.put("extra2_x", Icons.CURVES);
     }
 
+    public static void setLastReplay(int replay)
+    {
+        lastReplay = replay;
+    }
+
+    public static void renderBackground(UIContext context, UIKeyframes keyframes, Clips camera, int clipOffset)
+    {
+        if (!BBSSettings.audioWaveformVisible.get())
+        {
+            return;
+        }
+
+        Scale scale = keyframes.getXAxis();
+
+        for (Clip clip : camera.get())
+        {
+            if (clip instanceof AudioClip audioClip)
+            {
+                Link link = audioClip.audio.get();
+
+                if (link == null)
+                {
+                    continue;
+                }
+
+                SoundBuffer buffer = BBSModClient.getSounds().get(link, true);
+
+                if (buffer == null || buffer.getWaveform() == null)
+                {
+                    continue;
+                }
+
+                Waveform wave = buffer.getWaveform();
+
+                if (wave != null)
+                {
+                    int audioOffset = audioClip.offset.get();
+                    float offset = audioClip.tick.get() - clipOffset;
+                    int duration = Math.min((int) (wave.getDuration() * 20), clip.duration.get());
+
+                    int x1 = (int) scale.to(offset);
+                    int x2 = (int) scale.to(offset + duration);
+
+                    wave.render(context.batcher, Colors.WHITE, x1, keyframes.area.y + 15, x2 - x1, 20, TimeUtils.toSeconds(audioOffset), TimeUtils.toSeconds(audioOffset + duration));
+                }
+            }
+        }
+    }
+
     public UIReplaysEditor(UIFilmPanel filmPanel)
     {
         this.filmPanel = filmPanel;
@@ -165,10 +216,9 @@ public class UIReplaysEditor extends UIElement
     {
         this.replay = replay;
 
+        this.filmPanel.actionEditor.clips.setClips(replay == null ? null : replay.actions);
         this.updateChannelsList();
-
         this.replays.replays.setCurrentScroll(replay);
-        this.filmPanel.preview.recordReplay.setEnabled(replay != null);
     }
 
     public void moveReplay(double x, double y, double z)
@@ -227,7 +277,7 @@ public class UIReplaysEditor extends UIElement
             this.keyframeEditor = new UIKeyframeEditor((consumer) -> new UIFilmKeyframes(this.filmPanel.cameraEditor, consumer).absolute()).target(this.filmPanel.editArea);
             this.keyframeEditor.full(this);
 
-            this.keyframeEditor.view.backgroundRenderer(this::renderBackground);
+            this.keyframeEditor.view.backgroundRenderer((context) -> renderBackground(context, this.keyframeEditor.view, this.film.camera, 0));
             this.keyframeEditor.view.duration(() -> this.film.camera.calculateDuration());
 
             for (UIKeyframeSheet sheet : sheets)
@@ -284,7 +334,7 @@ public class UIReplaysEditor extends UIElement
 
     private void pickProperty(String bone, String key, boolean insert)
     {
-        for (UIKeyframeSheet sheet : this.keyframeEditor.view.getSheets())
+        for (UIKeyframeSheet sheet : this.keyframeEditor.view.getGraph().getSheets())
         {
             IFormProperty property = sheet.property;
 
@@ -303,8 +353,9 @@ public class UIReplaysEditor extends UIElement
 
         if (insert)
         {
-            this.keyframeEditor.view.addKeyframe(sheet, tick);
-            this.keyframeEditor.view.selectKeyframe(this.keyframeEditor.view.getSelected());
+            Keyframe keyframe = this.keyframeEditor.view.getGraph().addKeyframe(sheet, tick, null);
+
+            this.keyframeEditor.view.getGraph().selectKeyframe(keyframe);
 
             return;
         }
@@ -315,7 +366,7 @@ public class UIReplaysEditor extends UIElement
         {
             Keyframe closest = segment.getClosest();
 
-            this.keyframeEditor.view.selectKeyframe(closest);
+            this.keyframeEditor.view.getGraph().selectKeyframe(closest);
 
             if (this.keyframeEditor.editor instanceof UIPoseKeyframeFactory poseFactory)
             {
@@ -390,51 +441,6 @@ public class UIReplaysEditor extends UIElement
         }
 
         return false;
-    }
-
-    private void renderBackground(UIContext context)
-    {
-        UIKeyframes keyframes = this.keyframeEditor.view;
-
-        if (!BBSSettings.audioWaveformVisible.get() || keyframes == null)
-        {
-            return;
-        }
-
-        Scale scale = keyframes.getXAxis();
-
-        for (Clip clip : this.film.camera.get())
-        {
-            if (clip instanceof AudioClip audioClip)
-            {
-                Link link = audioClip.audio.get();
-
-                if (link == null)
-                {
-                    continue;
-                }
-
-                SoundBuffer buffer = BBSModClient.getSounds().get(link, true);
-
-                if (buffer == null || buffer.getWaveform() == null)
-                {
-                    continue;
-                }
-
-                Waveform wave = buffer.getWaveform();
-
-                if (wave != null)
-                {
-                    float offset = audioClip.tick.get();
-                    float duration = wave.getDuration();
-
-                    int x1 = (int) scale.to(offset);
-                    int x2 = (int) scale.to(offset + duration * 20);
-
-                    wave.render(context.batcher, Colors.WHITE, x1, keyframes.area.y + 15, x2 - x1, 20, 0F, duration);
-                }
-            }
-        }
     }
 
     public void close()

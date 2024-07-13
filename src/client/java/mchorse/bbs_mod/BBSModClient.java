@@ -9,6 +9,7 @@ import mchorse.bbs_mod.client.renderer.ActorEntityRenderer;
 import mchorse.bbs_mod.client.renderer.ModelBlockEntityRenderer;
 import mchorse.bbs_mod.client.renderer.ModelBlockItemRenderer;
 import mchorse.bbs_mod.cubic.model.ModelManager;
+import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.film.Films;
 import mchorse.bbs_mod.film.Recorder;
 import mchorse.bbs_mod.film.replays.Replay;
@@ -26,6 +27,7 @@ import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.ui.dashboard.UIDashboard;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
 import mchorse.bbs_mod.ui.film.menu.UIFilmsMenu;
+import mchorse.bbs_mod.ui.film.replays.UIReplaysEditor;
 import mchorse.bbs_mod.ui.framework.UIScreen;
 import mchorse.bbs_mod.ui.model_blocks.UIModelBlockEditorMenu;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
@@ -172,7 +174,7 @@ public class BBSModClient implements ClientModInitializer
 
     public static float getOriginalFramebufferScale()
     {
-        return originalFramebufferScale;
+        return Math.max(originalFramebufferScale, 1);
     }
 
     @Override
@@ -210,8 +212,8 @@ public class BBSModClient implements ClientModInitializer
 
         BBSMod.setupConfig(Icons.KEY_CAP, "keybinds", new File(BBSMod.getSettingsFolder(), "keybinds.json"), KeybindSettings::register);
 
-        BBSSettings.language.postCallback((v) -> reloadLanguage(((ValueLanguage) v).get()));
-        BBSSettings.editorSeconds.postCallback((v) ->
+        BBSSettings.language.postCallback((v, f) -> reloadLanguage(((ValueLanguage) v).get()));
+        BBSSettings.editorSeconds.postCallback((v, f) ->
         {
             if (dashboard != null)
             {
@@ -355,7 +357,33 @@ public class BBSModClient implements ClientModInitializer
 
             while (keyFilms.wasPressed())
             {
-                UIScreen.open(new UIFilmsMenu());
+                Recorder recorder = BBSModClient.getFilms().getRecorder();
+
+                if (recorder != null)
+                {
+                    UIReplaysEditor.setLastReplay(recorder.exception);
+
+                    UIDashboard dashboard = BBSModClient.getDashboard();
+                    UIFilmPanel panel = dashboard.getPanel(UIFilmPanel.class);
+
+                    if (dashboard.getPanels().panel != panel)
+                    {
+                        dashboard.setPanel(panel);
+                    }
+
+                    Film data = panel.getData();
+
+                    if (data == null || !data.getId().equals(recorder.film.getId()))
+                    {
+                        panel.pickData(recorder.film.getId());
+                    }
+
+                    UIScreen.open(dashboard);
+                }
+                else
+                {
+                    UIScreen.open(new UIFilmsMenu());
+                }
             }
 
             while (keyRecordReplay.wasPressed())

@@ -11,6 +11,7 @@ import mchorse.bbs_mod.utils.IOUtils;
 import mchorse.bbs_mod.utils.watchdog.IWatchDogListener;
 import mchorse.bbs_mod.utils.watchdog.WatchDogEvent;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -56,7 +57,7 @@ public class SoundManager implements IWatchDogListener
                 }
 
                 waveform = new Waveform();
-                waveform.generate(wave, this.tryReadingColorCodes(link), BBSSettings.audioWaveformDensity.get(), 40);
+                waveform.generate(wave, this.readColorCodes(link), BBSSettings.audioWaveformDensity.get(), 40);
             }
 
             SoundBuffer buffer = new SoundBuffer(link, wave, waveform);
@@ -75,11 +76,10 @@ public class SoundManager implements IWatchDogListener
         return null;
     }
 
-    private List<ColorCode> tryReadingColorCodes(Link link)
+    public List<ColorCode> readColorCodes(Link link)
     {
-        try
+        try (InputStream stream = this.provider.getAsset(new Link(link.source, link.path + ".json")))
         {
-            InputStream stream = this.provider.getAsset(new Link(link.source, link.path + ".json"));
             String string = IOUtils.readText(stream);
             ListType data = DataToString.listFromString(string);
 
@@ -110,6 +110,30 @@ public class SoundManager implements IWatchDogListener
         {}
 
         return null;
+    }
+
+    public void saveColorCodes(Link link, List<ColorCode> colorCodes)
+    {
+        File file = this.provider.getFile(link);
+
+        if (file != null)
+        {
+            ListType data = new ListType();
+
+            for (ColorCode color : colorCodes)
+            {
+                data.add(color.toData());
+            }
+
+            try
+            {
+                IOUtils.writeText(file, DataToString.toString(data, true));
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
     }
 
     public SoundBuffer get(Link link, boolean includeWaveform)
@@ -164,6 +188,7 @@ public class SoundManager implements IWatchDogListener
         {
             SoundPlayer player = new SoundPlayer(buffer).unique();
 
+            player.setRelative(true);
             player.play();
             this.sounds.add(player);
 

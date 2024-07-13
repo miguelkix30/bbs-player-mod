@@ -4,7 +4,12 @@
     "compatibilityLevel": "JAVA_17",
     "mixins": [
         "PlayerEntityMixin",
-        "PlayerEntityMorphMixin"
+        "PlayerEntityMorphMixin",
+        "ServerPlayNetworkHandlerMixin",
+        "BlockItemMixin",
+        "ServerWorldMixin",
+        "ItemStackMixin",
+        "WorldMixin"
     ],
     "injectors": {
         "defaultRequire": 1

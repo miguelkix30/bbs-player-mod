@@ -1,8 +1,8 @@
 package mchorse.bbs_mod.ui.dashboard;
 
 import mchorse.bbs_mod.BBSMod;
-import mchorse.bbs_mod.data.storage.DataStorage;
-import mchorse.bbs_mod.data.types.MapType;
+import mchorse.bbs_mod.audio.Wave;
+import mchorse.bbs_mod.audio.wav.WaveReader;
 import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.ui.dashboard.panels.UIDashboardPanel;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
@@ -14,7 +14,6 @@ import mchorse.bbs_mod.utils.keyframes.factories.KeyframeFactories;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 
 public class UIDebugPanel extends UIDashboardPanel
 {
@@ -42,9 +41,23 @@ public class UIDebugPanel extends UIDashboardPanel
             this.keyframes.addSheet(sheet);
         }
 
-        this.button = new UIButton(IKey.raw("Herro"), (b) ->
+        this.button = new UIButton(IKey.raw("Hello"), (b) ->
         {
-            File file = new File(BBSMod.getExportFolder(), "abc.dat");
+            WaveReader waveReader = new WaveReader();
+            File assetsFolder = new File(BBSMod.getAssetsFolder(), "audio/cheese.wav");
+
+            try (FileInputStream stream = new FileInputStream(assetsFolder))
+            {
+                Wave read = waveReader.read(stream);
+
+                System.out.println(read);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+
+            /* File file = new File(BBSMod.getExportFolder(), "abc.dat");
             MapType type = new MapType(false);
 
             for (int i = 0; i < 256; i++)
@@ -62,7 +75,7 @@ public class UIDebugPanel extends UIDashboardPanel
             catch (Exception e)
             {
                 e.printStackTrace();
-            }
+            } */
         });
 
         this.button.relative(this).xy(10, 10).w(80);

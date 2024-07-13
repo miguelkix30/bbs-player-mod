@@ -138,10 +138,8 @@ public class UIParticleSchemePanel extends UIDataDashboardPanel<ParticleScheme>
     }
 
     @Override
-    public void fill(ParticleScheme data)
+    protected void fillData(ParticleScheme data)
     {
-        super.fill(data);
-
         this.editMoLang(null, null, null);
 
         if (this.data != null)
@@ -162,9 +160,8 @@ public class UIParticleSchemePanel extends UIDataDashboardPanel<ParticleScheme>
     {
         super.fillDefaultData(data);
 
-        try
+        try (InputStream asset = BBSMod.getProvider().getAsset(PARTICLE_PLACEHOLDER))
         {
-            InputStream asset = BBSMod.getProvider().getAsset(PARTICLE_PLACEHOLDER);
             MapType map = DataToString.mapFromString(IOUtils.readText(asset));
 
             ParticleScheme.PARSER.fromData(data, map);

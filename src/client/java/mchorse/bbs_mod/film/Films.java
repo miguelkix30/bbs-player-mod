@@ -3,6 +3,7 @@ package mchorse.bbs_mod.film;
 import com.mojang.blaze3d.systems.RenderSystem;
 import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.camera.controller.PlayCameraController;
+import mchorse.bbs_mod.network.ClientNetwork;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
 import mchorse.bbs_mod.ui.ContentType;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
@@ -35,6 +36,7 @@ public class Films
                     BBSModClient.getCameraController().add(controller);
                 }
 
+                ClientNetwork.sendActionPlay(film.getId());
                 BBSModClient.getFilms().add(filmController);
             });
         });
@@ -48,6 +50,13 @@ public class Films
     public void startRecording(Film film, int replayId)
     {
         this.recorder = new Recorder(film, replayId);
+
+        if (ClientNetwork.isIsBBSModOnServer())
+        {
+            ClientNetwork.sendActionRecording(film.getId(), 0, this.recorder.tick, true);
+        }
+
+        ContentType.FILMS.getRepository().save(film.getId(), film.toData().asMap());
     }
 
     public Recorder stopRecording()
@@ -64,6 +73,11 @@ public class Films
                 {
                     channel.simplify();
                 }
+            }
+
+            if (ClientNetwork.isIsBBSModOnServer())
+            {
+                ClientNetwork.sendActionRecording(recorder.film.getId(), recorder.exception, recorder.tick, false);
             }
         }
 

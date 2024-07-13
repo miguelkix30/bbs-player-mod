@@ -29,10 +29,10 @@ public class Waveform
         }
 
         this.populate(data, pixelsPerSecond, height);
-        this.render(colorCodes);
+        this.render(colorCodes, data.getCues());
     }
 
-    public void render(List<ColorCode> colorCodes)
+    public void render(List<ColorCode> colorCodes, float[] cues)
     {
         this.delete();
 
@@ -63,6 +63,11 @@ public class Waveform
                 if (code == null) code = this.getColorCode(colorCodes, time);
                 if (code != null) color = Colors.setA(code.color, 1F);
 
+                if (this.hasCue(cues, time))
+                {
+                    pixels.drawRect(j, 0, 1, this.h, Colors.ACTIVE | Colors.A75);
+                }
+
                 if (avgHeight > 0)
                 {
                     pixels.drawRect(j, this.h / 2 - maxHeight / 2, 1, maxHeight, color);
@@ -84,6 +89,24 @@ public class Waveform
 
             offset += maxTextureSize;
         }
+    }
+
+    private boolean hasCue(float[] cues, float time)
+    {
+        if (cues == null)
+        {
+            return false;
+        }
+
+        for (float cue : cues)
+        {
+            if (time >= cue && time - cue < 1.5F / this.pixelsPerSecond)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private ColorCode getColorCode(List<ColorCode> colorCodes, float time)

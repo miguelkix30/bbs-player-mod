@@ -12,9 +12,9 @@ public class UIDoubleKeyframeFactory extends UIKeyframeFactory<Double>
     {
         super(keyframe, editor);
 
-        this.value = new UITrackpad((v) -> this.editor.setValue(v));
+        this.value = new UITrackpad(this::setValue);
         this.value.setValue(keyframe.getValue());
 
-        this.add(this.value);
+        this.scroll.add(this.value);
     }
 }

@@ -13,15 +13,11 @@ import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.factory.IFactory;
 import mchorse.bbs_mod.utils.undo.IUndo;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 public class UIClipsPanel extends UIElement implements IUIClipsDelegate
 {
-    private static Map<Class, Integer> scrolls = new HashMap<>();
-
     public UIClips clips;
     public UIFilmPanel filmPanel;
 
@@ -44,14 +40,6 @@ public class UIClipsPanel extends UIElement implements IUIClipsDelegate
         this.target = target;
 
         return this;
-    }
-
-    public void open()
-    {
-        if (this.panel != null)
-        {
-            this.panel.cameraEditorWasOpened();
-        }
     }
 
     public void handleUndo(IUndo<ValueGroup> undo, boolean redo)
@@ -91,6 +79,8 @@ public class UIClipsPanel extends UIElement implements IUIClipsDelegate
     @Override
     public void pickClip(Clip clip)
     {
+        UIClip.saveScroll(this.panel);
+
         if (this.panel != null)
         {
             if (this.panel.clip == clip)
@@ -118,15 +108,9 @@ public class UIClipsPanel extends UIElement implements IUIClipsDelegate
 
         try
         {
-            if (this.panel != null)
-            {
-                scrolls.put(this.panel.getClass(), (int) this.panel.panels.scroll.scroll);
-            }
-
             this.clips.embedView(null);
 
             this.panel = UIClip.createPanel(clip, this);
-            this.add(this.panel);
 
             if (this.target == null)
             {
@@ -137,9 +121,9 @@ public class UIClipsPanel extends UIElement implements IUIClipsDelegate
                 this.panel.full(this.target);
             }
 
+            this.add(this.panel);
             this.resize();
             this.panel.fillData();
-            this.panel.panels.scroll.scrollTo(scrolls.getOrDefault(this.panel.getClass(), 0));
 
             if (this.filmPanel.isFlying())
             {
@@ -203,7 +187,7 @@ public class UIClipsPanel extends UIElement implements IUIClipsDelegate
     @Override
     public void markLastUndoNoMerging()
     {
-        this.filmPanel.getUndoHandler().cacheMarkLastUndoNoMerging();
+        this.filmPanel.getUndoHandler().markLastUndoNoMerging();
     }
 
     @Override

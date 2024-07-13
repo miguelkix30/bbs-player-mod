@@ -10,6 +10,25 @@ import mchorse.bbs_mod.utils.interps.Interpolations;
 
 public class UIKeys
 {
+    public static final IKey AUDIO_TITLE = L10n.lang("bbs.ui.audio_editor.title");
+    public static final IKey AUDIO_CONTEXT_ADD = L10n.lang("bbs.ui.audio_editor.context.add");
+    public static final IKey AUDIO_CONTEXT_REMOVE = L10n.lang("bbs.ui.audio_editor.context.remove");
+    public static final IKey ACTIONS_CHAT_MESSAGE = L10n.lang("bbs.ui.actions.chat.message");
+    public static final IKey ACTIONS_COMMAND_COMMAND = L10n.lang("bbs.ui.actions.command.command");
+    public static final IKey ACTIONS_BLOCK_POSITION = L10n.lang("bbs.ui.actions.block.position");
+    public static final IKey ACTIONS_BLOCK_HIT = L10n.lang("bbs.ui.actions.block.hit");
+    public static final IKey ACTIONS_BLOCK_INSIDE = L10n.lang("bbs.ui.actions.block.inside");
+    public static final IKey ACTIONS_BLOCK_PROGRESS = L10n.lang("bbs.ui.actions.block.progress");
+    public static final IKey ACTIONS_BLOCK_DIRECTION = L10n.lang("bbs.ui.actions.block.direction");
+    public static final IKey ACTIONS_BLOCK_DIRECTION_UP = L10n.lang("bbs.ui.actions.block.direction.up");
+    public static final IKey ACTIONS_BLOCK_DIRECTION_DOWN = L10n.lang("bbs.ui.actions.block.direction.down");
+    public static final IKey ACTIONS_BLOCK_DIRECTION_NORTH = L10n.lang("bbs.ui.actions.block.direction.north");
+    public static final IKey ACTIONS_BLOCK_DIRECTION_SOUTH = L10n.lang("bbs.ui.actions.block.direction.south");
+    public static final IKey ACTIONS_BLOCK_DIRECTION_WEST = L10n.lang("bbs.ui.actions.block.direction.west");
+    public static final IKey ACTIONS_BLOCK_DIRECTION_EAST = L10n.lang("bbs.ui.actions.block.direction.east");
+    public static final IKey ACTIONS_BLOCK_STATE = L10n.lang("bbs.ui.actions.block.state");
+    public static final IKey ACTIONS_ITEM_MAIN_HAND = L10n.lang("bbs.ui.actions.item.main_hand");
+    public static final IKey ACTIONS_ITEM_STACK = L10n.lang("bbs.ui.actions.item.stack");
     public static final IKey CONTEXT_MENU_KEY = L10n.lang("bbs.ui.context.key");
     public static final IKey CONTEXT_MENU_KEY_CATEGORY = L10n.lang("bbs.ui.context.key_category");
     public static final IKey CAMERA_EDITOR_KEYS_CLIPS_DESELECT = L10n.lang("bbs.ui.camera.editor.keys.clips.deselect");
@@ -45,6 +64,7 @@ public class UIKeys
     public static final IKey CAMERA_PANELS_ANGLE = L10n.lang("bbs.ui.camera.panels.angle");
     public static final IKey CAMERA_PANELS_AT_BLOCK = L10n.lang("bbs.ui.camera.panels.at_block");
     public static final IKey CAMERA_PANELS_AUDIO_PICK_AUDIO = L10n.lang("bbs.ui.camera.panels.audio.pick_audio");
+    public static final IKey CAMERA_PANELS_AUDIO_OFFSET = L10n.lang("bbs.ui.camera.panels.audio.offset");
     public static final IKey CAMERA_PANELS_AUTO_CENTER = L10n.lang("bbs.ui.camera.panels.auto_center");
     public static final IKey CAMERA_PANELS_BLOCK = L10n.lang("bbs.ui.camera.panels.block");
     public static final IKey CAMERA_PANELS_CIRCLE = L10n.lang("bbs.ui.camera.panels.circle");
@@ -192,6 +212,7 @@ public class UIKeys
     public static final IKey FILM_SCREENSHOT = L10n.lang("bbs.ui.film.screenshot");
     public static final IKey FILM_SCREENSHOT_TITLE = L10n.lang("bbs.ui.film.screenshot-title");
     public static final IKey FILM_SCREENSHOT_DESCRIPTION = L10n.lang("bbs.ui.film.screenshot-description");
+    public static final IKey FILM_OPEN_ACTION_EDITOR = L10n.lang("bbs.ui.film.open_action_editor");
     public static final IKey FILM_OPEN_REPLAY_EDITOR = L10n.lang("bbs.ui.film.open_replay_editor");
     public static final IKey FILM_OPEN_VOICE_LINE_EDITOR = L10n.lang("bbs.ui.film.open_voice_line_editor");
     public static final IKey FILM_REPLAY_CONTEXT_ADD = L10n.lang("bbs.ui.film.replay.context.add");
@@ -322,6 +343,8 @@ public class UIKeys
     public static final IKey GENERIC_KEYFRAMES_LINK_PICK_TEXTURE = L10n.lang("bbs.ui.generic_keyframes.link.pick_texture");
     public static final IKey GRAPH_HELP = L10n.lang("bbs.ui.graph.help");
     public static final IKey GRAPH_TOOLTIP = L10n.lang("bbs.ui.graph.tooltip");
+    public static final IKey INTERPOLATIONS_CONTEXT_COPY = L10n.lang("interpolations.ui.context.copy");
+    public static final IKey INTERPOLATIONS_CONTEXT_PASTE = L10n.lang("interpolations.ui.context.paste");
     public static final IKey INTERPOLATIONS_KEY_CATEGORY = L10n.lang("interpolations.key_category");
     public static final IKey KEYFRAMES_CONTEXT_COPY = L10n.lang("bbs.ui.keyframes.context.copy");
     public static final IKey KEYFRAMES_CONTEXT_EDIT_TRACK = L10n.lang("bbs.ui.keyframes.context.edit_track");
@@ -341,10 +364,10 @@ public class UIKeys
     public static final IKey LANGUAGE_PICK = L10n.lang("bbs.ui.language.pick");
     public static final IKey LANGUAGE_PICK_TITLE = L10n.lang("bbs.ui.language.pick.title");
     public static final IKey OVERLAYS_SOUNDS_MAIN = L10n.lang("bbs.ui.overlays.sounds.main");
+    public static final IKey PANELS_SAVED_NOTIFICATION = L10n.lang("bbs.ui.panels.saved-notification");
     public static final IKey PANELS_CONTEXT_COPY = L10n.lang("bbs.ui.panels.context.copy");
     public static final IKey PANELS_CONTEXT_OPEN = L10n.lang("bbs.ui.panels.context.open");
     public static final IKey PANELS_CONTEXT_PASTE = L10n.lang("bbs.ui.panels.context.paste");
-    public static final IKey PANELS_KEYS_CATEGORY = L10n.lang("bbs.ui.panels.keys.category");
     public static final IKey PANELS_KEYS_OPEN_DATA_MANAGER = L10n.lang("bbs.ui.panels.keys.open_data_list");
     public static final IKey PANELS_MODALS_ADD = L10n.lang("bbs.ui.panels.modals.add");
     public static final IKey PANELS_MODALS_ADD_FOLDER = L10n.lang("bbs.ui.panels.modals.add_folder");
@@ -623,6 +646,8 @@ public class UIKeys
     public static final IKey LANGUAGE_EDITOR_REFERENCE_TITLE = L10n.lang("studio.ui.language.editor.reference-title");
     public static final IKey LANGUAGE_EDITOR_SAVE = L10n.lang("studio.ui.language.editor.save");
     public static final IKey LANGUAGE_EDITOR_TITLE = L10n.lang("studio.ui.language.editor.title");
+    public static final IKey UTILITY_AUDIO = L10n.lang("studio.ui.utility.audio");
+    public static final IKey UTILITY_OPEN_AUDIO_EDITOR = L10n.lang("studio.ui.utility.open_audio_editor");
     public static final IKey UTILITY_ANALYZE_LANG = L10n.lang("studio.ui.utility.analyze_lang");
     public static final IKey UTILITY_COMPILE_LANG = L10n.lang("studio.ui.utility.compile_lang");
     public static final IKey UTILITY_COMPILE_LANG_DESCRIPTION = L10n.lang("studio.ui.utility.compile_lang-description");

@@ -6,6 +6,7 @@ import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.properties.AnchorProperty;
 import mchorse.bbs_mod.l10n.keys.IKey;
+import mchorse.bbs_mod.settings.values.base.BaseValue;
 import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
 import mchorse.bbs_mod.ui.framework.UIContext;
@@ -54,7 +55,7 @@ public class UIAnchorKeyframeFactory extends UIKeyframeFactory<AnchorProperty.An
         this.actor = new UIButton(UIKeys.GENERIC_KEYFRAMES_ANCHOR_PICK_ACTOR, (b) -> this.displayActors());
         this.attachment = new UIButton(UIKeys.GENERIC_KEYFRAMES_ANCHOR_PICK_ATTACHMENT, (b) -> this.displayAttachments());
 
-        this.add(this.actor, this.attachment);
+        this.scroll.add(this.actor, this.attachment);
     }
 
     private void displayActors()
@@ -116,16 +117,12 @@ public class UIAnchorKeyframeFactory extends UIKeyframeFactory<AnchorProperty.An
 
     private void setActor(int actor)
     {
-        this.keyframe.getValue().actor = actor;
-
-        this.editor.setValue(this.keyframe.getValue());
+        BaseValue.edit(this.keyframe, (value) -> value.getValue().actor = actor);
     }
 
     private void setAttachment(String attachment)
     {
-        this.keyframe.getValue().attachment = attachment;
-
-        this.editor.setValue(this.keyframe.getValue());
+        BaseValue.edit(this.keyframe, (value) -> value.getValue().attachment = attachment);
     }
 
     private UIFilmPanel getPanel()

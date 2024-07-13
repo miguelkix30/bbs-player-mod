@@ -4,19 +4,16 @@ import mchorse.bbs_mod.camera.clips.ClipFactoryData;
 import mchorse.bbs_mod.data.types.BaseType;
 import mchorse.bbs_mod.data.types.ListType;
 import mchorse.bbs_mod.settings.values.ValueGroup;
+import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.factory.IFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Clips extends ValueGroup
 {
-    private static Map<Integer, Clip> clipMap = new HashMap<>();
-
     private List<Clip> clips = new ArrayList<>();
     private IFactory<Clip, ClipFactoryData> factory;
 
@@ -25,6 +22,28 @@ public class Clips extends ValueGroup
         super(id);
 
         this.factory = factory;
+    }
+
+    public void sortLayers()
+    {
+        for (Clip clip : this.clips)
+        {
+            clip.layer.set(0);
+        }
+
+        for (Clip clip : this.clips)
+        {
+            for (Clip otherClip : this.clips)
+            {
+                boolean sameLayer = clip.layer.get() == otherClip.layer.get();
+                boolean intersects = MathUtils.isInside(clip.tick.get(), clip.tick.get() + clip.duration.get(), otherClip.tick.get(), otherClip.tick.get() + otherClip.duration.get());
+
+                if (sameLayer && intersects)
+                {
+                    otherClip.layer.set(otherClip.layer.get() + 1);
+                }
+            }
+        }
     }
 
     public int getTopLayer()
@@ -79,7 +98,7 @@ public class Clips extends ValueGroup
 
     public List<Clip> getClips(int tick, int maxLayer)
     {
-        clipMap.clear();
+        List<Clip> clipList = new ArrayList<>();
 
         for (Clip clip : this.clips)
         {
@@ -87,14 +106,10 @@ public class Clips extends ValueGroup
 
             if ((clip.isInside(tick) || isGlobal) && clip.layer.get() < maxLayer)
             {
-                clipMap.put(clip.layer.get(), clip);
+                clipList.add(clip);
             }
         }
 
-        List<Clip> clipList = new ArrayList<>();
-
-        clipList.clear();
-        clipList.addAll(clipMap.values());
         clipList.sort(Comparator.comparingInt((a) -> a.layer.get()));
 
         return clipList;

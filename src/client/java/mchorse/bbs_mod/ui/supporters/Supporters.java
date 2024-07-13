@@ -360,7 +360,7 @@ public class Supporters
         this.add("TomyCresyler").withDate(5, 4);
         this.add("V0IDCreates").withDate(5, 4);
         this.add("MandyMiss").withDate(5, 5);
-        this.add("Liam Floyd").withDate(5, 5);
+        this.add("Liam Floyd", "https://x.com/mistergriimm").withDate(5, 5);
         this.add("구름 고양").withDate(5, 5);
         this.add("Tafukoni").withDate(5, 5);
         this.add("FrostAngelWolf").withDate(5, 6);
@@ -442,15 +442,15 @@ public class Supporters
         this.add("Astral").withDate(6, 4);
         this.add("Kuzyn Cyborg").withDate(6, 4);
         this.add("CharlyHorseman").withDate(6, 4);
-        this.add("IB4 _o").withDate(6, 5);
+        this.add("Karna").withDate(6, 5);
         this.add("craftgile").withDate(6, 8);
         this.add("Snamu").withDate(6, 8);
         this.add("FlameTFA").withDate(6, 9);
-        this.add("Skittle's", "...").withDate(6, 9);
+        this.add("StillSkittles", "https://youtube.com/@stillskittles?si=8p3aZL88VeZZwqhK").withDate(6, 9);
         this.add("eocx").withDate(6, 10);
-        this.add("Prospecteur Aguero").withDate(6, 10);
+        this.add("Agnis_").withDate(6, 10);
         this.add("Evoken").withDate(6, 12);
-        this.add("Izaak Rawlinson").withDate(6, 13);
+        this.add("TheUncertainKing").withDate(6, 13);
         this.add("creeperz653").withDate(6, 13);
         this.add("KeiBoogie").withDate(6, 14);
         this.add("Mystievous").withDate(6, 14);
@@ -460,11 +460,25 @@ public class Supporters
         this.add("Hugo Lovi").withDate(6, 19);
         this.add("EwLiyah").withDate(6, 20);
         this.add("ศุภวิชญ์ พ.").withDate(6, 21);
+        this.add("jeremy").withDate(6, 23);
+        this.add("Jet Hidden").withDate(6, 23);
+        this.add("cdr").withDate(6, 25);
+        this.add("Iago Manna").withDate(6, 25);
+        this.add("Godricxs").withDate(6, 26);
+        // this.add("Rusted_AK", "...").withDate(6, 26);
+        this.add("LOKIOLR", "https://youtube.com/@lokiolr").withDate(6, 26);
+        this.add("zenozz BTS", "...").withDate(6, 28);
+        this.add("DraKhaos").withDate(7, 1);
+        this.add("Neotrix").withDate(7, 2);
+        this.add("Nederlander_Khan").withDate(7, 3);
+        this.add("REHDM").withDate(7, 3);
+        this.add("GoldenNooby").withDate(7, 4);
 
         // Thank you very much for donation! 😊 Is $ is the name you want to be included in BBS mod?
         // Thank you very much for donation! 😊 Is $ is the name you want to be included in BBS mod? Also, you can provide a link to your social media account (like YouTube, Twitter, TikTok, etc.)
 
         /* Boosty */
+        this.add("Clesten", "https://www.youtube.com/@clesten", "...").withDate(3, 6);
         this.add("MRkoteich").withDate(4, 27);
         this.add("Mait53").withDate(4, 27);
         this.add("osas.exe").withDate(4, 27);
@@ -485,10 +499,11 @@ public class Supporters
         this.add("donquixotea").withDate(4, 29);
         this.add("Mudyi").withDate(4, 30);
         this.add("ellatuk").withDate(4, 30);
-        this.add("Бинди").withDate(5, 1);
+        this.add("BiNdi_").withDate(5, 1);
         this.add("Filliks&Line").withDate(5, 1);
         this.add("BCFuril").withDate(5, 1);
         this.add("Slippers_friend").withDate(5, 1);
+        this.add("TheBendy").withDate(5, 1);
         this.add("Just Fect").withDate(5, 1);
         this.add("mr.ifu").withDate(5, 2);
         this.add("Тимобус 223").withDate(5, 3);
@@ -502,7 +517,7 @@ public class Supporters
         this.add("_KvardSeries_").withDate(5, 9);
         this.add("paynqqwr").withDate(5, 9);
         this.add("_K0ks1k").withDate(5, 10);
-        this.add("Dimak Lapkin", "...").withDate(5, 10);
+        this.add("Dimak Lapkin", "https://www.youtube.com/channel/UCOomCTimgx20zd4Xynuv9sQ").withDate(5, 10);
         this.add("XlebkinS").withDate(5, 12);
         this.add("ZombieGamerz").withDate(5, 16);
         this.add("momfc").withDate(5, 19);
@@ -515,12 +530,13 @@ public class Supporters
         this.add("yurafakel").withDate(5, 28);
         this.add("GooseTeam").withDate(5, 30);
         this.add("LarsCraftAnimation").withDate(5, 30);
+        this.add("Goose Team").withDate(5, 30);
         this.add("Nabemo53").withDate(5, 31);
         this.add("BeGereshka").withDate(6, 3);
         this.add("MyStoryProd").withDate(6, 4);
         this.add("zeldon").withDate(6, 7);
         this.add("Ahmed SEGA").withDate(6, 7);
-        this.add("Вайт").withDate(6, 7);
+        this.add("IWaithI").withDate(6, 7);
         this.add("xzeldon").withDate(6, 7);
         this.add("FinalFrame").withDate(6, 10);
         this.add("Komentator").withDate(6, 10);
@@ -528,11 +544,17 @@ public class Supporters
         this.add("DOK").withDate(6, 14);
         this.add("Сергей Ш.").withDate(6, 17);
         this.add("Leon").withDate(6, 18);
+        this.add("melow").withDate(6, 23);
+        this.add("fenny013").withDate(6, 23);
+        this.add("onleew").withDate(6, 25);
+        this.add("Hellbug_U").withDate(6, 29);
+        this.add("Krimor").withDate(6, 30);
+        this.add("Murlovich").withDate(7, 3);
+        this.add("VladisCrafter").withDate(7, 5);
 
         /* Custom */
         this.add("Hrymka", "...", "textures/banners/hrymka.png").withDate(3, 6);
         this.add("Rasty", "https://www.youtube.com/@RastyStudio").withDate(3, 6);
-        this.add("Clesten", "https://www.youtube.com/@clesten9475").withDate(3, 6);
         this.add("Afegor (Alyokhin Dmitrii)", "https://www.youtube.com/@Afegor", "textures/banners/afegor.png").withDate(4, 8);
         this.add("ZoGa", "...", "...").withDate(4, 22);
         this.add("McHorse", "https://www.youtube.com/channel/UCSLuDXxxql4EVK_Ktd6PNbw", "textures/banners/mchorse.png");

@@ -7,6 +7,7 @@ import mchorse.bbs_mod.utils.interps.Interpolation;
 import mchorse.bbs_mod.utils.keyframes.Keyframe;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class UIKeyframeSheet
@@ -52,9 +53,10 @@ public class UIKeyframeSheet
         return this.icon;
     }
 
-    public void sort()
+    public List<Integer> sort()
     {
         List<Keyframe> selected = this.selection.getSelected();
+        List<Integer> lastSelection = new ArrayList<>(this.selection.getIndices());
 
         this.channel.sort();
         this.selection.clear();
@@ -65,21 +67,38 @@ public class UIKeyframeSheet
         {
             this.selection.add(keyframes.indexOf(keyframe));
         }
+
+        return lastSelection;
     }
 
-    public void setTickBy(long diff)
+    public void setTickBy(long diff, boolean dirty)
     {
         for (Keyframe keyframe : this.selection.getSelected())
         {
-            keyframe.setTick(keyframe.getTick() + diff);
+            keyframe.setTick(keyframe.getTick() + diff, dirty);
         }
     }
 
-    public void setValue(Object value)
+    public void setValue(Object value, Object selectedValue, boolean dirty)
     {
         for (Keyframe keyframe : this.selection.getSelected())
         {
-            keyframe.setValue(this.channel.getFactory().copy(value));
+            if (selectedValue instanceof Double)
+            {
+                keyframe.setValue((double) keyframe.getValue() + (double) value - (double) selectedValue);
+            }
+            else if (selectedValue instanceof Float)
+            {
+                keyframe.setValue((float) keyframe.getValue() + (float) value - (float) selectedValue);
+            }
+            else if (selectedValue instanceof Integer)
+            {
+                keyframe.setValue((int) keyframe.getValue() + (int) value - (int) selectedValue);
+            }
+            else
+            {
+                keyframe.setValue(this.channel.getFactory().copy(value), dirty);
+            }
         }
     }
 

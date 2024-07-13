@@ -48,9 +48,16 @@ public class Keyframe <T> extends ValueGroup
 
     public void setTick(long tick)
     {
-        this.preNotifyParent();
+        this.setTick(tick, false);
+    }
+
+    public void setTick(long tick, boolean dirty)
+    {
+        if (dirty) this.preNotifyParent();
+
         this.tick = tick;
-        this.postNotifyParent();
+
+        if (dirty) this.postNotifyParent();
     }
 
     public int getDuration()
@@ -72,14 +79,21 @@ public class Keyframe <T> extends ValueGroup
 
     public double getY(int index)
     {
-        return this.factory.getY(this.value, index);
+        return this.factory.getY(this.value);
     }
 
     public void setValue(T value)
     {
-        this.preNotifyParent();
+        this.setValue(value, false);
+    }
+
+    public void setValue(T value, boolean dirty)
+    {
+        if (dirty) this.preNotifyParent();
+
         this.value = value;
-        this.postNotifyParent();
+
+        if (dirty) this.postNotifyParent();
     }
 
     public Interpolation getInterpolation()
