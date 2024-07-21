@@ -41,6 +41,7 @@ public class ServerNetwork
     public static final Identifier CLIENT_MANAGER_DATA_PACKET = new Identifier(BBSMod.MOD_ID, "c4");
     public static final Identifier CLIENT_STOP_FILM_PACKET = new Identifier(BBSMod.MOD_ID, "c5");
     public static final Identifier CLIENT_HANDSHAKE = new Identifier(BBSMod.MOD_ID, "c6");
+    public static final Identifier CLIENT_RECORDED_ACTIONS = new Identifier(BBSMod.MOD_ID, "c7");
 
     public static final Identifier SERVER_MODEL_BLOCK_FORM_PACKET = new Identifier(BBSMod.MOD_ID, "s1");
     public static final Identifier SERVER_MODEL_BLOCK_TRANSFORMS_PACKET = new Identifier(BBSMod.MOD_ID, "s2");
@@ -182,27 +183,35 @@ public class ServerNetwork
         int tick = buf.readInt();
         boolean recording = buf.readBoolean();
 
-        if (recording)
+        server.execute(() ->
         {
-            Film film = BBSMod.getFilms().load(filmId);
-
-            if (film != null)
+            if (recording)
             {
-                BBSMod.getActions().startRecording(film, player, tick);
-                BBSMod.getActions().play(player.getServerWorld(), film, tick, replayId);
-            }
-        }
-        else
-        {
-            Clips clips = BBSMod.getActions().stopRecording(player);
-            Film film = BBSMod.getFilms().load(filmId);
+                Film film = BBSMod.getFilms().load(filmId);
 
-            if (clips != null && film != null && CollectionUtils.inRange(film.replays.getList(), replayId))
-            {
-                film.replays.getList().get(replayId).actions.fromData(clips.toData());
-                BBSMod.getFilms().save(filmId, film.toData().asMap());
+                if (film != null)
+                {
+                    BBSMod.getActions().startRecording(film, player, tick);
+                    BBSMod.getActions().play(player.getServerWorld(), film, tick, replayId);
+                }
             }
-        }
+            else
+            {
+                Clips clips = BBSMod.getActions().stopRecording(player);
+
+                /* Save clips to the film */
+                Film film = BBSMod.getFilms().load(filmId);
+
+                if (clips != null && film != null && CollectionUtils.inRange(film.replays.getList(), replayId))
+                {
+                    film.replays.getList().get(replayId).actions.fromData(clips.toData());
+                    BBSMod.getFilms().save(filmId, film.toData().asMap());
+                }
+
+                /* Send recorded clips to the client */
+                sendRecordedActions(player, filmId, replayId, clips);
+            }
+        });
     }
 
     private static void handleToggleFilm(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
@@ -210,21 +219,24 @@ public class ServerNetwork
         String filmId = buf.readString();
         boolean withCamera = buf.readBoolean();
 
-        ActionPlayer actionPlayer = BBSMod.getActions().getPlayer(filmId);
-
-        if (actionPlayer != null)
+        server.execute(() ->
         {
-            BBSMod.getActions().stop(filmId);
+            ActionPlayer actionPlayer = BBSMod.getActions().getPlayer(filmId);
 
-            for (ServerPlayerEntity otherPlayer : server.getPlayerManager().getPlayerList())
+            if (actionPlayer != null)
             {
-                sendStopFilm(otherPlayer, filmId);
+                BBSMod.getActions().stop(filmId);
+
+                for (ServerPlayerEntity otherPlayer : server.getPlayerManager().getPlayerList())
+                {
+                    sendStopFilm(otherPlayer, filmId);
+                }
             }
-        }
-        else
-        {
-            sendPlayFilm(player.getServerWorld(), filmId, withCamera);
-        }
+            else
+            {
+                sendPlayFilm(player.getServerWorld(), filmId, withCamera);
+            }
+        });
     }
 
     private static void handleActionControl(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
@@ -234,70 +246,73 @@ public class ServerNetwork
         ActionState state = EnumUtils.getValue(buf.readByte(), ActionState.values(), ActionState.STOP);
         int tick = buf.readInt();
 
-        if (state == ActionState.SEEK)
+        server.execute(() ->
         {
-            ActionPlayer actionPlayer = actions.getPlayer(filmId);
-
-            if (actionPlayer != null)
+            if (state == ActionState.SEEK)
             {
-                actionPlayer.goTo(tick);
-            }
-        }
-        else if (state == ActionState.PLAY)
-        {
-            ActionPlayer actionPlayer = actions.getPlayer(filmId);
+                ActionPlayer actionPlayer = actions.getPlayer(filmId);
 
-            if (actionPlayer != null)
-            {
-                actionPlayer.goTo(tick);
-                actionPlayer.playing = true;
-            }
-        }
-        else if (state == ActionState.PAUSE)
-        {
-            ActionPlayer actionPlayer = actions.getPlayer(filmId);
-
-            if (actionPlayer != null)
-            {
-                actionPlayer.goTo(tick);
-                actionPlayer.playing = false;
-            }
-        }
-        else if (state == ActionState.RESTART)
-        {
-            ActionPlayer actionPlayer = actions.getPlayer(filmId);
-
-            if (actionPlayer == null)
-            {
-                Film film = BBSMod.getFilms().load(filmId);
-
-                if (film != null)
-                {
-                    actionPlayer = actions.play(player.getServerWorld(), film, tick);
-                }
-            }
-            else
-            {
-                actions.stop(filmId);
-
-                actionPlayer = actions.play(player.getServerWorld(), actionPlayer.film, 0);
-            }
-
-            if (actionPlayer != null)
-            {
-                actionPlayer.syncing = true;
-                actionPlayer.playing = false;
-
-                if (tick != 0)
+                if (actionPlayer != null)
                 {
                     actionPlayer.goTo(tick);
                 }
             }
-        }
-        else if (state == ActionState.STOP)
-        {
-            actions.stop(filmId);
-    }
+            else if (state == ActionState.PLAY)
+            {
+                ActionPlayer actionPlayer = actions.getPlayer(filmId);
+
+                if (actionPlayer != null)
+                {
+                    actionPlayer.goTo(tick);
+                    actionPlayer.playing = true;
+                }
+            }
+            else if (state == ActionState.PAUSE)
+            {
+                ActionPlayer actionPlayer = actions.getPlayer(filmId);
+
+                if (actionPlayer != null)
+                {
+                    actionPlayer.goTo(tick);
+                    actionPlayer.playing = false;
+                }
+            }
+            else if (state == ActionState.RESTART)
+            {
+                ActionPlayer actionPlayer = actions.getPlayer(filmId);
+
+                if (actionPlayer == null)
+                {
+                    Film film = BBSMod.getFilms().load(filmId);
+
+                    if (film != null)
+                    {
+                        actionPlayer = actions.play(player.getServerWorld(), film, tick);
+                    }
+                }
+                else
+                {
+                    actions.stop(filmId);
+
+                    actionPlayer = actions.play(player.getServerWorld(), actionPlayer.film, 0);
+                }
+
+                if (actionPlayer != null)
+                {
+                    actionPlayer.syncing = true;
+                    actionPlayer.playing = false;
+
+                    if (tick != 0)
+                    {
+                        actionPlayer.goTo(tick);
+                    }
+                }
+            }
+            else if (state == ActionState.STOP)
+            {
+                actions.stop(filmId);
+            }
+        });
     }
 
     private static void handleActionsUpload(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
@@ -306,7 +321,10 @@ public class ServerNetwork
         int replayId = buf.readInt();
         BaseType data = DataStorageUtils.readFromPacket(buf);
 
-        BBSMod.getActions().updatePlayers(filmId, replayId, data);
+        server.execute(() ->
+        {
+            BBSMod.getActions().updatePlayers(filmId, replayId, data);
+        });
     }
 
     /* API */
@@ -416,5 +434,16 @@ public class ServerNetwork
         DataStorageUtils.writeToPacket(buf, data);
 
         ServerPlayNetworking.send(player, CLIENT_MANAGER_DATA_PACKET, buf);
+    }
+
+    public static void sendRecordedActions(ServerPlayerEntity player, String filmId, int replayId, Clips clips)
+    {
+        PacketByteBuf newBuf = PacketByteBufs.create();
+
+        newBuf.writeString(filmId);
+        newBuf.writeInt(replayId);
+        DataStorageUtils.writeToPacket(newBuf, clips.toData());
+
+        ServerPlayNetworking.send(player, CLIENT_RECORDED_ACTIONS, newBuf);
     }
 }
