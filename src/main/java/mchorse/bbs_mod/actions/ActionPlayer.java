@@ -14,16 +14,10 @@ public class ActionPlayer
     public int tick;
     public boolean playing = true;
     public int exception;
+    public boolean syncing;
 
     private ServerWorld world;
     private int duration;
-
-    private DamageControl control;
-
-    public ActionPlayer(ServerWorld world, Film film, int tick)
-    {
-        this(world, film, tick, -1);
-    }
 
     public ActionPlayer(ServerWorld world, Film film, int tick, int exception)
     {
@@ -31,14 +25,13 @@ public class ActionPlayer
         this.film = film;
         this.tick = tick;
         this.exception = exception;
-        this.control = new DamageControl(world);
 
         this.duration = film.camera.calculateDuration();
     }
 
-    public DamageControl getDC()
+    public ServerWorld getWorld()
     {
-        return this.control;
+        return this.world;
     }
 
     public boolean tick()
@@ -50,35 +43,46 @@ public class ActionPlayer
 
         if (this.tick >= 0)
         {
-            SuperFakePlayer fakePlayer = SuperFakePlayer.get(this.world);
-            List<Replay> list = this.film.replays.getList();
-
-            for (int i = 0; i < list.size(); i++)
-            {
-                if (i == this.exception)
-                {
-                    continue;
-                }
-
-                Replay replay = list.get(i);
-                List<Clip> clips = replay.actions.getClips(this.tick);
-
-                for (Clip clip : clips)
-                {
-                    ((ActionClip) clip).apply(fakePlayer, this.film, replay, this.tick);
-                }
-            }
+            this.applyAction();
         }
 
         this.tick += 1;
 
-        boolean hasFinished = this.tick >= this.duration;
+        return !this.syncing ? this.tick >= this.duration : false;
+    }
 
-        if (hasFinished)
+    private void applyAction()
+    {
+        SuperFakePlayer fakePlayer = SuperFakePlayer.get(this.world);
+        List<Replay> list = this.film.replays.getList();
+
+        for (int i = 0; i < list.size(); i++)
         {
-            this.control.restore();
-        }
+            if (i == this.exception)
+            {
+                continue;
+            }
 
-        return hasFinished;
+            Replay replay = list.get(i);
+            List<Clip> clips = replay.actions.getClips(this.tick);
+
+            for (Clip clip : clips)
+            {
+                ((ActionClip) clip).apply(fakePlayer, this.film, replay, this.tick);
+            }
+        }
+    }
+
+    public void goTo(int tick)
+    {
+        if (this.tick != tick)
+        {
+            while (this.tick != tick)
+            {
+                this.tick += this.tick > tick ? -1 : 1;
+
+                this.applyAction();
+            }
+        }
     }
 }

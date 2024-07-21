@@ -2,8 +2,8 @@ package mchorse.bbs_mod.ui.film.controller;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.systems.VertexSorter;
-import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.BBSSettings;
+import mchorse.bbs_mod.actions.ActionState;
 import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.camera.controller.RunnerCameraController;
 import mchorse.bbs_mod.client.BBSRendering;
@@ -33,7 +33,6 @@ import mchorse.bbs_mod.ui.film.UIFilmPanel;
 import mchorse.bbs_mod.ui.film.replays.UIRecordOverlayPanel;
 import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
-import mchorse.bbs_mod.ui.framework.elements.buttons.UIIcon;
 import mchorse.bbs_mod.ui.framework.elements.overlay.UIOverlay;
 import mchorse.bbs_mod.ui.framework.elements.utils.FontRenderer;
 import mchorse.bbs_mod.ui.framework.elements.utils.StencilMap;
@@ -139,6 +138,7 @@ public class UIFilmController extends UIElement
                 this.panel.replayEditor.moveReplay(result.getPos().x, result.getPos().y, result.getPos().z);
             }
         }).active(hasActor).category(category);
+        this.keys().register(Keys.FILM_CONTROLLER_KEYS_RESTART_ACTIONS, () -> this.panel.notifyServer(ActionState.RESTART)).category(category);
 
         this.noCulling();
     }
@@ -614,29 +614,11 @@ public class UIFilmController extends UIElement
 
         this.toggleMousePointer(false);
 
-        UIRecordOverlayPanel panel = new UIRecordOverlayPanel(
+        UIOverlay.addOverlay(this.getContext(), new UIRecordOverlayPanel(
             UIKeys.FILM_CONTROLLER_RECORD_TITLE,
             UIKeys.FILM_CONTROLLER_RECORD_DESCRIPTION,
             this::startRecording
-        );
-
-        UIIcon recordOutside = new UIIcon(Icons.UPLOAD, (b) -> this.recordOutside());
-        recordOutside.tooltip(UIKeys.FILM_CONTROLLER_RECORD_OUTSIDE);
-
-        panel.bar.add(recordOutside);
-        UIOverlay.addOverlay(this.getContext(), panel);
-    }
-
-    public void recordOutside()
-    {
-        int index = this.panel.replayEditor.replays.replays.getIndex();
-
-        if (index >= 0)
-        {
-            this.panel.dashboard.closeThisMenu();
-
-            BBSModClient.getFilms().startRecording(this.panel.getData(), index);
-        }
+        ));
     }
 
     public void toggleOrbitMode()

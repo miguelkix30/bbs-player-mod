@@ -4,6 +4,8 @@ import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.audio.AudioRenderer;
 import mchorse.bbs_mod.camera.Camera;
+import mchorse.bbs_mod.camera.clips.misc.AudioClip;
+import mchorse.bbs_mod.camera.controller.RunnerCameraController;
 import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.graphics.texture.Texture;
 import mchorse.bbs_mod.graphics.window.Window;
@@ -22,6 +24,9 @@ import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.utils.Direction;
 import mchorse.bbs_mod.utils.FFMpegUtils;
 import mchorse.bbs_mod.utils.ScreenshotRecorder;
+import mchorse.bbs_mod.utils.StringUtils;
+import mchorse.bbs_mod.utils.clips.Clip;
+import mchorse.bbs_mod.utils.clips.Clips;
 import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.joml.Vectors;
 import net.minecraft.client.MinecraftClient;
@@ -29,8 +34,15 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import org.joml.Vector2i;
 import org.joml.Vector3d;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 public class UIFilmPreview extends UIElement
 {
+    private List<AudioClip> clips = new ArrayList<>();
     private UIFilmPanel panel;
 
     public UIElement icons;
@@ -114,10 +126,39 @@ public class UIFilmPreview extends UIElement
             });
 
             menu.action(Icons.FILM, UIKeys.CAMERA_TOOLTIPS_OPEN_VIDEOS, () -> this.panel.recorder.openMovies());
+
+            menu.action(Icons.SOUND, UIKeys.FILM_RENDER_AUDIO, this::renderAudio);
         });
 
         this.icons.add(this.replays, this.plause, this.teleport, this.flight, this.control, this.perspective, this.recordReplay, this.recordVideo);
         this.add(this.icons);
+    }
+
+    private void renderAudio()
+    {
+        Clips camera = this.panel.getData().camera;
+        List<AudioClip> audioClips = new ArrayList<>();
+
+        for (Clip clip : camera.get())
+        {
+            if (clip instanceof AudioClip audioClip)
+            {
+                audioClips.add(audioClip);
+            }
+        }
+
+        String name = StringUtils.createTimestampFilename() + ".wav";
+        File videos = BBSRendering.getVideoFolder();
+        UIContext context = this.getContext();
+
+        if (AudioRenderer.renderAudio(new File(videos, name), audioClips, camera.calculateDuration()))
+        {
+            UIOverlay.addOverlay(context, new UIMessageFolderOverlayPanel(UIKeys.GENERAL_SUCCESS, UIKeys.FILM_RENDER_AUDIO_SUCCESS, videos));
+        }
+        else
+        {
+            UIOverlay.addOverlay(context, new UIMessageOverlayPanel(UIKeys.GENERAL_ERROR, UIKeys.FILM_RENDER_AUDIO_ERROR));
+        }
     }
 
     public Area getViewport()
@@ -206,10 +247,22 @@ public class UIFilmPreview extends UIElement
 
         if (this.panel.replayEditor.isVisible())
         {
+            RunnerCameraController runner = this.panel.getRunner();
             int w = (int) (area.w * BBSSettings.audioWaveformWidth.get());
             int x = area.x(0.5F, w);
+            float tick = runner.isRunning() ? runner.ticks + context.getTransition() : runner.ticks;
 
-            AudioRenderer.renderAll(context.batcher, x, area.y + 10, w, BBSSettings.audioWaveformHeight.get(), context.menu.width, context.menu.height);
+            this.clips.clear();
+
+            for (Clip clip : this.panel.getData().camera.get())
+            {
+                if (clip instanceof AudioClip)
+                {
+                    this.clips.add((AudioClip) clip);
+                }
+            }
+
+            AudioRenderer.renderAll(context.batcher, this.clips, tick, x, area.y + 10, w, BBSSettings.audioWaveformHeight.get(), context.menu.width, context.menu.height);
         }
 
         Area a = this.icons.area;

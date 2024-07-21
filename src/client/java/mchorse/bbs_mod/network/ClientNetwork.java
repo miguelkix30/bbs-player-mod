@@ -1,9 +1,8 @@
 package mchorse.bbs_mod.network;
 
 import mchorse.bbs_mod.BBSModClient;
+import mchorse.bbs_mod.actions.ActionState;
 import mchorse.bbs_mod.blocks.entities.ModelBlockEntity;
-import mchorse.bbs_mod.camera.controller.ICameraController;
-import mchorse.bbs_mod.camera.controller.PlayCameraController;
 import mchorse.bbs_mod.data.DataStorageUtils;
 import mchorse.bbs_mod.data.types.BaseType;
 import mchorse.bbs_mod.data.types.MapType;
@@ -16,6 +15,7 @@ import mchorse.bbs_mod.ui.dashboard.UIDashboard;
 import mchorse.bbs_mod.ui.framework.UIBaseMenu;
 import mchorse.bbs_mod.ui.framework.UIScreen;
 import mchorse.bbs_mod.ui.model_blocks.UIModelBlockPanel;
+import mchorse.bbs_mod.utils.clips.Clips;
 import mchorse.bbs_mod.utils.repos.RepositoryOperation;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
@@ -51,7 +51,7 @@ public class ClientNetwork
     {
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_CLICKED_MODEL_BLOCK_PACKET, (client, handler, buf, responseSender) -> handleClientModelBlockPacket(client, buf));
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_PLAYER_FORM_PACKET, (client, handler, buf, responseSender) -> handlePlayerFormPacket(client, buf));
-        ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_PLAY_FILM_PACKET, (client, handler, buf, responseSender) -> handlePlayFilmPacket(buf));
+        ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_PLAY_FILM_PACKET, (client, handler, buf, responseSender) -> handlePlayFilmPacket(client, buf));
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_MANAGER_DATA_PACKET, (client, handler, buf, responseSender) -> handleManagerDataPacket(buf));
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_STOP_FILM_PACKET, (client, handler, buf, responseSender) -> handleStopFilmPacket(buf));
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_HANDSHAKE, (client, handler, buf, responseSender) -> isBBSModOnServer = true);
@@ -111,17 +111,19 @@ public class ClientNetwork
         });
     }
 
-    private static void handlePlayFilmPacket(PacketByteBuf buf)
+    private static void handlePlayFilmPacket(MinecraftClient client, PacketByteBuf buf)
     {
         String filmId = buf.readString();
         boolean withCamera = buf.readBoolean();
+        Film film = new Film();
 
-        try
+        film.setId(filmId);
+        film.fromData(DataStorageUtils.readFromPacket(buf));
+
+        client.execute(() ->
         {
-            Films.playFilm(filmId, withCamera);
-        }
-        catch (Exception e)
-        {}
+            Films.playFilm(film, withCamera);
+        });
     }
 
     private static void handleManagerDataPacket(PacketByteBuf buf)
@@ -144,16 +146,7 @@ public class ClientNetwork
 
         MinecraftClient.getInstance().execute(() ->
         {
-            Film film = BBSModClient.getFilms().remove(filmId);
-            ICameraController current = BBSModClient.getCameraController().getCurrent();
-
-            if (film != null && current instanceof PlayCameraController play)
-            {
-                if (play.getContext().clips == film.camera)
-                {
-                    BBSModClient.getCameraController().remove(play);
-                }
-            }
+            Films.stopFilm(filmId);
         });
     }
 
@@ -229,12 +222,35 @@ public class ClientNetwork
         ClientPlayNetworking.send(ServerNetwork.SERVER_ACTION_RECORDING, buf);
     }
 
-    public static void sendActionPlay(String id)
+    public static void sendToggleFilm(String filmId, boolean withCamera)
     {
         PacketByteBuf buf = PacketByteBufs.create();
 
-        buf.writeString(id);
+        buf.writeString(filmId);
+        buf.writeBoolean(withCamera);
 
-        ClientPlayNetworking.send(ServerNetwork.SERVER_ACTION_PLAY, buf);
+        ClientPlayNetworking.send(ServerNetwork.SERVER_TOGGLE_FILM, buf);
+    }
+
+    public static void sendActionState(String filmId, ActionState state, int tick)
+    {
+        PacketByteBuf buf = PacketByteBufs.create();
+
+        buf.writeString(filmId);
+        buf.writeByte(state.ordinal());
+        buf.writeInt(tick);
+
+        ClientPlayNetworking.send(ServerNetwork.SERVER_ACTION_CONTROL, buf);
+    }
+
+    public static void sendActions(String filmId, int replayId, Clips actions)
+    {
+        PacketByteBuf buf = PacketByteBufs.create();
+
+        buf.writeString(filmId);
+        buf.writeInt(replayId);
+        DataStorageUtils.writeToPacket(buf, actions.toData());
+
+        ClientPlayNetworking.send(ServerNetwork.SERVER_ACTIONS_UPLOAD, buf);
     }
 }

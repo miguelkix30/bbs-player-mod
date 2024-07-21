@@ -75,7 +75,7 @@ public abstract class UIDataDashboardPanel <T extends ValueGroup> extends UICRUD
 
     /* Data population */
 
-    public final void fill(T data)
+    public void fill(T data)
     {
         this.data = data;
 
@@ -146,6 +146,14 @@ public abstract class UIDataDashboardPanel <T extends ValueGroup> extends UICRUD
         {
             this.savingTimer.mark(seconds * 1000L);
         }
+    }
+
+    @Override
+    public void close()
+    {
+        super.close();
+
+        this.save();
     }
 
     @Override

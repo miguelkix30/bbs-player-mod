@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import mchorse.bbs_mod.BBSMod;
 import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.BBSSettings;
+import mchorse.bbs_mod.actions.ActionState;
 import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.camera.clips.overwrite.IdleClip;
 import mchorse.bbs_mod.camera.controller.CameraController;
@@ -114,7 +115,10 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
     {
         super(dashboard);
 
-        this.runner = new RunnerCameraController(this);
+        this.runner = new RunnerCameraController(this, (playing) ->
+        {
+            this.notifyServer(playing ? ActionState.PLAY : ActionState.PAUSE);
+        });
         this.recorder = new UIFilmRecorder(this);
 
         this.main = new UIElement();
@@ -228,8 +232,6 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         this.keys().register(Keys.JUMP_FORWARD, () -> this.setCursor(this.getCursor() + BBSSettings.editorJump.get())).active(active).category(editor);
         this.keys().register(Keys.JUMP_BACKWARD, () -> this.setCursor(this.getCursor() - BBSSettings.editorJump.get())).active(active).category(editor);
 
-        this.keys().register(Keys.FILM_CONTROLLER_START_RECORDING_OUTSIDE, () -> this.controller.recordOutside());
-
         this.fill(null);
 
         this.setupEditorFlex(false);
@@ -323,7 +325,7 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
 
     private void dupeData(String name)
     {
-        if (this.getData() != null && !this.overlay.namesList.getList().contains(name))
+        if (this.getData() != null && !this.overlay.namesList.hasInHierarchy(name))
         {
             this.save();
             this.overlay.namesList.addFile(name);
@@ -401,7 +403,14 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
 
         Recorder recorder = BBSModClient.getFilms().stopRecording();
 
-        if (recorder != null && recorder.tick >= 0)
+        if (recorder == null || recorder.tick < 0)
+        {
+            this.notifyServer(ActionState.RESTART);
+
+            return;
+        }
+
+        if (ClientNetwork.isIsBBSModOnServer())
         {
             ClientNetwork.sendManagerDataLoad(recorder.film.getId(), (data) ->
             {
@@ -416,19 +425,29 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
                     film.copy(newFilm);
                 });
 
-                int replayId = recorder.exception;
-
-                if (CollectionUtils.inRange(film.replays.getList(), replayId))
-                {
-                    BaseValue.edit(film.replays.getList().get(replayId), (replay) ->
-                    {
-                        replay.keyframes.copy(recorder.keyframes);
-                    });
-
-                    this.dashboard.context.notify(UIKeys.FILMS_SAVED_NOTIFICATION.format(film.getId()), Colors.BLUE | Colors.A100);
-                    this.save();
-                }
+                this.applyRecordedKeyframes(recorder, film);
+                this.notifyServer(ActionState.RESTART);
+                this.fillData(film);
             });
+        }
+        else
+        {
+            this.applyRecordedKeyframes(recorder, this.data);
+        }
+    }
+
+    private void applyRecordedKeyframes(Recorder recorder, Film film)
+    {
+        int replayId = recorder.exception;
+
+        if (CollectionUtils.inRange(film.replays.getList(), replayId))
+        {
+            BaseValue.edit(film.replays.getList().get(replayId), (replay) ->
+            {
+                replay.keyframes.copy(recorder.keyframes);
+            });
+
+            this.save();
         }
     }
 
@@ -463,6 +482,8 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
 
         this.disableContext();
         this.replayEditor.close();
+
+        this.notifyServer(ActionState.STOP);
     }
 
     @Override
@@ -518,6 +539,14 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
     public IKey getTitle()
     {
         return UIKeys.FILM_TITLE;
+    }
+
+    @Override
+    public void fill(Film data)
+    {
+        this.notifyServer(ActionState.STOP);
+        super.fill(data);
+        this.notifyServer(ActionState.RESTART);
     }
 
     @Override
@@ -723,6 +752,7 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         {
             this.lastRunning = this.runner.isRunning();
             this.setCursor(0);
+            this.notifyServer(ActionState.RESTART);
         }
     }
 
@@ -766,6 +796,19 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
 
     /* IUICameraWorkDelegate implementation */
 
+    public void notifyServer(ActionState state)
+    {
+        if (this.data == null || !ClientNetwork.isIsBBSModOnServer())
+        {
+            return;
+        }
+
+        String id = this.data.getId();
+        int tick = this.runner.ticks;
+
+        ClientNetwork.sendActionState(id, state, tick);
+    }
+
     public Film getFilm()
     {
         return this.data;
@@ -799,6 +842,7 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         this.runner.ticks = Math.max(0, value);
 
         this.screenplayEditor.setCursor(this.runner.ticks);
+        this.notifyServer(ActionState.SEEK);
     }
 
     public boolean isRunning()

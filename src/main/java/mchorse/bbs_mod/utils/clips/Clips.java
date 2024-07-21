@@ -24,6 +24,11 @@ public class Clips extends ValueGroup
         this.factory = factory;
     }
 
+    public IFactory<Clip, ClipFactoryData> getFactory()
+    {
+        return this.factory;
+    }
+
     public void sortLayers()
     {
         for (Clip clip : this.clips)
@@ -35,6 +40,11 @@ public class Clips extends ValueGroup
         {
             for (Clip otherClip : this.clips)
             {
+                if (clip == otherClip)
+                {
+                    continue;
+                }
+
                 boolean sameLayer = clip.layer.get() == otherClip.layer.get();
                 boolean intersects = MathUtils.isInside(clip.tick.get(), clip.tick.get() + clip.duration.get(), otherClip.tick.get(), otherClip.tick.get() + otherClip.duration.get());
 
