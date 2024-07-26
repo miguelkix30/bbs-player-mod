@@ -83,6 +83,12 @@ public class ModelBlock extends Block implements BlockEntityProvider, Waterlogga
         return BlockRenderType.INVISIBLE;
     }
 
+    @Override
+    public boolean isTransparent(BlockState state, BlockView world, BlockPos pos)
+    {
+        return true;
+    }
+
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type)
