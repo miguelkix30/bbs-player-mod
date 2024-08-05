@@ -1,13 +1,19 @@
 package mchorse.bbs_mod.film.replays;
 
 import mchorse.bbs_mod.BBSMod;
+import mchorse.bbs_mod.actions.types.ActionClip;
+import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.forms.FormUtils;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.properties.IFormProperty;
+import mchorse.bbs_mod.settings.values.ValueBoolean;
+import mchorse.bbs_mod.settings.values.ValueFloat;
 import mchorse.bbs_mod.settings.values.ValueForm;
 import mchorse.bbs_mod.settings.values.ValueGroup;
+import mchorse.bbs_mod.settings.values.ValueString;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
+import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.clips.Clips;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
 import mchorse.bbs_mod.utils.keyframes.KeyframeSegment;
@@ -21,6 +27,10 @@ public class Replay extends ValueGroup
     public final FormProperties properties = new FormProperties("properties");
     public final Clips actions = new Clips("actions", BBSMod.getFactoryActionClips());
 
+    public final ValueString label = new ValueString("label", "");
+    public final ValueBoolean shadow = new ValueBoolean("shadow", true);
+    public final ValueFloat shadowSize = new ValueFloat("shadow_size", 0.5F);
+
     public Replay(String id)
     {
         super(id);
@@ -29,6 +39,29 @@ public class Replay extends ValueGroup
         this.add(this.keyframes);
         this.add(this.properties);
         this.add(this.actions);
+
+        this.add(this.label);
+        this.add(this.shadow);
+        this.add(this.shadowSize);
+    }
+
+    public String getName()
+    {
+        String label = this.label.get();
+
+        if (!label.isEmpty())
+        {
+            return label;
+        }
+
+        Form form = this.form.get();
+
+        if (form == null)
+        {
+            return "-";
+        }
+
+        return form.getDisplayName();
     }
 
     public void applyFrame(int tick, IEntity actor)
@@ -91,6 +124,19 @@ public class Replay extends ValueGroup
                 {
                     property.set(replayProperty.get());
                 }
+            }
+        }
+    }
+
+    public void applyClientActions(int tick, IEntity entity, Film film)
+    {
+        List<Clip> clips = this.actions.getClips(tick);
+
+        for (Clip clip : clips)
+        {
+            if (clip instanceof ActionClip actionClip && actionClip.isClient())
+            {
+                actionClip.applyClient(entity, film, this, tick);
             }
         }
     }

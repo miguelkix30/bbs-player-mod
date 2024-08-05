@@ -22,7 +22,6 @@ import mchorse.bbs_mod.graphics.Draw;
 import mchorse.bbs_mod.graphics.texture.Texture;
 import mchorse.bbs_mod.graphics.window.Window;
 import mchorse.bbs_mod.l10n.keys.IKey;
-import mchorse.bbs_mod.mixin.client.MinecraftClientInvoker;
 import mchorse.bbs_mod.morphing.Morph;
 import mchorse.bbs_mod.network.ClientNetwork;
 import mchorse.bbs_mod.resources.Link;
@@ -255,6 +254,7 @@ public class UIFilmController extends UIElement
                 entity.setForm(FormUtils.copy(replay.form.get()));
                 replay.applyFrame(this.getTick(), entity);
                 replay.applyProperties(this.getTick(), entity.getForm(), this.panel.getRunner().isRunning());
+                replay.applyClientActions(this.getTick(), entity, film);
                 entity.setPrevX(entity.getX());
                 entity.setPrevY(entity.getY());
                 entity.setPrevZ(entity.getZ());
@@ -590,11 +590,8 @@ public class UIFilmController extends UIElement
             || options.backKey.getDefaultKey() == utilKey
             || options.leftKey.getDefaultKey() == utilKey
             || options.rightKey.getDefaultKey() == utilKey
-            || options.attackKey.getDefaultKey() == utilKey
-            || options.useKey.getDefaultKey() == utilKey
             || options.sneakKey.getDefaultKey() == utilKey
             || options.sprintKey.getDefaultKey() == utilKey
-            || options.dropKey.getDefaultKey() == utilKey
             || options.jumpKey.getDefaultKey() == utilKey;
     }
 
@@ -788,20 +785,6 @@ public class UIFilmController extends UIElement
         {
             this.updateControls();
         }
-
-        if (this.canControl())
-        {
-            MinecraftClientInvoker mc = (MinecraftClientInvoker) MinecraftClient.getInstance();
-            int attackCooldown = mc.bbs$getAttackCooldown();
-
-            mc.bbs$handleInputEvents();
-            mc.bbs$handleBlockBreaking(MinecraftClient.getInstance().options.attackKey.isPressed());
-
-            if (attackCooldown > 0)
-            {
-                mc.bbs$setAttackCooldown(attackCooldown - 1);
-            }
-        }
     }
 
     private void handleRecording(RunnerCameraController runner)
@@ -865,6 +848,7 @@ public class UIFilmController extends UIElement
                 }
 
                 replay.applyProperties(ticks, entity.getForm(), runner.isRunning());
+                replay.applyClientActions(ticks, entity, this.panel.getData());
             }
 
             /* Special pausing logic */
@@ -976,14 +960,27 @@ public class UIFilmController extends UIElement
             }
         }
 
+        int x = area.ex() - 5;
+        int y = area.ey() - 5 - font.getHeight();
+
         if (this.panel.isFlying())
         {
             String label = UIKeys.FILM_CONTROLLER_SPEED.format(this.panel.dashboard.orbit.speed.getValue()).get();
             int w = font.getWidth(label);
-            int x = area.ex() - 5 - w;
-            int y = area.ey() - 5 - font.getHeight();
 
-            context.batcher.textCard(label, x, y, Colors.WHITE, Colors.A50);
+            context.batcher.textCard(label, x - w, y, Colors.WHITE, Colors.A50);
+
+            y += font.getHeight() + 2;
+        }
+
+        Replay replay = this.panel.replayEditor.getReplay();
+
+        if (replay != null)
+        {
+            String label = replay.getName();
+            int w = font.getWidth(label);
+
+            context.batcher.textCard(label, x - w, y, Colors.WHITE, Colors.A50);
         }
 
         this.renderPickingPreview(context, area);
@@ -1064,14 +1061,18 @@ public class UIFilmController extends UIElement
 
         RenderSystem.enableDepthTest();
 
-        for (IEntity entity : this.entities)
+        for (int i = 0; i < this.entities.size(); i++)
         {
+            IEntity entity = this.entities.get(i);
+
             if (this.getPovMode() == 2 && entity == getCurrentEntity() && this.orbit.enabled)
             {
                 continue;
             }
 
-            FilmController.renderEntity(this.entities, context, entity, null, isPlaying ? context.tickDelta() : 0F);
+            Replay replay = this.panel.getData().replays.getList().get(i);
+
+            FilmController.renderEntity(this.entities, context, entity, null, isPlaying ? context.tickDelta() : 0F, replay.shadow.get(), replay.shadowSize.get());
         }
 
         this.rayTraceEntity(context);
@@ -1190,7 +1191,7 @@ public class UIFilmController extends UIElement
 
         this.stencilMap.setup();
         this.stencil.apply();
-        FilmController.renderEntity(this.entities, renderContext, entity, this.stencilMap, isPlaying ? renderContext.tickDelta() : 0);
+        FilmController.renderEntity(this.entities, renderContext, entity, this.stencilMap, isPlaying ? renderContext.tickDelta() : 0, false, 0F);
 
         int x = (int) ((context.mouseX - viewport.x) / (float) viewport.w * mainTexture.width);
         int y = (int) ((1F - (context.mouseY - viewport.y) / (float) viewport.h) * mainTexture.height);

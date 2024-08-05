@@ -8,6 +8,7 @@ import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
@@ -43,7 +44,7 @@ public class MCEntity implements IEntity
     {
         Morph morph = Morph.getMorph(this.mcEntity);
 
-        return morph == null ? null : morph.form;
+        return morph == null ? null : morph.getForm();
     }
 
     @Override
@@ -53,7 +54,7 @@ public class MCEntity implements IEntity
 
         if (morph != null)
         {
-            morph.form = form;
+            morph.setForm(form);
         }
     }
 
@@ -114,14 +115,12 @@ public class MCEntity implements IEntity
     }
 
     @Override
-    public boolean isPunching()
+    public void swingArm()
     {
         if (this.mcEntity instanceof LivingEntity living)
         {
-            return living.handSwingTicks == -1;
+            living.swingHand(Hand.MAIN_HAND);
         }
-
-        return false;
     }
 
     @Override

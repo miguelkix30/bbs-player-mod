@@ -2,11 +2,13 @@ package mchorse.bbs_mod.ui.film.clips;
 
 import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.actions.types.AttackActionClip;
+import mchorse.bbs_mod.actions.types.SwipeActionClip;
 import mchorse.bbs_mod.actions.types.blocks.BreakBlockActionClip;
 import mchorse.bbs_mod.actions.types.blocks.InteractBlockActionClip;
 import mchorse.bbs_mod.actions.types.blocks.PlaceBlockActionClip;
 import mchorse.bbs_mod.actions.types.chat.ChatActionClip;
 import mchorse.bbs_mod.actions.types.chat.CommandActionClip;
+import mchorse.bbs_mod.actions.types.item.ItemDropActionClip;
 import mchorse.bbs_mod.actions.types.item.UseBlockItemActionClip;
 import mchorse.bbs_mod.actions.types.item.UseItemActionClip;
 import mchorse.bbs_mod.camera.clips.misc.AudioClientClip;
@@ -36,7 +38,9 @@ import mchorse.bbs_mod.ui.film.clips.actions.UIBreakBlockActionClip;
 import mchorse.bbs_mod.ui.film.clips.actions.UIChatActionClip;
 import mchorse.bbs_mod.ui.film.clips.actions.UICommandActionClip;
 import mchorse.bbs_mod.ui.film.clips.actions.UIInteractBlockActionClip;
+import mchorse.bbs_mod.ui.film.clips.actions.UIItemDropActionClip;
 import mchorse.bbs_mod.ui.film.clips.actions.UIPlaceBlockActionClip;
+import mchorse.bbs_mod.ui.film.clips.actions.UISwipeActionClip;
 import mchorse.bbs_mod.ui.film.clips.actions.UIUseBlockItemActionClip;
 import mchorse.bbs_mod.ui.film.clips.actions.UIUseItemActionClip;
 import mchorse.bbs_mod.ui.film.clips.widgets.UIEnvelope;
@@ -102,6 +106,8 @@ public abstract class UIClip <T extends Clip> extends UIElement
         register(UseItemActionClip.class, UIUseItemActionClip::new);
         register(UseBlockItemActionClip.class, UIUseBlockItemActionClip::new);
         register(AttackActionClip.class, UIAttackActionClip::new);
+        register(ItemDropActionClip.class, UIItemDropActionClip::new);
+        register(SwipeActionClip.class, UISwipeActionClip::new);
     }
 
     public static <T extends Clip> void register(Class<T> clazz, IUIClipFactory<T> factory)

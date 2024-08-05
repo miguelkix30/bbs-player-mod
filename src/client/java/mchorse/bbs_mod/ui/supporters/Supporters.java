@@ -68,7 +68,7 @@ public class Supporters
         this.add("WATERMELON").withDate(3, 4);
         this.add("无铭_Null").withDate(3, 4);
         this.add("silent", "https://space.bilibili.com/514637376").withDate(3, 4);
-        this.add("Usaky舞麒", "https://space.bilibili.com/673732587", "...").withDate(3, 4);
+        this.add("Usaky舞麒", "https://space.bilibili.com/673732587", "textures/banners/usakywuqi.png").withDate(3, 4);
         this.add("流风LFloy", "...", "...").withDate(3, 4);
         this.add("南风不知我意").withDate(3, 4);
         this.add("临夜Livie", "https://space.bilibili.com/1544935486").withDate(3, 5);
@@ -176,7 +176,7 @@ public class Supporters
         this.add("大鱿鱼").withDate(5, 25);
         this.add("Not_vegetabledog").withDate(5, 29);
         this.add("节奏梦想").withDate(5, 31);
-        this.add("ENDNULL").withDate(6, 3);
+        this.add("ENDNULL", "https://space.bilibili.com/505118990", "...").withDate(6, 3);
         this.add("布咕鸟不谷").withDate(6, 4);
         this.add("绚烂的白色").withDate(6, 6);
         // this.add("发电用户_yk").withDate(6, 7);
@@ -215,6 +215,12 @@ public class Supporters
         this.add("Godyum").withDate(7, 16);
         this.add("于小黑想重开").withDate(7, 17);
         this.add("海曦").withDate(7, 21);
+        this.add("假人偶咯").withDate(7, 24);
+        this.add("ALK阿狸控").withDate(7, 25);
+        this.add("牧子鱼").withDate(7, 25);
+        this.add("想摆烂的卡洛诺斯").withDate(7, 26);
+        this.add("while1cry").withDate(7, 31);
+        this.add("xu_zai").withDate(7, 31);
 
         /* Patreon */
         this.add("terbin", "https://www.youtube.com/channel/UCD4X2slLdD_WJxlW03JPVQQ", "...").withDate(2, 23);
@@ -517,11 +523,24 @@ public class Supporters
         this.add("BrainCells").withDate(7, 20);
         this.add("Sebastian Ruditz").withDate(7, 20);
         this.add("Caméléon Gamer").withDate(7, 21);
-        this.add("Mii Mimlam").withDate(7, 22);
+        this.add("Mii").withDate(7, 22);
         this.add("PistachioJay").withDate(7, 23);
         this.add("Ez Ez").withDate(7, 23);
         this.add("Liam Vinokurov").withDate(7, 24);
         this.add("TooFfion").withDate(7, 25);
+        this.add("Catolo FW").withDate(7, 26);
+        this.add("José Caballero").withDate(7, 26);
+        this.add("Biggerest").withDate(7, 26);
+        this.add("Wonder Studios").withDate(7, 27);
+        this.add("HibridNil").withDate(7, 27);
+        this.add("CT Me").withDate(7, 27);
+        this.add("Amsther").withDate(7, 27);
+        this.add("Sammy_Boy_Br 123").withDate(7, 28);
+        this.add("Tse Tin").withDate(7, 29);
+        this.add("Minaduk1").withDate(7, 30);
+        this.add("Riggih A.").withDate(7, 30);
+        this.add("T4ddyGamesBR", "https://www.youtube.com/@BUNGas99").withDate(7, 30);
+        this.add("ChillinWithDylan", "https://www.youtube.com/channel/UCM8yL498_xlj-oOMAjM7CPA").withDate(7, 31);
 
         // Thank you very much for donation! 😊 Is $ is the name you want to be included in BBS mod?
         // Thank you very much for donation! 😊 Is $ is the name you want to be included in BBS mod? Also, you can provide a link to your social media account (like YouTube, Twitter, TikTok, etc.)
@@ -606,9 +625,12 @@ public class Supporters
         this.add("wolfifurr").withDate(7, 15);
         this.add("QZero").withDate(7, 16);
         this.add("4ePHiT").withDate(7, 17);
-        this.add("lil roxx").withDate(7, 17);
+        this.add("gammuk").withDate(7, 17);
         this.add("WIN_Den").withDate(7, 18);
         this.add("Allorific").withDate(7, 19);
+        this.add("Enotiy").withDate(7, 26);
+        this.add("Library Keeper").withDate(7, 26);
+        this.add("dofimus").withDate(8, 1);
 
         /* Custom */
         this.add("Hrymka", "...", "textures/banners/hrymka.png").withDate(3, 6);

@@ -8,7 +8,6 @@
         "MouseMixin",
         "EntityRendererDispatcherInvoker",
         "PlayerEntityRendererMixin",
-        "MinecraftClientInvoker",
         "RenderTickCounterMixin",
         "IntegratedServerMixin",
         "WindowMixin",
@@ -19,7 +18,8 @@
         "LivingEntityRendererMixin",
         "iris.SystemTimeUniformsTimerMixin",
         "InGameHudMixin",
-        "KeyboardMixin"
+        "KeyboardMixin",
+        "MinecraftClientMixin"
     ],
     "injectors": {
         "defaultRequire": 1
