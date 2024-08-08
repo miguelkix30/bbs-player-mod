@@ -351,6 +351,8 @@ public class UIKeys
     public static final IKey GRAPH_TOOLTIP = L10n.lang("bbs.ui.graph.tooltip");
     public static final IKey IMPORTER_FFMPEG_NOTIFICATION = L10n.lang("bbs.ui.importer.ffmpeg-notification");
     public static final IKey IMPORTER_GIF = L10n.lang("bbs.ui.importer.gif");
+    public static final IKey IMPORTER_PNG = L10n.lang("bbs.ui.importer.png");
+    public static final IKey IMPORTER_WAV = L10n.lang("bbs.ui.importer.wav");
     public static final IKey IMPORTER_JPEG = L10n.lang("bbs.ui.importer.jpeg");
     public static final IKey IMPORTER_MPEG = L10n.lang("bbs.ui.importer.mpeg");
     public static final IKey IMPORTER_OLD_SKIN = L10n.lang("bbs.ui.importer.old_skin");
@@ -676,7 +678,8 @@ public class UIKeys
     /* Key collections */
     public static final KeyCollection C_CLIP = new KeyCollection("bbs.ui.camera.clips.^")
         .load(BBSMod.getFactoryCameraClips().getStringKeys())
-        .load(BBSMod.getFactoryScreenplayClips().getStringKeys());
+        .load(BBSMod.getFactoryScreenplayClips().getStringKeys())
+        .load(BBSMod.getFactoryActionClips().getStringKeys());
 
     public static final KeyCollection C_CURVE_TYPE = new KeyCollection("bbs.ui.snowstorm.curves.types.^")
         .load(EnumUtils.getKeys(ParticleCurveType.class, (c) -> c.id));

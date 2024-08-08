@@ -1,26 +1,32 @@
 package mchorse.bbs_mod.importers.types;
 
+import mchorse.bbs_mod.BBSMod;
 import mchorse.bbs_mod.importers.ImporterContext;
 import mchorse.bbs_mod.importers.ImporterUtils;
 import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.utils.FFMpegUtils;
-import mchorse.bbs_mod.utils.StringUtils;
 
 import java.io.File;
 
-public class GIFImporter implements IImporter
+public class WAVImporter implements IImporter
 {
     @Override
     public IKey getName()
     {
-        return UIKeys.IMPORTER_GIF;
+        return UIKeys.IMPORTER_WAV;
+    }
+
+    @Override
+    public File getDefaultFolder()
+    {
+        return BBSMod.getAssetsPath("audio");
     }
 
     @Override
     public boolean canImport(ImporterContext context)
     {
-        return ImporterUtils.checkFileEtension(context.files, ".gif");
+        return ImporterUtils.checkFileEtension(context.files, ".wav");
     }
 
     @Override
@@ -28,10 +34,11 @@ public class GIFImporter implements IImporter
     {
         for (File file : context.files)
         {
-            String name = StringUtils.removeExtension(file.getName()) + "_%d.png";
+            String name = file.getName();
             File destination = context.getDestination(this);
 
-            FFMpegUtils.execute(destination, "-y", "-i", file.getAbsolutePath(), ImporterUtils.getName(destination, name));
+            /* Force the audio to be mono */
+            FFMpegUtils.execute(destination, "-y", "-i", file.getAbsolutePath(), "-ac", "1", ImporterUtils.getName(destination, name));
         }
     }
 }
