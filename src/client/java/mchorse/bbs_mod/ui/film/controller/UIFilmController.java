@@ -48,7 +48,9 @@ import mchorse.bbs_mod.utils.Pair;
 import mchorse.bbs_mod.utils.RayTracing;
 import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.joml.Matrices;
+import mchorse.bbs_mod.utils.keyframes.Keyframe;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
+import mchorse.bbs_mod.utils.keyframes.KeyframeSegment;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.Mouse;
@@ -76,6 +78,13 @@ import java.util.function.Supplier;
 
 public class UIFilmController extends UIElement
 {
+    public static final int CAMERA_MODE_CAMERA = 0;
+    public static final int CAMERA_MODE_FREE = 1;
+    public static final int CAMERA_MODE_ORBIT = 2;
+    public static final int CAMERA_MODE_FIRST_PERSON = 3;
+    public static final int CAMERA_MODE_THIRD_PERSON_BACK = 4;
+    public static final int CAMERA_MODE_THIRD_PERSON_FRONT = 5;
+
     public final UIFilmPanel panel;
 
     public final List<IEntity> entities = new ArrayList<>();
@@ -103,6 +112,8 @@ public class UIFilmController extends UIElement
     public final OrbitFilmCameraController orbit = new OrbitFilmCameraController(this);
     private int pov;
     private int lastTick;
+
+    private OnionSkin onionSkin = new OnionSkin();
 
     private WorldRenderContext worldRenderContext;
 
@@ -137,7 +148,17 @@ public class UIFilmController extends UIElement
                 this.panel.replayEditor.moveReplay(result.getPos().x, result.getPos().y, result.getPos().z);
             }
         }).active(hasActor).category(category);
-        this.keys().register(Keys.FILM_CONTROLLER_KEYS_RESTART_ACTIONS, () -> this.panel.notifyServer(ActionState.RESTART)).category(category);
+        this.keys().register(Keys.FILM_CONTROLLER_RESTART_ACTIONS, () -> this.panel.notifyServer(ActionState.RESTART)).category(category);
+        this.keys().register(Keys.FILM_CONTROLLER_TOGGLE_ONION_SKIN, () ->
+        {
+            this.onionSkin.enabled = !this.onionSkin.enabled;
+
+            UIUtils.playClick();
+        }).category(category);
+        this.keys().register(Keys.FILM_CONTROLLER_OPEN_REPLAYS, () ->
+        {
+            this.panel.preview.openReplays();
+        }).category(category);
 
         this.noCulling();
     }
@@ -154,6 +175,11 @@ public class UIFilmController extends UIElement
         {
             GLFW.glfwSetInputMode(window.getHandle(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
         }
+    }
+
+    public OnionSkin getOnionSkin()
+    {
+        return this.onionSkin;
     }
 
     private int getTick()
@@ -183,9 +209,9 @@ public class UIFilmController extends UIElement
         return null;
     }
 
-    private int getPovMode()
+    public int getPovMode()
     {
-        return this.pov % 5;
+        return this.pov % 6;
     }
 
     public void setPov(int pov)
@@ -631,11 +657,12 @@ public class UIFilmController extends UIElement
         {
             int color = BBSSettings.primaryColor(0);
 
-            menu.autoKeys().action(Icons.CAMERA, UIKeys.FILM_REPLAY_ORBIT_CAMERA, this.pov == 0 ? color : 0, () -> this.setPov(0));
-            menu.action(Icons.ORBIT, UIKeys.FILM_REPLAY_ORBIT_ORBIT, this.pov == 1 ? color : 0, () -> this.setPov(1));
-            menu.action(Icons.VISIBLE, UIKeys.FILM_REPLAY_ORBIT_FIRST_PERSON, this.pov == 2 ? color : 0, () -> this.setPov(2));
-            menu.action(Icons.POSE, UIKeys.FILM_REPLAY_ORBIT_THIRD_PERSON_FRONT, this.pov == 3 ? color : 0, () -> this.setPov(3));
-            menu.action(Icons.POSE, UIKeys.FILM_REPLAY_ORBIT_THIRD_PERSON_BACK, this.pov == 4 ? color : 0, () -> this.setPov(4));
+            menu.autoKeys().action(Icons.CAMERA, UIKeys.FILM_REPLAY_ORBIT_CAMERA, this.pov == CAMERA_MODE_CAMERA ? color : 0, () -> this.setPov(0));
+            menu.action(Icons.REFRESH, UIKeys.FILM_REPLAY_ORBIT_FREE, this.pov == CAMERA_MODE_FREE ? color : 0, () -> this.setPov(1));
+            menu.action(Icons.ORBIT, UIKeys.FILM_REPLAY_ORBIT_ORBIT, this.pov == CAMERA_MODE_ORBIT ? color : 0, () -> this.setPov(2));
+            menu.action(Icons.VISIBLE, UIKeys.FILM_REPLAY_ORBIT_FIRST_PERSON, this.pov == CAMERA_MODE_FIRST_PERSON ? color : 0, () -> this.setPov(3));
+            menu.action(Icons.POSE, UIKeys.FILM_REPLAY_ORBIT_THIRD_PERSON_BACK, this.pov == CAMERA_MODE_THIRD_PERSON_BACK ? color : 0, () -> this.setPov(4));
+            menu.action(Icons.POSE, UIKeys.FILM_REPLAY_ORBIT_THIRD_PERSON_FRONT, this.pov == CAMERA_MODE_THIRD_PERSON_FRONT ? color : 0, () -> this.setPov(5));
         });
     }
 
@@ -643,15 +670,15 @@ public class UIFilmController extends UIElement
     {
         if (this.orbit.enabled)
         {
-            int mode = this.getPovMode() - 1;
+            int mode = this.getPovMode();
 
-            if (mode == 0)
+            if (mode == CAMERA_MODE_ORBIT)
             {
                 this.orbit.setup(camera, transition);
 
                 camera.fov = BBSSettings.getFov();
             }
-            else
+            else if (mode != CAMERA_MODE_FREE)
             {
                 this.handleFirstThirdPerson(camera, transition, mode);
             }
@@ -670,7 +697,6 @@ public class UIFilmController extends UIElement
         Vector3d position = new Vector3d();
         Vector3f rotation = new Vector3f();
         float distance = this.orbit.getDistance();
-        boolean back = mode == 2;
 
         position.set(controller.getPrevX(), controller.getPrevY(), controller.getPrevZ());
         position.lerp(new Vector3d(controller.getX(), controller.getY(), controller.getZ()), transition);
@@ -682,7 +708,7 @@ public class UIFilmController extends UIElement
         rotation.x = MathUtils.toRad(rotation.x);
         rotation.y = MathUtils.toRad(rotation.y);
 
-        if (mode == 1)
+        if (mode == CAMERA_MODE_FIRST_PERSON)
         {
             camera.position.set(position);
             camera.rotation.set(rotation.x, rotation.y + MathUtils.PI, 0F);
@@ -691,6 +717,7 @@ public class UIFilmController extends UIElement
             return;
         }
 
+        boolean back = mode == CAMERA_MODE_THIRD_PERSON_BACK;
         Vector3f rotate = Matrices.rotation(rotation.x * (back ? 1 : -1), (back ? 0F : MathUtils.PI) - rotation.y);
         World world = MinecraftClient.getInstance().world;
 
@@ -1056,6 +1083,7 @@ public class UIFilmController extends UIElement
     public void renderFrame(WorldRenderContext context)
     {
         boolean isPlaying = this.isPlaying();
+        int tick = this.getTick();
 
         this.worldRenderContext = context;
 
@@ -1065,14 +1093,50 @@ public class UIFilmController extends UIElement
         {
             IEntity entity = this.entities.get(i);
 
-            if (this.getPovMode() == 2 && entity == getCurrentEntity() && this.orbit.enabled)
+            if (this.getPovMode() == CAMERA_MODE_FIRST_PERSON && entity == this.getCurrentEntity() && this.orbit.enabled)
             {
                 continue;
             }
 
             Replay replay = this.panel.getData().replays.getList().get(i);
+            BaseValue value = replay.properties.get(this.onionSkin.getGroup());
 
             FilmController.renderEntity(this.entities, context, entity, null, isPlaying ? context.tickDelta() : 0F, replay.shadow.get(), replay.shadowSize.get());
+
+            if (value instanceof KeyframeChannel<?> pose && entity instanceof StubEntity)
+            {
+                boolean canRender = this.onionSkin.enabled;
+
+                if (!this.onionSkin.all)
+                {
+                    canRender = canRender && entity == this.getCurrentEntity();
+                }
+
+                if (canRender)
+                {
+                    KeyframeSegment<?> segment = pose.findSegment(tick);
+
+                    if (segment != null)
+                    {
+                        this.renderOnion(replay, pose.getKeyframes().indexOf(segment.a), -1, pose, this.onionSkin.preColor, this.onionSkin.preFrames, context, isPlaying, entity);
+                        this.renderOnion(replay, pose.getKeyframes().indexOf(segment.b), 1, pose, this.onionSkin.postColor, this.onionSkin.postFrames, context, isPlaying, entity);
+
+                        replay.applyFrame(tick, entity, null);
+                        replay.applyProperties(tick, entity.getForm(), isPlaying);
+
+                        if (!isPlaying)
+                        {
+                            entity.setPrevX(entity.getX());
+                            entity.setPrevY(entity.getY());
+                            entity.setPrevZ(entity.getZ());
+                            entity.setPrevYaw(entity.getYaw());
+                            entity.setPrevHeadYaw(entity.getHeadYaw());
+                            entity.setPrevBodyYaw(entity.getBodyYaw());
+                            entity.setPrevPitch(entity.getPitch());
+                        }
+                    }
+                }
+            }
         }
 
         this.rayTraceEntity(context);
@@ -1107,6 +1171,25 @@ public class UIFilmController extends UIElement
         this.lastMouse.set(x, y);
 
         RenderSystem.disableDepthTest();
+    }
+
+    private void renderOnion(Replay replay, int index, int direction, KeyframeChannel<?> pose, int color, int frames, WorldRenderContext context, boolean isPlaying, IEntity entity)
+    {
+        List<? extends Keyframe<?>> keyframes = pose.getKeyframes();
+        float alpha = Colors.getAlpha(color);
+
+        for (; CollectionUtils.inRange(keyframes, index) && frames > 0; index += direction)
+        {
+            Keyframe<?> keyframe = keyframes.get(index);
+
+            replay.applyFrame((int) keyframe.getTick(), entity);
+            replay.applyProperties((int) keyframe.getTick(), entity.getForm(), isPlaying);
+
+            FilmController.renderEntity(this.entities, context, entity, null, 1F, Colors.setA(color, alpha), false, 0F);
+
+            frames -= 1;
+            alpha *= alpha;
+        }
     }
 
     private void rayTraceEntity(WorldRenderContext context)

@@ -41,6 +41,7 @@ public class UIKeys
     public static final IKey CAMERA_EDITOR_KEYS_EDITOR_NEXT = L10n.lang("bbs.ui.camera.editor.keys.editor.next");
     public static final IKey CAMERA_EDITOR_KEYS_EDITOR_NEXT_CLIP = L10n.lang("bbs.ui.camera.editor.keys.editor.next_clip");
     public static final IKey CAMERA_EDITOR_KEYS_EDITOR_PLAUSE = L10n.lang("bbs.ui.camera.editor.keys.editor.plause");
+    public static final IKey CAMERA_EDITOR_KEYS_EDITOR_PLAY_FILM = L10n.lang("bbs.ui.camera.editor.keys.editor.play_film");
     public static final IKey CAMERA_EDITOR_KEYS_EDITOR_PREV = L10n.lang("bbs.ui.camera.editor.keys.editor.prev");
     public static final IKey CAMERA_EDITOR_KEYS_EDITOR_PREV_CLIP = L10n.lang("bbs.ui.camera.editor.keys.editor.prev_clip");
     public static final IKey CAMERA_EDITOR_KEYS_EDITOR_REDO = L10n.lang("bbs.ui.camera.editor.keys.editor.redo");
@@ -51,6 +52,7 @@ public class UIKeys
     public static final IKey CAMERA_EDITOR_KEYS_LOOPING_SET_MAX = L10n.lang("bbs.ui.camera.editor.keys.looping.set_max");
     public static final IKey CAMERA_EDITOR_KEYS_LOOPING_SET_MIN = L10n.lang("bbs.ui.camera.editor.keys.looping.set_min");
     public static final IKey CAMERA_EDITOR_KEYS_LOOPING_TITLE = L10n.lang("bbs.ui.camera.editor.keys.looping.title");
+    public static final IKey CAMERA_EDITOR_KEYS_LOOPING_TOGGLE_NOTIFICATION = L10n.lang("bbs.ui.camera.editor.keys.looping.toggle-notification");
     public static final IKey CAMERA_EDITOR_KEYS_MODES_FLIGHT = L10n.lang("bbs.ui.camera.editor.keys.modes.flight");
     public static final IKey CAMERA_EDITOR_KEYS_MODES_LOOPING = L10n.lang("bbs.ui.camera.editor.keys.modes.looping");
     public static final IKey CAMERA_EDITOR_KEYS_MODES_TITLE = L10n.lang("bbs.ui.camera.editor.keys.modes.title");
@@ -198,9 +200,17 @@ public class UIKeys
     public static final IKey FILM_CONTROLLER_KEYS_START_RECORDING = L10n.lang("bbs.ui.film.controller.keys.start_recording");
     public static final IKey FILM_CONTROLLER_KEYS_TOGGLE_CONTROL = L10n.lang("bbs.ui.film.controller.keys.toggle_control");
     public static final IKey FILM_CONTROLLER_KEYS_TOGGLE_ORBIT_MODE = L10n.lang("bbs.ui.film.controller.keys.toggle_orbit_mode");
+    public static final IKey FILM_CONTROLLER_KEYS_OPEN_REPLAYS = L10n.lang("bbs.ui.film.controller.keys.open_replays");
+    public static final IKey FILM_CONTROLLER_KEYS_CYCLE_EDITORS = L10n.lang("bbs.ui.film.controller.keys.cycle_editors");
     public static final IKey FILM_CONTROLLER_RECORD_DESCRIPTION = L10n.lang("bbs.ui.film.controller.record-description");
     public static final IKey FILM_CONTROLLER_RECORD_TITLE = L10n.lang("bbs.ui.film.controller.record-title");
     public static final IKey FILM_CONTROLLER_SERVER_WARNING = L10n.lang("bbs.ui.film.controller.server_warning");
+    public static final IKey FILM_CONTROLLER_ONION_SKIN_ALL_DESCRIPTION = L10n.lang("bbs.ui.film.controller.onion_skin.all-description");
+    public static final IKey FILM_CONTROLLER_ONION_SKIN_GROUP = L10n.lang("bbs.ui.film.controller.onion_skin.group");
+    public static final IKey FILM_CONTROLLER_ONION_SKIN_KEYS_TOGGLE = L10n.lang("bbs.ui.film.controller.onion_skin.keys.toggle");
+    public static final IKey FILM_CONTROLLER_ONION_SKIN_NEXT = L10n.lang("bbs.ui.film.controller.onion_skin.next");
+    public static final IKey FILM_CONTROLLER_ONION_SKIN_PREV = L10n.lang("bbs.ui.film.controller.onion_skin.prev");
+    public static final IKey FILM_CONTROLLER_ONION_SKIN_TITLE = L10n.lang("bbs.ui.film.controller.onion_skin.title");
     public static final IKey FILM_CONTROLLER_SPEED = L10n.lang("bbs.ui.film.controller.speed");
     public static final IKey FILM_CONTROLLER_TICKS = L10n.lang("bbs.ui.film.controller.ticks");
     public static final IKey FILM_GROUPS_ALL = L10n.lang("bbs.ui.film.groups.all");
@@ -224,6 +234,7 @@ public class UIKeys
     public static final IKey FILM_REPLAY_CONTEXT_MOVE_HERE = L10n.lang("bbs.ui.film.replay.context.move_here");
     public static final IKey FILM_REPLAY_LABEL = L10n.lang("bbs.ui.film.replay.label");
     public static final IKey FILM_REPLAY_ORBIT_CAMERA = L10n.lang("bbs.ui.film.replay.orbit.camera");
+    public static final IKey FILM_REPLAY_ORBIT_FREE = L10n.lang("bbs.ui.film.replay.orbit.free");
     public static final IKey FILM_REPLAY_ORBIT_FIRST_PERSON = L10n.lang("bbs.ui.film.replay.orbit.first_person");
     public static final IKey FILM_REPLAY_ORBIT_ORBIT = L10n.lang("bbs.ui.film.replay.orbit.orbit");
     public static final IKey FILM_REPLAY_ORBIT_THIRD_PERSON_BACK = L10n.lang("bbs.ui.film.replay.orbit.third_person_back");
@@ -371,6 +382,8 @@ public class UIKeys
     public static final IKey KEYFRAMES_FORCED_DURATION = L10n.lang("bbs.ui.keyframes.forced_duration");
     public static final IKey KEYFRAMES_KEYS_CATEGORY = L10n.lang("bbs.ui.keyframes.keys.category");
     public static final IKey KEYFRAMES_KEYS_TOGGLE_INTERP = L10n.lang("bbs.ui.keyframes.keys.toggle_interp");
+    public static final IKey KEYFRAMES_KEYS_SELECT_LEFT = L10n.lang("bbs.ui.keyframes.keys.select_left");
+    public static final IKey KEYFRAMES_KEYS_SELECT_RIGHT = L10n.lang("bbs.ui.keyframes.keys.select_right");
     public static final IKey KEYFRAMES_TICK = L10n.lang("bbs.ui.keyframes.tick");
     public static final IKey KEYFRAMES_VALUE = L10n.lang("bbs.ui.keyframes.value");
     public static final IKey KEYS_LIST = L10n.lang("bbs.ui.keys.list");
@@ -424,6 +437,7 @@ public class UIKeys
     public static final IKey POSE_CONTEXT_RESET = L10n.lang("bbs.ui.pose.context.reset");
     public static final IKey POSE_CONTEXT_SAVE = L10n.lang("bbs.ui.pose.context.save");
     public static final IKey SCENE_REPLAYS_CONTEXT_ADD = L10n.lang("bbs.ui.scene.replays.context.add");
+    public static final IKey SCENE_REPLAYS_CONTEXT_FROM_CAMERA = L10n.lang("bbs.ui.scene.replays.context.from_camera");
     public static final IKey SCENE_REPLAYS_CONTEXT_DUPE = L10n.lang("bbs.ui.scene.replays.context.dupe");
     public static final IKey SCENE_REPLAYS_CONTEXT_EDIT_FORM = L10n.lang("bbs.ui.scene.replays.context.edit_form");
     public static final IKey SCENE_REPLAYS_CONTEXT_PICK_FORM = L10n.lang("bbs.ui.scene.replays.context.pick_form");

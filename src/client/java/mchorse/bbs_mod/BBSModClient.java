@@ -27,6 +27,7 @@ import mchorse.bbs_mod.ui.dashboard.UIDashboard;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
 import mchorse.bbs_mod.ui.framework.UIScreen;
 import mchorse.bbs_mod.ui.model_blocks.UIModelBlockEditorMenu;
+import mchorse.bbs_mod.ui.morphing.UIMorphingPanel;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.ui.utils.keys.KeyCombo;
 import mchorse.bbs_mod.ui.utils.keys.KeybindSettings;
@@ -44,7 +45,6 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.impl.client.rendering.BlockEntityRendererRegistryImpl;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.Window;
@@ -58,7 +58,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Collections;
 
 public class BBSModClient implements ClientModInitializer
@@ -83,6 +82,7 @@ public class BBSModClient implements ClientModInitializer
     private static KeyBinding keyRecordReplay;
     private static KeyBinding keyRecordVideo;
     private static KeyBinding keyOpenReplays;
+    private static KeyBinding keyOpenMorphing;
     private static KeyBinding keyDemorph;
 
     private static UIDashboard dashboard;
@@ -252,6 +252,7 @@ public class BBSModClient implements ClientModInitializer
         keyRecordReplay = this.createKey("record_replay", GLFW.GLFW_KEY_RIGHT_ALT);
         keyRecordVideo = this.createKey("record_video", GLFW.GLFW_KEY_F4);
         keyOpenReplays = this.createKey("open_replays", GLFW.GLFW_KEY_RIGHT_SHIFT);
+        keyOpenMorphing = this.createKey("open_morphing", GLFW.GLFW_KEY_B);
         keyDemorph = this.createKey("demorph", GLFW.GLFW_KEY_PERIOD);
 
         WorldRenderEvents.AFTER_ENTITIES.register((context) ->
@@ -266,9 +267,15 @@ public class BBSModClient implements ClientModInitializer
         {
             if (requestToggleRecording)
             {
-                Framebuffer framebuffer = MinecraftClient.getInstance().getFramebuffer();
+                Window window = MinecraftClient.getInstance().getWindow();
+                int width = Math.max(window.getWidth(), 2);
+                int height = Math.max(window.getHeight(), 2);
 
-                videoRecorder.toggleRecording(framebuffer.getColorAttachment(), framebuffer.textureWidth, framebuffer.textureHeight);
+                if (width % 2 == 1) width -= width % 2;
+                if (height % 2 == 1) height -= height % 2;
+
+                videoRecorder.toggleRecording(BBSRendering.getTexture().id, width, height);
+                BBSRendering.setCustomSize(videoRecorder.isRecording(), width, height);
 
                 requestToggleRecording = false;
             }
@@ -315,6 +322,13 @@ public class BBSModClient implements ClientModInitializer
             while (keyRecordReplay.wasPressed()) this.keyRecordReplay();
             while (keyRecordVideo.wasPressed()) requestToggleRecording = true;
             while (keyOpenReplays.wasPressed()) this.keyOpenReplays();
+            while (keyOpenMorphing.wasPressed())
+            {
+                UIDashboard dashboard = getDashboard();
+
+                UIScreen.open(dashboard);
+                dashboard.setPanel(dashboard.getPanel(UIMorphingPanel.class));
+            }
             while (keyDemorph.wasPressed()) ClientNetwork.sendPlayerForm(null);
         });
 
@@ -361,9 +375,9 @@ public class BBSModClient implements ClientModInitializer
             isForge = true;
         }
         catch (Exception e)
-        {
-            e.printStackTrace();
-        }
+        {}
+
+        BBSMod.getAudioFolder().mkdirs();
 
         File steve = BBSMod.getAssetsPath("models/player/steve");
         File alex = BBSMod.getAssetsPath("models/player/alex");

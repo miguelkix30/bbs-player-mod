@@ -1,6 +1,8 @@
 package mchorse.bbs_mod.ui.film.replays;
 
 import mchorse.bbs_mod.camera.Camera;
+import mchorse.bbs_mod.camera.clips.CameraClipContext;
+import mchorse.bbs_mod.camera.data.Position;
 import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.FormUtilsClient;
@@ -15,9 +17,10 @@ import mchorse.bbs_mod.ui.framework.elements.UIElement;
 import mchorse.bbs_mod.ui.framework.elements.input.list.UIList;
 import mchorse.bbs_mod.ui.utils.UIDataUtils;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
-import mchorse.bbs_mod.utils.RayTracing;
-import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.MathUtils;
+import mchorse.bbs_mod.utils.RayTracing;
+import mchorse.bbs_mod.utils.clips.Clip;
+import mchorse.bbs_mod.utils.clips.Clips;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -47,16 +50,17 @@ public class UIReplayList extends UIList<Replay>
         {
             menu.action(Icons.ADD, UIKeys.SCENE_REPLAYS_CONTEXT_ADD, this::addReplay);
 
+            int duration = this.panel.getFilm().camera.calculateDuration();
+
+            if (duration > 0)
+            {
+                menu.action(Icons.PLAY, UIKeys.SCENE_REPLAYS_CONTEXT_FROM_CAMERA, () -> this.fromCamera(duration));
+            }
+
             if (this.isSelected())
             {
                 menu.action(Icons.DUPE, UIKeys.SCENE_REPLAYS_CONTEXT_DUPE, this::dupeReplay);
                 menu.action(Icons.REMOVE, UIKeys.SCENE_REPLAYS_CONTEXT_REMOVE, this::removeReplay);
-
-                if (this.isSelected())
-                {
-                    menu.action(Icons.POSE, UIKeys.SCENE_REPLAYS_CONTEXT_PICK_FORM, () -> this.openFormEditor(this.getCurrentFirst().form, false));
-                    menu.action(Icons.EDIT, UIKeys.SCENE_REPLAYS_CONTEXT_EDIT_FORM, () -> this.openFormEditor(this.getCurrentFirst().form, true));
-                }
             }
         });
 
@@ -64,15 +68,15 @@ public class UIReplayList extends UIList<Replay>
 
         this.keys().register(Keys.FORMS_PICK, () ->
         {
-            this.openFormEditor(this.getCurrentFirst().form, false);
+            this.openFormEditor(this.getCurrentFirst().form, false, null);
         }).active(active);
         this.keys().register(Keys.FORMS_EDIT, () ->
         {
-            this.openFormEditor(this.getCurrentFirst().form, true);
+            this.openFormEditor(this.getCurrentFirst().form, true, null);
         }).active(active);
     }
 
-    private void openFormEditor(ValueForm form, boolean editing)
+    public void openFormEditor(ValueForm form, boolean editing, Consumer<Form> consumer)
     {
         UIElement target = this.panel;
 
@@ -85,6 +89,11 @@ public class UIReplayList extends UIList<Replay>
         {
             form.set(f);
             this.updateFilmEditor();
+
+            if (consumer != null)
+            {
+                consumer.accept(f);
+            }
         });
 
         palette.updatable();
@@ -107,6 +116,47 @@ public class UIReplayList extends UIList<Replay>
         this.addReplay(position, camera.rotation.x, camera.rotation.y + MathUtils.PI);
     }
 
+    private void fromCamera(int duration)
+    {
+        Position position = new Position();
+        Clips camera = this.panel.getFilm().camera;
+        CameraClipContext context = new CameraClipContext();
+
+        Film film = this.panel.getData();
+        Replay replay = film.replays.addReplay();
+
+        context.clips = camera;
+
+        for (int i = 0; i < duration; i++)
+        {
+            context.clipData.clear();
+            context.setup(i, 0F);
+
+            for (Clip clip : context.clips.getClips(i))
+            {
+                context.apply(clip, position);
+            }
+
+            context.currentLayer = 0;
+
+            float yaw = position.angle.yaw - 180;
+
+            replay.keyframes.x.insert(i, position.point.x);
+            replay.keyframes.y.insert(i, position.point.y);
+            replay.keyframes.z.insert(i, position.point.z);
+            replay.keyframes.yaw.insert(i, (double) yaw);
+            replay.keyframes.headYaw.insert(i, (double) yaw);
+            replay.keyframes.bodyYaw.insert(i, (double) yaw);
+            replay.keyframes.pitch.insert(i, (double) position.angle.pitch);
+        }
+
+        this.update();
+        this.panel.replayEditor.setReplay(replay);
+        this.updateFilmEditor();
+
+        this.openFormEditor(replay.form, false, null);
+    }
+
     public void addReplay(Vector3d position, float pitch, float yaw)
     {
         Film film = this.panel.getData();
@@ -125,7 +175,7 @@ public class UIReplayList extends UIList<Replay>
         this.panel.replayEditor.setReplay(replay);
         this.updateFilmEditor();
 
-        this.openFormEditor(replay.form, false);
+        this.openFormEditor(replay.form, false, null);
     }
 
     private void updateFilmEditor()
