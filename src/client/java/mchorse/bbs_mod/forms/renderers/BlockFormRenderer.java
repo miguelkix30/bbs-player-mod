@@ -25,6 +25,8 @@ public class BlockFormRenderer extends FormRenderer<BlockForm>
     @Override
     public void renderInUI(UIContext context, int x1, int y1, int x2, int y2)
     {
+        context.batcher.getContext().draw();
+
         CustomVertexConsumerProvider consumers = FormUtilsClient.getProvider();
         MatrixStack matrices = context.batcher.getContext().getMatrices();
 
@@ -32,6 +34,7 @@ public class BlockFormRenderer extends FormRenderer<BlockForm>
 
         matrices.push();
         MatrixStackUtils.multiply(matrices, uiMatrix);
+        matrices.scale(this.form.uiScale.get(), this.form.uiScale.get(), this.form.uiScale.get());
         matrices.translate(-0.5F, 0F, -0.5F);
 
         matrices.peek().getNormalMatrix().getScale(Vectors.EMPTY_3F);
@@ -56,7 +59,7 @@ public class BlockFormRenderer extends FormRenderer<BlockForm>
 
         if (context.isPicking())
         {
-            consumers.hijackVertexFormat(VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL, () ->
+            CustomVertexConsumerProvider.hijackVertexFormat(VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL, () ->
             {
                 this.setupTarget(context, BBSShaders.getPickerModelsProgram());
                 RenderSystem.setShader(BBSShaders::getPickerModelsProgram);
@@ -67,7 +70,7 @@ public class BlockFormRenderer extends FormRenderer<BlockForm>
 
         MinecraftClient.getInstance().getBlockRenderManager().renderBlockAsEntity(this.form.blockState.get(context.getTransition()), context.stack, consumers, light, context.overlay);
         consumers.draw();
-        consumers.clearRunnables();
+        CustomVertexConsumerProvider.clearRunnables();
 
         context.stack.pop();
 

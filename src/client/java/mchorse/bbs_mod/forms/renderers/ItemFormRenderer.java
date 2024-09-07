@@ -25,6 +25,8 @@ public class ItemFormRenderer extends FormRenderer<ItemForm>
     @Override
     public void renderInUI(UIContext context, int x1, int y1, int x2, int y2)
     {
+        context.batcher.getContext().draw();
+
         CustomVertexConsumerProvider consumers = FormUtilsClient.getProvider();
         MatrixStack matrices = context.batcher.getContext().getMatrices();
 
@@ -32,6 +34,7 @@ public class ItemFormRenderer extends FormRenderer<ItemForm>
 
         matrices.push();
         MatrixStackUtils.multiply(matrices, uiMatrix);
+        matrices.scale(this.form.uiScale.get(), this.form.uiScale.get(), this.form.uiScale.get());
 
         matrices.peek().getNormalMatrix().getScale(Vectors.EMPTY_3F);
         matrices.peek().getNormalMatrix().scale(1F / Vectors.EMPTY_3F.x, -1F / Vectors.EMPTY_3F.y, 1F / Vectors.EMPTY_3F.z);
@@ -54,7 +57,7 @@ public class ItemFormRenderer extends FormRenderer<ItemForm>
 
         if (context.isPicking())
         {
-            consumers.hijackVertexFormat(VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL, () ->
+            CustomVertexConsumerProvider.hijackVertexFormat(VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL, () ->
             {
                 this.setupTarget(context, BBSShaders.getPickerModelsProgram());
                 RenderSystem.setShader(BBSShaders::getPickerModelsProgram);
@@ -65,7 +68,7 @@ public class ItemFormRenderer extends FormRenderer<ItemForm>
 
         MinecraftClient.getInstance().getItemRenderer().renderItem(this.form.stack.get(context.getTransition()), this.form.modelTransform.get(), light, context.overlay, context.stack, consumers, context.entity.getWorld(), 0);
         consumers.draw();
-        consumers.clearRunnables();
+        CustomVertexConsumerProvider.clearRunnables();
 
         context.stack.pop();
 

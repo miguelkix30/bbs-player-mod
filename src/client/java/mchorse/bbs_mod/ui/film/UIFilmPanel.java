@@ -99,6 +99,7 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
 
     private Camera camera = new Camera();
     private boolean entered;
+    public boolean playerToCamera;
 
     /* Entity control */
     private UIFilmController controller = new UIFilmController(this);
@@ -245,7 +246,7 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         this.keys().register(Keys.JUMP_BACKWARD, () -> this.setCursor(this.getCursor() - BBSSettings.editorJump.get())).active(active).category(editor);
         this.keys().register(Keys.FILM_CONTROLLER_CYCLE_EDITORS, () ->
         {
-            this.showPanel(this.panels.get(MathUtils.cycler(this.getPanelIndex() + (Window.isShiftPressed() ? -1 : 1), 0, this.panels.size() - 1)));
+            this.showPanel(MathUtils.cycler(this.getPanelIndex() + (Window.isShiftPressed() ? -1 : 1), 0, this.panels.size() - 1));
             UIUtils.playClick();
         }).category(editor);
 
@@ -307,6 +308,11 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         }
 
         return -1;
+    }
+
+    public void showPanel(int index)
+    {
+        this.showPanel(this.panels.get(index));
     }
 
     public void showPanel(UIElement element)
@@ -389,11 +395,11 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
                         continue;
                     }
 
-                    KeyframeChannel<Double> channel = (KeyframeChannel<Double>) value;
+                    KeyframeChannel channel = (KeyframeChannel) value;
 
                     if (!channel.isEmpty())
                     {
-                        KeyframeChannel<Double> newChannel = (KeyframeChannel<Double>) copy.keyframes.get(channel.getId());
+                        KeyframeChannel newChannel = (KeyframeChannel) copy.keyframes.get(channel.getId());
 
                         newChannel.insert(0, channel.interpolate(tick));
                     }
@@ -466,10 +472,11 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
     private void applyRecordedKeyframes(Recorder recorder, Film film)
     {
         int replayId = recorder.exception;
+        Replay rp = CollectionUtils.getSafe(film.replays.getList(), replayId);
 
-        if (CollectionUtils.inRange(film.replays.getList(), replayId))
+        if (rp != null)
         {
-            BaseValue.edit(film.replays.getList().get(replayId), (replay) ->
+            BaseValue.edit(rp, (replay) ->
             {
                 replay.keyframes.copy(recorder.keyframes);
             });
@@ -665,6 +672,11 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
     public void update()
     {
         this.controller.update();
+
+        if (this.playerToCamera && this.data != null)
+        {
+            this.teleportToCamera();
+        }
 
         super.update();
     }
@@ -920,6 +932,26 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         if (this.data != null)
         {
             this.screenplayEditor.setFilm(this.data);
+        }
+    }
+
+    public void teleportToCamera()
+    {
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        Vector3d cameraPos = this.getCamera().position;
+        double posX = Math.floor(cameraPos.x);
+        double posY = Math.floor(cameraPos.y);
+        double posZ = Math.floor(cameraPos.z);
+
+        if (!ClientNetwork.isIsBBSModOnServer())
+        {
+            String name = player.getGameProfile().getName();
+
+            player.networkHandler.sendCommand("tp " + name + " " + posX + " " + posY + " " + posZ);
+        }
+        else
+        {
+            ClientNetwork.sendTeleport((int) posX, (int) posY, (int) posZ);
         }
     }
 }

@@ -16,7 +16,7 @@ import mchorse.bbs_mod.forms.properties.TransformProperty;
 import mchorse.bbs_mod.utils.pose.Transform;
 
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public abstract class Form implements IMapSerializable
@@ -27,6 +27,7 @@ public abstract class Form implements IMapSerializable
     public final BooleanProperty lighting = new BooleanProperty(this, "lighting", true);
     public final StringProperty name = new StringProperty(this, "name", "");
     public final TransformProperty transform = new TransformProperty(this, "transform", new Transform());
+    public final FloatProperty uiScale = new FloatProperty(this, "uiScale", 1F);
     public final BodyPartManager parts = new BodyPartManager(this);
     public final AnchorProperty anchor = new AnchorProperty(this, "anchor");
 
@@ -41,16 +42,18 @@ public abstract class Form implements IMapSerializable
 
     protected Object renderer;
     protected String cachedID;
-    protected final Map<String, IFormProperty> properties = new HashMap<>();
+    protected final Map<String, IFormProperty> properties = new LinkedHashMap<>();
 
     public Form()
     {
         this.name.cantAnimate();
+        this.uiScale.cantAnimate();
 
         this.register(this.visible);
         this.register(this.lighting);
         this.register(this.name);
         this.register(this.transform);
+        this.register(this.uiScale);
         this.register(this.anchor);
 
         this.hitbox.cantAnimate();
@@ -148,8 +151,6 @@ public abstract class Form implements IMapSerializable
 
     public void update(IEntity entity)
     {
-        this.updateHitbox(entity);
-
         this.parts.update(entity);
 
         for (IFormProperty property : this.properties.values())
@@ -160,17 +161,6 @@ public abstract class Form implements IMapSerializable
         if (this.renderer instanceof ITickable)
         {
             ((ITickable) this.renderer).tick(entity);
-        }
-    }
-
-    public void updateHitbox(IEntity entity)
-    {
-        if (this.hitbox.get() && this.parent == null)
-        {
-//            TODO: entity.basic.hitboxWidth = this.hitboxWidth.get();
-//            entity.basic.hitboxHeight = this.hitboxHeight.get();
-//            entity.basic.eyeHeight = this.hitboxEyeHeight.get();
-//            entity.basic.sneakMultiplier = this.hitboxSneakMultiplier.get();
         }
     }
 

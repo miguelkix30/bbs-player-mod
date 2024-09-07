@@ -9,6 +9,7 @@ import mchorse.bbs_mod.settings.values.ValueFloat;
 import mchorse.bbs_mod.settings.values.ValueInt;
 import mchorse.bbs_mod.settings.values.ValueLanguage;
 import mchorse.bbs_mod.settings.values.ValueLink;
+import mchorse.bbs_mod.settings.values.ValueOnionSkin;
 import mchorse.bbs_mod.settings.values.ValueString;
 import mchorse.bbs_mod.settings.values.ValueVideoSettings;
 import mchorse.bbs_mod.utils.MathUtils;
@@ -27,6 +28,7 @@ public class BBSSettings
     public static ValueFloat fov;
     public static ValueBoolean hsvColorPicker;
     public static ValueBoolean forceQwerty;
+    public static ValueBoolean freezeModels;
 
     public static ValueBoolean enableCursorRendering;
     public static ValueBoolean enableMouseButtonRendering;
@@ -59,8 +61,12 @@ public class BBSSettings
     public static ValueInt editorPeriodicSave;
     public static ValueBoolean editorHorizontalFlight;
     public static ValueEditorLayout editorLayoutSettings;
+    public static ValueOnionSkin editorOnionSkin;
 
     public static ValueFloat recordingCountdown;
+    public static ValueInt recordingNextVariable;
+
+    public static ValueBoolean damageControl;
 
     public static ValueBoolean audioWaveformVisible;
     public static ValueInt audioWaveformDensity;
@@ -109,6 +115,7 @@ public class BBSSettings
         fov = builder.getFloat("fov", 40, 0, 180);
         hsvColorPicker = builder.getBoolean("hsv_color_picker", true);
         forceQwerty = builder.getBoolean("force_qwerty", false);
+        freezeModels = builder.getBoolean("freeze_models", false);
 
         favoriteColors = new ValueColors("favorite_colors");
         builder.register(favoriteColors);
@@ -145,8 +152,12 @@ public class BBSSettings
         editorPeriodicSave = builder.getInt("periodic_save", 60, 0, 3600);
         editorHorizontalFlight = builder.getBoolean("horizontal_flight", false);
         builder.register(editorLayoutSettings = new ValueEditorLayout("layout"));
+        builder.register(editorOnionSkin = new ValueOnionSkin("onion_skin"));
 
         recordingCountdown = builder.category("recording").getFloat("countdown", 1.5F, 0F, 30F);
+        recordingNextVariable = builder.getInt("next", 1, 1, 100);
+
+        damageControl = builder.category("dc").getBoolean("enabled", true);
 
         builder.category("audio");
         audioWaveformVisible = builder.getBoolean("waveform_visible", true);

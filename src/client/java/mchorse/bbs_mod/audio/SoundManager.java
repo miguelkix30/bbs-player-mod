@@ -240,17 +240,46 @@ public class SoundManager implements IWatchDogListener
     {
         for (SoundPlayer player : this.sounds)
         {
-            player.delete();
+            if (player != null)
+            {
+                player.delete();
+            }
         }
 
         this.sounds.clear();
 
         for (SoundBuffer buffer : this.buffers.values())
         {
-            buffer.delete();
+            if (buffer != null)
+            {
+                buffer.delete();
+            }
         }
 
         this.buffers.clear();
+    }
+
+    public void deleteSound(Link audio)
+    {
+        SoundBuffer buffer = this.buffers.remove(audio);
+
+        if (buffer != null)
+        {
+            Iterator<SoundPlayer> it = this.sounds.iterator();
+
+            if (it.hasNext())
+            {
+                SoundPlayer player = it.next();
+
+                if (player.getBuffer() == buffer)
+                {
+                    it.remove();
+                    player.delete();
+                }
+            }
+
+            buffer.delete();
+        }
     }
 
     /* Watch dog listener implementation */

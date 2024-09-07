@@ -2,6 +2,7 @@ package mchorse.bbs_mod.forms.renderers;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import mchorse.bbs_mod.BBSModClient;
+import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.client.BBSShaders;
 import mchorse.bbs_mod.cubic.CubicModel;
 import mchorse.bbs_mod.cubic.CubicModelAnimator;
@@ -96,12 +97,18 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
         float scale = (y2 - y1) / 2.5F;
         int x = x1 + (x2 - x1) / 2;
         float y = y1 + (y2 - y1) * 0.85F;
+        float angle = MathUtils.toRad(context.mouseX - (x1 + x2) / 2) + MathUtils.PI;
+
+        if (BBSSettings.freezeModels.get())
+        {
+            angle = -MathUtils.PI + MathUtils.PI / 8;
+        }
 
         uiMatrix.identity();
         uiMatrix.translate(x, y, 40);
         uiMatrix.scale(scale, -scale, scale);
         uiMatrix.rotateX(MathUtils.PI / 8);
-        uiMatrix.rotateY(MathUtils.toRad(context.mouseX - (x1 + x2) / 2) + MathUtils.PI);
+        uiMatrix.rotateY(angle);
 
         return uiMatrix;
     }
@@ -194,6 +201,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
             Link link = this.form.texture.get(context.getTransition());
             Link texture = link == null ? model.texture : link;
             Color color = this.form.color.get(context.getTransition());
+            float scale = this.form.uiScale.get() * model.uiScale;
 
             CubicModelAnimator.resetPose(model.model);
 
@@ -201,6 +209,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
             model.model.apply(this.getPose(context.getTransition()));
 
             MatrixStackUtils.multiply(stack, uiMatrix);
+            stack.scale(scale, scale, scale);
 
             BBSModClient.getTextures().bindTexture(texture);
             RenderSystem.depthFunc(GL11.GL_LEQUAL);

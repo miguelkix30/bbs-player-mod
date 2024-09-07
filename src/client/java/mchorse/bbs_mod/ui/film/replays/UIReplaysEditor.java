@@ -8,19 +8,22 @@ import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.camera.CameraUtils;
 import mchorse.bbs_mod.camera.clips.misc.AudioClip;
 import mchorse.bbs_mod.camera.utils.TimeUtils;
+import mchorse.bbs_mod.cubic.CubicModel;
+import mchorse.bbs_mod.cubic.data.model.ModelGroup;
 import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.film.replays.ReplayKeyframes;
 import mchorse.bbs_mod.forms.FormUtils;
 import mchorse.bbs_mod.forms.forms.Form;
+import mchorse.bbs_mod.forms.forms.ModelForm;
 import mchorse.bbs_mod.forms.properties.IFormProperty;
+import mchorse.bbs_mod.forms.renderers.ModelFormRenderer;
 import mchorse.bbs_mod.graphics.window.Window;
 import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
 import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
-import mchorse.bbs_mod.ui.film.controller.OnionSkin;
 import mchorse.bbs_mod.ui.film.utils.keyframes.UIFilmKeyframes;
 import mchorse.bbs_mod.ui.film.utils.undo.ValueChangeUndo;
 import mchorse.bbs_mod.ui.framework.UIContext;
@@ -56,6 +59,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class UIReplaysEditor extends UIElement
 {
@@ -107,6 +111,13 @@ public class UIReplaysEditor extends UIElement
         COLORS.put("item_main_hand", Colors.ORANGE);
         COLORS.put("item_off_hand", Colors.ORANGE);
 
+        COLORS.put("user1", Colors.RED);
+        COLORS.put("user2", Colors.ORANGE);
+        COLORS.put("user3", Colors.GREEN);
+        COLORS.put("user4", Colors.BLUE);
+        COLORS.put("user5", Colors.RED);
+        COLORS.put("user6", Colors.ORANGE);
+
         ICONS.put("x", Icons.X);
         ICONS.put("y", Icons.Y);
         ICONS.put("z", Icons.Z);
@@ -126,6 +137,65 @@ public class UIReplaysEditor extends UIElement
         ICONS.put("extra1_x", Icons.CURVES);
         ICONS.put("extra2_x", Icons.CURVES);
         ICONS.put("item_main_hand", Icons.LIMB);
+
+        ICONS.put("user1", Icons.PARTICLE);
+    }
+
+    public static void offerAdjacent(UIContext context, Form form, String bone, Consumer<String> consumer)
+    {
+        if (!bone.isEmpty() && form instanceof ModelForm modelForm)
+        {
+            CubicModel model = ModelFormRenderer.getModel(modelForm);
+
+            if (model != null)
+            {
+                ModelGroup group = model.model.getGroup(bone);
+                List<ModelGroup> groups = group.parent != null
+                    ? group.parent.children
+                    : model.model.topGroups;
+
+                context.replaceContextMenu((menu) ->
+                {
+                    for (ModelGroup modelGroup : groups)
+                    {
+                        menu.action(Icons.LIMB, IKey.raw(modelGroup.id), () -> consumer.accept(modelGroup.id));
+                    }
+
+                    menu.autoKeys();
+                });
+            }
+        }
+    }
+
+    public static void offerHierarchy(UIContext context, Form form, String bone, Consumer<String> consumer)
+    {
+        if (!bone.isEmpty() && form instanceof ModelForm modelForm)
+        {
+            CubicModel model = ModelFormRenderer.getModel(modelForm);
+
+            if (model != null)
+            {
+                ModelGroup group = model.model.getGroup(bone);
+                List<ModelGroup> groups = new ArrayList<>();
+
+                while (group != null)
+                {
+                    groups.add(group);
+
+                    group = group.parent;
+                }
+
+                context.replaceContextMenu((menu) ->
+                {
+                    for (ModelGroup modelGroup : groups)
+                    {
+                        menu.action(Icons.LIMB, IKey.raw(modelGroup.id), () -> consumer.accept(modelGroup.id));
+                    }
+
+                    menu.autoKeys();
+                });
+            }
+        }
     }
 
     public static void renderBackground(UIContext context, UIKeyframes keyframes, Clips camera, int clipOffset)
@@ -220,13 +290,6 @@ public class UIReplaysEditor extends UIElement
         this.filmPanel.actionEditor.setClips(replay == null ? null : replay.actions);
         this.updateChannelsList();
         this.replays.replays.setCurrentScroll(replay);
-
-        OnionSkin onionSkin = this.filmPanel.getController().getOnionSkin();
-
-        if (replay == null || !replay.properties.properties.containsKey(onionSkin.getGroup()))
-        {
-            onionSkin.resetGroup();
-        }
     }
 
     public void moveReplay(double x, double y, double z)
@@ -407,7 +470,9 @@ public class UIReplaysEditor extends UIElement
 
                 if (context.mouseButton == 0)
                 {
-                    this.pickForm(pair.a, pair.b);
+                    if (Window.isAltPressed()) offerAdjacent(this.getContext(), pair.a, pair.b, (bone) -> this.pickForm(pair.a, bone));
+                    else if (Window.isShiftPressed()) offerHierarchy(this.getContext(), pair.a, pair.b, (bone) -> this.pickForm(pair.a, bone));
+                    else this.pickForm(pair.a, pair.b);
 
                     return true;
                 }

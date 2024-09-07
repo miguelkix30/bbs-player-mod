@@ -25,6 +25,7 @@ import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.morphing.Morph;
 import mchorse.bbs_mod.network.ClientNetwork;
 import mchorse.bbs_mod.resources.Link;
+import mchorse.bbs_mod.settings.values.ValueOnionSkin;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
 import mchorse.bbs_mod.ui.Keys;
 import mchorse.bbs_mod.ui.UIKeys;
@@ -112,8 +113,7 @@ public class UIFilmController extends UIElement
     public final OrbitFilmCameraController orbit = new OrbitFilmCameraController(this);
     private int pov;
     private int lastTick;
-
-    private OnionSkin onionSkin = new OnionSkin();
+    private boolean paused;
 
     private WorldRenderContext worldRenderContext;
 
@@ -151,7 +151,7 @@ public class UIFilmController extends UIElement
         this.keys().register(Keys.FILM_CONTROLLER_RESTART_ACTIONS, () -> this.panel.notifyServer(ActionState.RESTART)).category(category);
         this.keys().register(Keys.FILM_CONTROLLER_TOGGLE_ONION_SKIN, () ->
         {
-            this.onionSkin.enabled = !this.onionSkin.enabled;
+            this.getOnionSkin().enabled.toggle();
 
             UIUtils.playClick();
         }).category(category);
@@ -161,6 +161,16 @@ public class UIFilmController extends UIElement
         }).category(category);
 
         this.noCulling();
+    }
+
+    public boolean isPaused()
+    {
+        return this.paused;
+    }
+
+    public void setPaused(boolean paused)
+    {
+        this.paused = paused;
     }
 
     private void toggleMousePointer(boolean disable)
@@ -177,9 +187,9 @@ public class UIFilmController extends UIElement
         }
     }
 
-    public OnionSkin getOnionSkin()
+    public ValueOnionSkin getOnionSkin()
     {
-        return this.onionSkin;
+        return BBSSettings.editorOnionSkin;
     }
 
     private int getTick()
@@ -199,14 +209,7 @@ public class UIFilmController extends UIElement
 
     public IEntity getCurrentEntity()
     {
-        int index = this.panel.replayEditor.replays.replays.getIndex();
-
-        if (CollectionUtils.inRange(this.entities, index))
-        {
-            return this.entities.get(index);
-        }
-
-        return null;
+        return CollectionUtils.getSafe(this.entities, this.panel.replayEditor.replays.replays.getIndex());
     }
 
     public int getPovMode()
@@ -359,7 +362,14 @@ public class UIFilmController extends UIElement
 
     public boolean isPlaying()
     {
-        return !UIOverlay.has(this.getContext()) && this.panel.isRunning();
+        boolean playing = !UIOverlay.has(this.getContext()) && this.panel.isRunning();
+
+        if (this.isPaused())
+        {
+            playing = true;
+        }
+
+        return playing;
     }
 
     public boolean isRecording()
@@ -495,12 +505,13 @@ public class UIFilmController extends UIElement
             {
                 this.getContext().replaceContextMenu((menu) ->
                 {
+                    menu.autoKeys();
+
                     for (IEntity entity : this.hoveredEntities)
                     {
-                        Form form = entity.getForm();
-                        String name = form == null ? "-" : form.getIdOrName();
+                        int index = this.entities.indexOf(entity);
 
-                        menu.action(Icons.POSE, IKey.raw(name), () -> this.pickEntity(entity));
+                        menu.action(Icons.POSE, IKey.raw(this.panel.getData().replays.getList().get(index).getName()), () -> this.pickEntity(entity));
                     }
                 });
 
@@ -837,6 +848,9 @@ public class UIFilmController extends UIElement
 
     private void updateEntities(Film film, RunnerCameraController runner, UIContext context)
     {
+        /* Plus 1 is necessary because apparently the render ticks comes before
+         * the update tick, so in order to force the correct animation, I have to
+         * increment the tick, so it would appear correctly */
         boolean isPlaying = this.isPlaying();
         int ticks = runner.ticks + (runner.isRunning() ? 1 : 0);
 
@@ -856,14 +870,10 @@ public class UIFilmController extends UIElement
             }
 
             List<Replay> replays = film.replays.getList();
+            Replay replay = CollectionUtils.getSafe(replays, i);
 
-            if (CollectionUtils.inRange(replays, i))
+            if (replay != null)
             {
-                /* Plus 1 is necessary because apparently the render ticks comes before
-                 * the update tick, so in order to force the correct animation, I have to
-                 * increment the tick, so it would appear correctly */
-                Replay replay = replays.get(i);
-
                 if (entity != this.controlled || (this.recording && this.recordingCountdown <= 0 && this.recordingGroups != null))
                 {
                     replay.applyFrame(ticks, entity, entity == this.controlled ? this.recordingGroups : null);
@@ -1098,16 +1108,22 @@ public class UIFilmController extends UIElement
                 continue;
             }
 
+            ValueOnionSkin onionSkin = this.getOnionSkin();
             Replay replay = this.panel.getData().replays.getList().get(i);
-            BaseValue value = replay.properties.get(this.onionSkin.getGroup());
+            BaseValue value = replay.properties.get(onionSkin.group.get());
+
+            if (value == null)
+            {
+                value = replay.properties.get("pose");
+            }
 
             FilmController.renderEntity(this.entities, context, entity, null, isPlaying ? context.tickDelta() : 0F, replay.shadow.get(), replay.shadowSize.get());
 
             if (value instanceof KeyframeChannel<?> pose && entity instanceof StubEntity)
             {
-                boolean canRender = this.onionSkin.enabled;
+                boolean canRender = onionSkin.enabled.get();
 
-                if (!this.onionSkin.all)
+                if (!onionSkin.all.get())
                 {
                     canRender = canRender && entity == this.getCurrentEntity();
                 }
@@ -1118,8 +1134,8 @@ public class UIFilmController extends UIElement
 
                     if (segment != null)
                     {
-                        this.renderOnion(replay, pose.getKeyframes().indexOf(segment.a), -1, pose, this.onionSkin.preColor, this.onionSkin.preFrames, context, isPlaying, entity);
-                        this.renderOnion(replay, pose.getKeyframes().indexOf(segment.b), 1, pose, this.onionSkin.postColor, this.onionSkin.postFrames, context, isPlaying, entity);
+                        this.renderOnion(replay, pose.getKeyframes().indexOf(segment.a), -1, pose, onionSkin.preColor.get(), onionSkin.preFrames.get(), context, isPlaying, entity);
+                        this.renderOnion(replay, pose.getKeyframes().indexOf(segment.b), 1, pose, onionSkin.postColor.get(), onionSkin.postFrames.get(), context, isPlaying, entity);
 
                         replay.applyFrame(tick, entity, null);
                         replay.applyProperties(tick, entity.getForm(), isPlaying);
