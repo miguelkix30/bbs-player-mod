@@ -24,6 +24,7 @@ import mchorse.bbs_mod.camera.clips.converters.IdleToPathConverter;
 import mchorse.bbs_mod.camera.clips.converters.PathToDollyConverter;
 import mchorse.bbs_mod.camera.clips.converters.PathToKeyframeConverter;
 import mchorse.bbs_mod.camera.clips.misc.AudioClip;
+import mchorse.bbs_mod.camera.clips.misc.CurveClip;
 import mchorse.bbs_mod.camera.clips.misc.SubtitleClip;
 import mchorse.bbs_mod.camera.clips.misc.VoicelineClip;
 import mchorse.bbs_mod.camera.clips.modifiers.AngleClip;
@@ -48,6 +49,7 @@ import mchorse.bbs_mod.forms.forms.BlockForm;
 import mchorse.bbs_mod.forms.forms.ExtrudedForm;
 import mchorse.bbs_mod.forms.forms.ItemForm;
 import mchorse.bbs_mod.forms.forms.LabelForm;
+import mchorse.bbs_mod.forms.forms.MobForm;
 import mchorse.bbs_mod.forms.forms.ModelForm;
 import mchorse.bbs_mod.forms.forms.ParticleForm;
 import mchorse.bbs_mod.morphing.Morph;
@@ -70,6 +72,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.fabricmc.fabric.api.networking.v1.EntityTrackingEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
@@ -96,6 +99,8 @@ import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.BlockPos;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class BBSMod implements ModInitializer
@@ -119,6 +124,8 @@ public class BBSMod implements ModInitializer
 
     /* Data */
     private static FilmManager films;
+
+    private static List<Runnable> runnables = new ArrayList<>();
 
     private static MapFactory<Clip, ClipFactoryData> factoryCameraClips;
     private static MapFactory<Clip, ClipFactoryData> factoryScreenplayClips;
@@ -296,7 +303,8 @@ public class BBSMod implements ModInitializer
             .register(Link.bbs("extruded"), ExtrudedForm.class, null)
             .register(Link.bbs("block"), BlockForm.class, null)
             .register(Link.bbs("item"), ItemForm.class, null)
-            .register(Link.bbs("anchor"), AnchorForm.class, null);
+            .register(Link.bbs("anchor"), AnchorForm.class, null)
+            .register(Link.bbs("mob"), MobForm.class, null);
 
         films = new FilmManager(() -> new File(worldFolder, "bbs/films"));
 
@@ -327,7 +335,8 @@ public class BBSMod implements ModInitializer
             .register(Link.bbs("orbit"), OrbitClip.class, new ClipFactoryData(Icons.GLOBE, 0xd82253))
             .register(Link.bbs("remapper"), RemapperClip.class, new ClipFactoryData(Icons.TIME, 0x222222))
             .register(Link.bbs("audio"), AudioClip.class, new ClipFactoryData(Icons.SOUND, 0xffc825))
-            .register(Link.bbs("subtitle"), SubtitleClip.class, new ClipFactoryData(Icons.FONT, 0x888899));
+            .register(Link.bbs("subtitle"), SubtitleClip.class, new ClipFactoryData(Icons.FONT, 0x888899))
+            .register(Link.bbs("curve"), CurveClip.class, new ClipFactoryData(Icons.ARC, 0xff1493));
 
         factoryScreenplayClips = new MapFactory<Clip, ClipFactoryData>()
             .register(Link.bbs("voice_line"), VoicelineClip.class, new ClipFactoryData(Icons.SOUND, 0xffc825));
@@ -391,9 +400,35 @@ public class BBSMod implements ModInitializer
             actions.tick();
         });
 
+        ServerTickEvents.END_SERVER_TICK.register((server) ->
+        {
+            for (Runnable runnable : runnables)
+            {
+                runnable.run();
+            }
+
+            runnables.clear();
+        });
+
         ServerLifecycleEvents.SERVER_STOPPED.register((server) ->
         {
             actions.reset();
+        });
+
+        EntityTrackingEvents.START_TRACKING.register((trackedEntity, player) ->
+        {
+            runnables.add(() ->
+            {
+                if (trackedEntity instanceof ServerPlayerEntity playerTwo)
+                {
+                    Morph morph = Morph.getMorph(trackedEntity);
+
+                    if (morph != null)
+                    {
+                        ServerNetwork.sendMorph(player, playerTwo.getId(), morph.getForm());
+                    }
+                }
+            });
         });
     }
 

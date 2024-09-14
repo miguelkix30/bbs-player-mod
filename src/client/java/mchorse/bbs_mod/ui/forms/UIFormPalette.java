@@ -20,8 +20,10 @@ public class UIFormPalette extends UIElement implements IUIFormList
     public Consumer<Form> callback;
 
     private UIFormCategory lastSelected;
+    private boolean background = true;
     private boolean cantExit;
     private boolean immersive;
+    private boolean canModify;
 
     public static UIFormPalette open(UIElement parent, boolean editing, Form form, Consumer<Form> callback)
     {
@@ -79,12 +81,22 @@ public class UIFormPalette extends UIElement implements IUIFormList
         });
     }
 
+    public void noBackground()
+    {
+        this.background = false;
+    }
+
     public void cantExit()
     {
         this.cantExit = true;
 
         this.list.close.removeFromParent();
         this.eventPropagataion(EventPropagation.PASS);
+    }
+
+    public void canModify()
+    {
+        this.canModify = true;
     }
 
     public boolean isImmersive()
@@ -146,7 +158,7 @@ public class UIFormPalette extends UIElement implements IUIFormList
         {
             Form form = this.editor.finish();
 
-            if (this.lastSelected.category.canModify(form))
+            if (this.canModify && this.lastSelected.category.canModify(form))
             {
                 int index = this.lastSelected.category.getForms().indexOf(this.lastSelected.selected);
 
@@ -185,9 +197,19 @@ public class UIFormPalette extends UIElement implements IUIFormList
     {
         if (context.isPressed(GLFW.GLFW_KEY_ESCAPE))
         {
+            boolean wasEditing = this.editor.isEditing();
+
             this.exit();
 
-            return !this.cantExit;
+            if (!this.cantExit)
+            {
+                return true;
+            }
+
+            if (wasEditing)
+            {
+                return true;
+            }
         }
 
         return false;
@@ -196,9 +218,12 @@ public class UIFormPalette extends UIElement implements IUIFormList
     @Override
     public void render(UIContext context)
     {
-        if (!this.immersive || this.list.isVisible())
+        if (this.background)
         {
-            this.area.render(context.batcher, Colors.A75);
+            if (!this.immersive || this.list.isVisible())
+            {
+                this.area.render(context.batcher, Colors.A75);
+            }
         }
 
         super.render(context);

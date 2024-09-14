@@ -20,6 +20,7 @@ public class UIMorphingPanel extends UIDashboardPanel
 {
     public UIFormPalette palette;
     public UIIcon demorph;
+    public UIIcon fromMob;
 
     private ImmersiveMorphingCameraController controller;
 
@@ -32,6 +33,8 @@ public class UIMorphingPanel extends UIDashboardPanel
         this.palette.immersive();
         this.palette.full(this);
         this.palette.editor.renderer.full(dashboard.getRoot());
+        this.palette.noBackground();
+        this.palette.canModify();
 
         this.demorph = new UIIcon(Icons.POSE, (b) ->
         {
@@ -39,8 +42,19 @@ public class UIMorphingPanel extends UIDashboardPanel
             this.setForm(null);
         });
         this.demorph.tooltip(UIKeys.MORPHING_DEMORPH, Direction.TOP);
+        this.fromMob = new UIIcon(Icons.MORPH, (b) ->
+        {
+            Form form = Morph.getMobForm(MinecraftClient.getInstance().player);
 
-        this.palette.list.bar.add(this.demorph);
+            if (form != null)
+            {
+                this.palette.setSelected(form);
+                this.setForm(form);
+            }
+        });
+        this.fromMob.tooltip(UIKeys.MORPHING_FROM_MOB, Direction.TOP);
+
+        this.palette.list.bar.add(this.fromMob, this.demorph);
 
         this.add(this.palette);
 
@@ -55,7 +69,7 @@ public class UIMorphingPanel extends UIDashboardPanel
     @Override
     public boolean needsBackground()
     {
-        return false;
+        return !this.palette.editor.isEditing();
     }
 
     @Override

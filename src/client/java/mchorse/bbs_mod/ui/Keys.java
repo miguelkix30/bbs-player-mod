@@ -41,6 +41,8 @@ public class Keys
     public static final KeyCombo PREV_CLIP = new KeyCombo("prev_clip", UIKeys.CAMERA_EDITOR_KEYS_EDITOR_PREV_CLIP, GLFW.GLFW_KEY_LEFT, GLFW.GLFW_KEY_LEFT_SHIFT).repeatable().categoryKey("camera");
     public static final KeyCombo JUMP_FORWARD = new KeyCombo("jump_forward", UIKeys.CAMERA_EDITOR_KEYS_EDITOR_JUMP_FORWARD, GLFW.GLFW_KEY_UP).repeatable().categoryKey("camera");
     public static final KeyCombo JUMP_BACKWARD = new KeyCombo("jump_backward", UIKeys.CAMERA_EDITOR_KEYS_EDITOR_JUMP_BACKWARD, GLFW.GLFW_KEY_DOWN).repeatable().categoryKey("camera");
+    public static final KeyCombo FADE_IN = new KeyCombo("fade_in", UIKeys.CAMERA_EDITOR_KEYS_EDITOR_FADE_IN, GLFW.GLFW_KEY_COMMA).categoryKey("camera");
+    public static final KeyCombo FADE_OUT = new KeyCombo("fade_out", UIKeys.CAMERA_EDITOR_KEYS_EDITOR_FADE_OUT, GLFW.GLFW_KEY_PERIOD).categoryKey("camera");
 
     /* Flight mode keybinds */
     public static final KeyCombo FLIGHT_FORWARD = new KeyCombo("flight_forward", UIKeys.CAMERA_FLIGHT_FLIGHT_FORWARD, GLFW.GLFW_KEY_W).categoryKey("flight");
@@ -77,6 +79,7 @@ public class Keys
     public static final KeyCombo KEYFRAMES_SELECT_LEFT = new KeyCombo("select_left", UIKeys.KEYFRAMES_KEYS_SELECT_LEFT, GLFW.GLFW_KEY_COMMA, GLFW.GLFW_KEY_LEFT_CONTROL).categoryKey("keyframes");
     public static final KeyCombo KEYFRAMES_SELECT_RIGHT = new KeyCombo("select_right", UIKeys.KEYFRAMES_KEYS_SELECT_RIGHT, GLFW.GLFW_KEY_PERIOD, GLFW.GLFW_KEY_LEFT_CONTROL).categoryKey("keyframes");
     public static final KeyCombo KEYFRAMES_SELECT_SAME = new KeyCombo("select_same", UIKeys.KEYFRAMES_KEYS_SELECT_SAME, GLFW.GLFW_KEY_L).categoryKey("keyframes");
+    public static final KeyCombo KEYFRAMES_SCALE_TIME = new KeyCombo("scale_time", UIKeys.KEYFRAMES_KEYS_SCALE_TIME, GLFW.GLFW_KEY_V).categoryKey("keyframes");
 
     /* World menu */
     public static final KeyCombo CYCLE_PANELS = new KeyCombo("cycle_panels", UIKeys.WORLD_KEYS_CYCLE_PANELS, GLFW.GLFW_KEY_TAB).categoryKey("world");
@@ -113,4 +116,7 @@ public class Keys
 
     /* Model block editor */
     public static final KeyCombo MODEL_BLOCKS_MOVE_TO = new KeyCombo("move_to", UIKeys.MODEL_BLOCKS_KEYS_MOVE_TO, GLFW.GLFW_KEY_G, GLFW.GLFW_KEY_LEFT_CONTROL).categoryKey("model_blocks");
+
+    /* Texture picker */
+    public static final KeyCombo TEXTURE_PICKER_FIND = new KeyCombo("find", UIKeys.TEXTURE_KEYS_FIND_ALL, GLFW.GLFW_KEY_F, GLFW.GLFW_KEY_LEFT_CONTROL).categoryKey("texture_picker");
 }
