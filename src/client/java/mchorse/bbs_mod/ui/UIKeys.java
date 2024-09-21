@@ -120,6 +120,7 @@ public class UIKeys
     public static final IKey CAMERA_PANELS_MATH = L10n.lang("bbs.ui.camera.panels.math");
     public static final IKey CAMERA_PANELS_METRICS = L10n.lang("bbs.ui.camera.panels.metrics");
     public static final IKey CAMERA_PANELS_OFFSET = L10n.lang("bbs.ui.camera.panels.offset");
+    public static final IKey CAMERA_PANELS_CURVES_SUN_ROTATION = L10n.lang("bbs.ui.camera.panels.curves.sun_rotation");
     public static final IKey CAMERA_PANELS_PATH_POINTS = L10n.lang("bbs.ui.camera.panels.path_points");
     public static final IKey CAMERA_PANELS_PITCH = L10n.lang("bbs.ui.camera.panels.pitch");
     public static final IKey CAMERA_PANELS_POINT = L10n.lang("bbs.ui.camera.panels.point");
@@ -258,6 +259,8 @@ public class UIKeys
     public static final IKey FILM_TELEPORT_TITLE = L10n.lang("bbs.ui.film.teleport-title");
     public static final IKey FILM_TELEPORT_CONTEXT_PLAYER = L10n.lang("bbs.ui.film.teleport.context.player");
     public static final IKey FILM_TITLE = L10n.lang("bbs.ui.film.title");
+    public static final IKey FILM_OPEN_HISTORY = L10n.lang("bbs.ui.film.open_history");
+    public static final IKey FILM_HISTORY_TITLE = L10n.lang("bbs.ui.film.history-title");
     public static final IKey FILM_TOGGLE_LAYOUT = L10n.lang("bbs.ui.film.toggle_layout");
     public static final IKey FORMS_CATEGORIES_ADD_CATEGORY_DESCRIPTION = L10n.lang("bbs.ui.forms.categories.add_category-description");
     public static final IKey FORMS_CATEGORIES_ADD_CATEGORY_TITLE = L10n.lang("bbs.ui.forms.categories.add_category-title");
@@ -303,6 +306,7 @@ public class UIKeys
     public static final IKey FORMS_EDITORS_BILLBOARD_PICK_TEXTURE = L10n.lang("bbs.ui.forms.editors.billboard.pick_texture");
     public static final IKey FORMS_EDITORS_BILLBOARD_RESIZE_CROP = L10n.lang("bbs.ui.forms.editors.billboard.resize_crop");
     public static final IKey FORMS_EDITORS_BILLBOARD_ROTATION = L10n.lang("bbs.ui.forms.editors.billboard.rotation");
+    public static final IKey FORMS_EDITORS_BILLBOARD_SHADING = L10n.lang("bbs.ui.forms.editors.billboard.shading");
     public static final IKey FORMS_EDITORS_BILLBOARD_TITLE = L10n.lang("bbs.ui.forms.editors.billboard.title");
     public static final IKey FORMS_EDITORS_BILLBOARD_UV_SHIFT = L10n.lang("bbs.ui.forms.editors.billboard.uv_shift");
     public static final IKey FORMS_EDITORS_BLOCK_PROPERTIES = L10n.lang("bbs.ui.forms.editors.block.title");
@@ -337,6 +341,8 @@ public class UIKeys
     public static final IKey FORMS_EDITOR_CONTEXT_COPY = L10n.lang("bbs.ui.forms.editor.context.copy");
     public static final IKey FORMS_EDITOR_CONTEXT_PASTE = L10n.lang("bbs.ui.forms.editor.context.paste");
     public static final IKey FORMS_EDITOR_CONTEXT_REMOVE = L10n.lang("bbs.ui.forms.editor.context.remove");
+    public static final IKey FORMS_EDITOR_CONTEXT_MOVE_UP = L10n.lang("bbs.ui.forms.editor.context.move_up");
+    public static final IKey FORMS_EDITOR_CONTEXT_MOVE_DOWN = L10n.lang("bbs.ui.forms.editor.context.move_down");
     public static final IKey FORMS_EDITOR_FINISH = L10n.lang("bbs.ui.forms.editor.finish");
     public static final IKey FORMS_EDITOR_MODEL_PICK_TEXTURE = L10n.lang("bbs.ui.forms.editor.model.pick_texture");
     public static final IKey FORMS_EDITOR_PICK_FORM = L10n.lang("bbs.ui.forms.editor.pick_form");
@@ -421,6 +427,7 @@ public class UIKeys
     public static final IKey LANGUAGE_PICK_TITLE = L10n.lang("bbs.ui.language.pick.title");
     public static final IKey MODEL_BLOCKS_GLOBAL = L10n.lang("bbs.ui.model_blocks.global");
     public static final IKey MODEL_BLOCKS_KEYS_MOVE_TO = L10n.lang("bbs.ui.model_blocks.keys.move_to");
+    public static final IKey MODEL_BLOCKS_KEYS_TOGGLE_RENDERING = L10n.lang("bbs.ui.model_blocks.keys.toggle_rendering");
     public static final IKey MODEL_BLOCKS_SHADOW = L10n.lang("bbs.ui.model_blocks.shadow");
     public static final IKey MODEL_BLOCKS_TITLE = L10n.lang("bbs.ui.model_blocks.title");
     public static final IKey MODEL_BLOCKS_TRANSFORM_FIRST_PERSON = L10n.lang("bbs.ui.model_blocks.transform.first_person");
@@ -650,6 +657,8 @@ public class UIKeys
     public static final IKey TRANSFORMS_CONTEXT_PASTE_SCALE = L10n.lang("bbs.ui.transforms.context.paste_scale");
     public static final IKey TRANSFORMS_CONTEXT_PASTE_TRANSLATION = L10n.lang("bbs.ui.transforms.context.paste_translation");
     public static final IKey TRANSFORMS_CONTEXT_RESET = L10n.lang("bbs.ui.transforms.context.reset");
+    public static final IKey TRANSFORMS_CONTEXT_SWITCH_LOCAL = L10n.lang("bbs.ui.transforms.context.switch_local");
+    public static final IKey TRANSFORMS_CONTEXT_SWITCH_GLOBAL = L10n.lang("bbs.ui.transforms.context.switch_global");
     public static final IKey TRANSFORMS_EDITING = L10n.lang("bbs.ui.transforms.editing");
     public static final IKey TRANSFORMS_KEYS_CATEGORY = L10n.lang("bbs.ui.transforms.keys.category");
     public static final IKey TRANSFORMS_ROTATE = L10n.lang("bbs.ui.transforms.rotate");
@@ -694,6 +703,11 @@ public class UIKeys
     public static final IKey VIDEO_SETTINGS_WIDTH = L10n.lang("bbs.ui.video_settings.width");
     public static final IKey VOICE_COLORS_OPEN = L10n.lang("bbs.ui.voice_colors.open");
     public static final IKey VOICE_COLORS_TITLE = L10n.lang("bbs.ui.voice_colors.title");
+    public static final IKey VOICE_MODEL_OPEN = L10n.lang("bbs.ui.voice_model.open");
+    public static final IKey VOICE_MODEL_TITLE = L10n.lang("bbs.ui.voice_model-title");
+    public static final IKey VOICE_MODEL_PICK_MODEL = L10n.lang("bbs.ui.voice_model.pick_model");
+    public static final IKey VOICE_MODEL_STABILITY = L10n.lang("bbs.ui.voice_model.stability");
+    public static final IKey VOICE_MODEL_SIMILARITY = L10n.lang("bbs.ui.voice_model.similarity");
     public static final IKey VOICE_LINE_ACTION_NO_VOICE = L10n.lang("bbs.ui.voice_line.action.no_voice");
     public static final IKey VOICE_LINE_COMPILE = L10n.lang("bbs.ui.voice_line.compile");
     public static final IKey VOICE_LINE_FOUNTAIN = L10n.lang("bbs.ui.voice_line.fountain");

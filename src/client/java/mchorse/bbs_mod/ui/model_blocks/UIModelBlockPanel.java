@@ -45,6 +45,8 @@ import java.util.Set;
 
 public class UIModelBlockPanel extends UIDashboardPanel implements IFlightSupported
 {
+    public static boolean toggleRendering;
+
     public UIScrollView scrollView;
     public UIModelBlockEntityList modelBlocks;
     public UINestedEdit pickEdit;
@@ -80,7 +82,10 @@ public class UIModelBlockPanel extends UIDashboardPanel implements IFlightSuppor
             });
 
             palette.immersive();
+            palette.editor.keys().register(Keys.MODEL_BLOCKS_TOGGLE_RENDERING, () -> toggleRendering = !toggleRendering);
             palette.editor.renderer.full(dashboard.getRoot());
+            palette.editor.renderer.setTarget(this.modelBlock.getEntity());
+            palette.editor.renderer.setRenderForm(() -> !toggleRendering);
             palette.getEvents().register(UIToggleEditorEvent.class, (e) ->
             {
                 if (e.editing)
@@ -116,7 +121,7 @@ public class UIModelBlockPanel extends UIDashboardPanel implements IFlightSuppor
         });
 
         this.transform = new UIPropTransform();
-        this.transform.enableHotkeys().verticalCompact();
+        this.transform.enableHotkeys();
 
         this.scrollView = UI.scrollView(5, 10, this.modelBlocks, this.pickEdit, this.shadow, this.global, this.transform);
         this.scrollView.scroll.opposite().cancelScrolling();

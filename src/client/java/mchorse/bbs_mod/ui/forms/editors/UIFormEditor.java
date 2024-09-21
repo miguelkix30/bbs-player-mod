@@ -7,6 +7,7 @@ import mchorse.bbs_mod.forms.forms.AnchorForm;
 import mchorse.bbs_mod.forms.forms.BillboardForm;
 import mchorse.bbs_mod.forms.forms.BlockForm;
 import mchorse.bbs_mod.forms.forms.BodyPart;
+import mchorse.bbs_mod.forms.forms.BodyPartManager;
 import mchorse.bbs_mod.forms.forms.ExtrudedForm;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.forms.ItemForm;
@@ -44,6 +45,7 @@ import mchorse.bbs_mod.ui.utils.UI;
 import mchorse.bbs_mod.ui.utils.context.ContextMenuManager;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.utils.Direction;
+import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.Pair;
 import mchorse.bbs_mod.utils.colors.Colors;
 
@@ -124,6 +126,7 @@ public class UIFormEditor extends UIElement implements IUIFormList
         this.forms.context(this::createFormContextMenu);
 
         this.bodyPartData = UI.scrollView(5, 10);
+        this.bodyPartData.scroll.cancelScrolling();
         this.bodyPartData.relative(this.formsArea).w(1F).y(0.5F).h(0.5F);
 
         this.pick = new UIButton(UIKeys.FORMS_EDITOR_PICK_FORM, (b) ->
@@ -144,14 +147,10 @@ public class UIFormEditor extends UIElement implements IUIFormList
             this.forms.getCurrentFirst().part.useTarget = b.getValue();
         });
 
-        this.bone = new UIStringList((l) ->
-        {
-            this.forms.getCurrentFirst().part.bone = l.get(0);
-        });
+        this.bone = new UIStringList((l) -> this.forms.getCurrentFirst().part.bone = l.get(0));
         this.bone.background().h(16 * 6);
 
         this.transform = new UIPropTransform();
-        this.transform.verticalCompactNoIcons();
 
         this.editArea = new UIElement();
         this.editArea.full(this);
@@ -232,6 +231,19 @@ public class UIFormEditor extends UIElement implements IUIFormList
 
             if (current.part != null)
             {
+                List<BodyPart> all = current.part.getManager().getAll();
+
+                if (all.size() > 1)
+                {
+                    int index = all.indexOf(current.part);
+
+                    if (index != 0) menu.action(Icons.ARROW_UP, UIKeys.FORMS_EDITOR_CONTEXT_MOVE_UP, () -> this.moveBodyPart(current, -1));
+                    if (index != all.size() - 1) menu.action(Icons.ARROW_DOWN, UIKeys.FORMS_EDITOR_CONTEXT_MOVE_DOWN, () -> this.moveBodyPart(current, 1));
+                }
+            }
+
+            if (current.part != null)
+            {
                 menu.action(Icons.COPY, UIKeys.FORMS_EDITOR_CONTEXT_COPY, this::copyBodyPart);
             }
 
@@ -245,6 +257,38 @@ public class UIFormEditor extends UIElement implements IUIFormList
             if (current.part != null)
             {
                 menu.action(Icons.REMOVE, UIKeys.FORMS_EDITOR_CONTEXT_REMOVE, this::removeBodyPart);
+            }
+        }
+    }
+
+    private void moveBodyPart(UIForms.FormEntry current, int direction)
+    {
+        BodyPartManager manager = current.part.getManager();
+        List<BodyPart> all = manager.getAll();
+        int index = all.indexOf(current.part);
+        int newIndex = MathUtils.clamp(index + direction, 0, all.size() - 1);
+
+        if (newIndex != index)
+        {
+            manager.moveBodyPart(current.part, newIndex);
+            this.forms.setForm(this.form);
+
+            UIForms.FormEntry selection = null;
+
+            for (UIForms.FormEntry entry : this.forms.getList())
+            {
+                if (entry.part == current.part)
+                {
+                    selection = entry;
+
+                    break;
+                }
+            }
+
+            if (selection != null)
+            {
+                this.forms.setCurrentScroll(selection);
+                this.pickForm(selection);
             }
         }
     }

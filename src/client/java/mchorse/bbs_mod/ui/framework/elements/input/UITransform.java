@@ -9,6 +9,7 @@ import mchorse.bbs_mod.ui.framework.elements.UIElement;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIIcon;
 import mchorse.bbs_mod.ui.utils.UI;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
+import mchorse.bbs_mod.utils.Axis;
 import mchorse.bbs_mod.utils.colors.Colors;
 import org.joml.Vector3d;
 import org.lwjgl.glfw.GLFW;
@@ -33,9 +34,11 @@ public abstract class UITransform extends UIElement
     public UITrackpad r2y;
     public UITrackpad r2z;
 
-    protected boolean vertical;
+    protected UIIcon iconT;
+    protected UIIcon iconS;
+    protected UIIcon iconR;
+    protected UIIcon iconR2;
 
-    private boolean renderLabels = true;
     private boolean uniformDrag;
 
     public UITransform()
@@ -44,72 +47,77 @@ public abstract class UITransform extends UIElement
 
         IKey raw = IKey.raw("%s (%s)");
 
-        this.tx = new UITrackpad((value) -> this.internalSetT(value, this.ty.value, this.tz.value)).block();
+        this.tx = new UITrackpad((value) -> this.internalSetT(value, Axis.X)).block();
         this.tx.tooltip(raw.format(UIKeys.TRANSFORMS_TRANSLATE, UIKeys.GENERAL_X));
         this.tx.textbox.setColor(Colors.RED);
-        this.ty = new UITrackpad((value) -> this.internalSetT(this.tx.value, value, this.tz.value)).block();
+        this.ty = new UITrackpad((value) -> this.internalSetT(value, Axis.Y)).block();
         this.ty.tooltip(raw.format(UIKeys.TRANSFORMS_TRANSLATE, UIKeys.GENERAL_Y));
         this.ty.textbox.setColor(Colors.GREEN);
-        this.tz = new UITrackpad((value) -> this.internalSetT(this.tx.value, this.ty.value, value)).block();
+        this.tz = new UITrackpad((value) -> this.internalSetT(value, Axis.Z)).block();
         this.tz.tooltip(raw.format(UIKeys.TRANSFORMS_TRANSLATE, UIKeys.GENERAL_Z));
         this.tz.textbox.setColor(Colors.BLUE);
 
         this.sx = new UITrackpad((value) ->
         {
-            this.internalSetS(value, this.sy.value, this.sz.value);
+            this.internalSetS(value, Axis.X);
             this.syncScale(value);
         });
         this.sx.tooltip(raw.format(UIKeys.TRANSFORMS_SCALE, UIKeys.GENERAL_X));
         this.sx.textbox.setColor(Colors.RED);
         this.sy = new UITrackpad((value) ->
         {
-            this.internalSetS(this.sx.value, value, this.sz.value);
+            this.internalSetS(value, Axis.Y);
             this.syncScale(value);
         });
         this.sy.tooltip(raw.format(UIKeys.TRANSFORMS_SCALE, UIKeys.GENERAL_Y));
         this.sy.textbox.setColor(Colors.GREEN);
         this.sz = new UITrackpad((value) ->
         {
-            this.internalSetS(this.sx.value, this.sy.value, value);
+            this.internalSetS(value, Axis.Z);
             this.syncScale(value);
         });
         this.sz.tooltip(raw.format(UIKeys.TRANSFORMS_SCALE, UIKeys.GENERAL_Z));
         this.sz.textbox.setColor(Colors.BLUE);
 
-        this.rx = new UITrackpad((value) -> this.internalSetR(value, this.ry.value, this.rz.value)).degrees();
+        this.rx = new UITrackpad((value) -> this.internalSetR(value, Axis.X)).degrees();
         this.rx.tooltip(raw.format(UIKeys.TRANSFORMS_ROTATE, UIKeys.GENERAL_X));
         this.rx.textbox.setColor(Colors.RED);
-        this.ry = new UITrackpad((value) -> this.internalSetR(this.rx.value, value, this.rz.value)).degrees();
+        this.ry = new UITrackpad((value) -> this.internalSetR(value, Axis.Y)).degrees();
         this.ry.tooltip(raw.format(UIKeys.TRANSFORMS_ROTATE, UIKeys.GENERAL_Y));
         this.ry.textbox.setColor(Colors.GREEN);
-        this.rz = new UITrackpad((value) -> this.internalSetR(this.rx.value, this.ry.value, value)).degrees();
+        this.rz = new UITrackpad((value) -> this.internalSetR(value, Axis.Z)).degrees();
         this.rz.tooltip(raw.format(UIKeys.TRANSFORMS_ROTATE, UIKeys.GENERAL_Z));
         this.rz.textbox.setColor(Colors.BLUE);
 
-        this.r2x = new UITrackpad((value) -> this.internalSetR2(value, this.r2y.value, this.r2z.value)).degrees();
+        this.r2x = new UITrackpad((value) -> this.internalSetR2(value, Axis.X)).degrees();
         this.r2x.tooltip(raw.format(UIKeys.TRANSFORMS_ROTATE2, UIKeys.GENERAL_X));
         this.r2x.textbox.setColor(Colors.RED);
-        this.r2y = new UITrackpad((value) -> this.internalSetR2(this.r2x.value, value, this.r2z.value)).degrees();
+        this.r2y = new UITrackpad((value) -> this.internalSetR2(value, Axis.Y)).degrees();
         this.r2y.tooltip(raw.format(UIKeys.TRANSFORMS_ROTATE2, UIKeys.GENERAL_Y));
         this.r2y.textbox.setColor(Colors.GREEN);
-        this.r2z = new UITrackpad((value) -> this.internalSetR2(this.r2x.value, this.r2y.value, value)).degrees();
+        this.r2z = new UITrackpad((value) -> this.internalSetR2(value, Axis.Z)).degrees();
         this.r2z.tooltip(raw.format(UIKeys.TRANSFORMS_ROTATE2, UIKeys.GENERAL_Z));
         this.r2z.textbox.setColor(Colors.BLUE);
 
-        UIElement first = new UIElement();
-        UIElement second = new UIElement();
-        UIElement third = new UIElement();
+        this.w(1F).column().stretch().vertical();
 
-        first.relative(this).w(1F).h(20).row().height(20);
-        first.add(this.tx, this.sx, this.rx, this.r2x);
+        this.iconT = new UIIcon(Icons.ALL_DIRECTIONS, null);
+        this.iconS = new UIIcon(Icons.SCALE, null);
+        this.iconR = new UIIcon(Icons.REFRESH, null);
+        this.iconR2 = new UIIcon(Icons.REFRESH, null);
 
-        second.relative(this).y(0.5F, -10).w(1F).h(20).row().height(20);
-        second.add(this.ty, this.sy, this.ry, this.r2y);
+        this.iconT.disabledColor = this.iconS.disabledColor = this.iconR.disabledColor = this.iconR2.disabledColor = Colors.WHITE;
+        this.iconT.hoverColor = this.iconS.hoverColor = this.iconR.hoverColor = this.iconR2.hoverColor = Colors.WHITE;
 
-        third.relative(this).y(1F, -20).w(1F).h(20).row().height(20);
-        third.add(this.tz, this.sz, this.rz, this.r2z);
+        this.iconT.setEnabled(false);
+        this.iconS.setEnabled(false);
+        this.iconR.setEnabled(false);
+        this.iconR2.setEnabled(false);
 
-        this.add(first, second, third);
+        this.add(UI.row(this.iconT, this.tx, this.ty, this.tz));
+        this.add(UI.row(this.iconS, this.sx, this.sy, this.sz));
+        this.add(UI.row(this.iconR, this.rx, this.ry, this.rz));
+        this.add(UI.row(this.iconR2, this.r2x, this.r2y, this.r2z));
 
         this.context((menu) ->
         {
@@ -120,7 +128,7 @@ public abstract class UITransform extends UIElement
                 transforms = null;
             }
 
-            menu.action(Icons.COPY, UIKeys.TRANSFORMS_CONTEXT_COPY, this::copyTransformations);
+            menu.autoKeys().action(Icons.COPY, UIKeys.TRANSFORMS_CONTEXT_COPY, this::copyTransformations);
 
             if (transforms != null)
             {
@@ -143,72 +151,12 @@ public abstract class UITransform extends UIElement
         return this.uniformDrag || Window.isKeyPressed(GLFW.GLFW_KEY_SPACE);
     }
 
-    public UITransform noLabels()
-    {
-        this.renderLabels = false;
-
-        return this;
-    }
-
-    public UITransform verticalCompact()
-    {
-        this.vertical = true;
-
-        for (UITrackpad trackpad : this.getChildren(UITrackpad.class))
-        {
-            trackpad.removeFromParent();
-        }
-
-        this.removeAll();
-        this.resetFlex().w(1F).column().stretch().vertical();
-
-        UIIcon translate = new UIIcon(Icons.ALL_DIRECTIONS, null);
-        UIIcon scale = new UIIcon(Icons.SCALE, null);
-        UIIcon rotate = new UIIcon(Icons.REFRESH, null);
-        UIIcon rotate2 = new UIIcon(Icons.REFRESH, null);
-
-        translate.disabledColor = scale.disabledColor = rotate.disabledColor = rotate2.disabledColor = Colors.WHITE;
-        translate.hoverColor = scale.hoverColor = rotate.hoverColor = rotate2.hoverColor = Colors.WHITE;
-
-        translate.setEnabled(false);
-        scale.setEnabled(false);
-        rotate.setEnabled(false);
-        rotate2.setEnabled(false);
-
-        this.add(UI.row(translate, this.tx, this.ty, this.tz));
-        this.add(UI.row(scale, this.sx, this.sy, this.sz));
-        this.add(UI.row(rotate, this.rx, this.ry, this.rz));
-        this.add(UI.row(rotate2, this.r2x, this.r2y, this.r2z));
-
-        return this;
-    }
-
-    public UITransform verticalCompactNoIcons()
-    {
-        this.vertical = true;
-
-        for (UITrackpad trackpad : this.getChildren(UITrackpad.class))
-        {
-            trackpad.removeFromParent();
-        }
-
-        this.removeAll();
-        this.resetFlex().w(1F).column().stretch().vertical();
-
-        this.add(UI.row(this.tx, this.ty, this.tz));
-        this.add(UI.row(this.sx, this.sy, this.sz));
-        this.add(UI.row(this.rx, this.ry, this.rz));
-        this.add(UI.row(this.r2x, this.r2y, this.r2z));
-
-        return this;
-    }
-
     private void syncScale(double value)
     {
         if (this.isUniformScale())
         {
             this.fillS(value, value, value);
-            this.internalSetS(value, value, value);
+            this.setS(value, value, value);
         }
     }
 
@@ -264,11 +212,15 @@ public abstract class UITransform extends UIElement
         this.r2z.setValue(z);
     }
     
-    private void internalSetT(double x, double y, double z)
+    protected void internalSetT(double x, Axis axis)
     {
         try
         {
-            this.setT(x, y, z);
+            this.setT(
+                axis == Axis.X ? x : this.tx.value,
+                axis == Axis.Y ? x : this.ty.value,
+                axis == Axis.Z ? x : this.tz.value
+            );
         }
         catch (Exception e)
         {
@@ -276,11 +228,15 @@ public abstract class UITransform extends UIElement
         }
     }
 
-    private void internalSetS(double x, double y, double z)
+    protected void internalSetS(double x, Axis axis)
     {
         try
         {
-            this.setS(x, y, z);
+            this.setS(
+                axis == Axis.X ? x : this.sx.value,
+                axis == Axis.Y ? x : this.sy.value,
+                axis == Axis.Z ? x : this.sz.value
+            );
         }
         catch (Exception e)
         {
@@ -288,11 +244,15 @@ public abstract class UITransform extends UIElement
         }
     }
 
-    private void internalSetR(double x, double y, double z)
+    protected void internalSetR(double x, Axis axis)
     {
         try
         {
-            this.setR(x, y, z);
+            this.setR(
+                axis == Axis.X ? x : this.rx.value,
+                axis == Axis.Y ? x : this.ry.value,
+                axis == Axis.Z ? x : this.rz.value
+            );
         }
         catch (Exception e)
         {
@@ -300,11 +260,15 @@ public abstract class UITransform extends UIElement
         }
     }
 
-    private void internalSetR2(double x, double y, double z)
+    protected void internalSetR2(double x, Axis axis)
     {
         try
         {
-            this.setR2(x, y, z);
+            this.setR2(
+                axis == Axis.X ? x : this.r2x.value,
+                axis == Axis.Y ? x : this.r2y.value,
+                axis == Axis.Z ? x : this.r2z.value
+            );
         }
         catch (Exception e)
         {
@@ -441,18 +405,5 @@ public abstract class UITransform extends UIElement
         }
 
         return super.subKeyPressed(context);
-    }
-
-    @Override
-    public void render(UIContext context)
-    {
-        if (!this.vertical && this.renderLabels)
-        {
-            context.batcher.textShadow(UIKeys.TRANSFORMS_TRANSLATE.get(), this.tx.area.x, this.tx.area.y - 12);
-            context.batcher.textShadow(UIKeys.TRANSFORMS_SCALE.get(), this.sx.area.x, this.sx.area.y - 12);
-            context.batcher.textShadow(UIKeys.TRANSFORMS_ROTATE.get(), this.rx.area.x, this.rx.area.y - 12);
-        }
-
-        super.render(context);
     }
 }

@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import mchorse.bbs_mod.client.BBSShaders;
 import mchorse.bbs_mod.forms.FormUtilsClient;
+import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.renderers.FormRenderingContext;
 import mchorse.bbs_mod.graphics.Draw;
@@ -19,16 +20,12 @@ import mchorse.bbs_mod.utils.colors.Colors;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.GlUniform;
 import net.minecraft.client.gl.ShaderProgram;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.BufferRenderer;
-import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.math.MatrixStack;
 import org.joml.Matrix4f;
+
+import java.util.function.Supplier;
 
 public class UIPickableFormRenderer extends UIFormRenderer
 {
@@ -39,6 +36,9 @@ public class UIPickableFormRenderer extends UIFormRenderer
     private StencilFormFramebuffer stencil = new StencilFormFramebuffer();
     private StencilMap stencilMap = new StencilMap();
 
+    private IEntity target;
+    private Supplier<Boolean> renderForm;
+
     public UIPickableFormRenderer(UIFormEditor formEditor)
     {
         this.formEditor = formEditor;
@@ -47,6 +47,21 @@ public class UIPickableFormRenderer extends UIFormRenderer
     public void updatable()
     {
         this.update = true;
+    }
+
+    public void setRenderForm(Supplier<Boolean> renderForm)
+    {
+        this.renderForm = renderForm;
+    }
+
+    public IEntity getTargetEntity()
+    {
+        return this.target == null ? this.entity : this.target;
+    }
+
+    public void setTarget(IEntity target)
+    {
+        this.target = target;
     }
 
     private void ensureFramebuffer()
@@ -90,14 +105,17 @@ public class UIPickableFormRenderer extends UIFormRenderer
         }
 
         FormRenderingContext formContext = FormRenderingContext
-            .set(this.entity, context.batcher.getContext().getMatrices(), LightmapTextureManager.pack(15, 15), OverlayTexture.DEFAULT_UV, context.getTransition())
+            .set(this.target == null ? this.entity : this.target, context.batcher.getContext().getMatrices(), LightmapTextureManager.pack(15, 15), OverlayTexture.DEFAULT_UV, context.getTransition())
             .camera(this.camera);
 
-        FormUtilsClient.render(this.form, formContext);
-
-        if (this.form.hitbox.get())
+        if (this.renderForm == null || this.renderForm.get())
         {
-            this.renderFormHitbox(context);
+            FormUtilsClient.render(this.form, formContext);
+
+            if (this.form.hitbox.get())
+            {
+                this.renderFormHitbox(context);
+            }
         }
 
         this.renderAxes(context);
@@ -126,11 +144,6 @@ public class UIPickableFormRenderer extends UIFormRenderer
     private void renderAxes(UIContext context)
     {
         Matrix4f matrix = this.formEditor.editor.getOrigin(context.getTransition());
-        final float axisSize = 0.1F;
-        final float axisOffset = 0.005F;
-        final float outlineSize = axisSize + 0.005F;
-        final float outlineOffset = axisOffset + 0.005F;
-
         MatrixStack stack = context.render.batcher.getContext().getMatrices();
 
         stack.push();
@@ -141,25 +154,8 @@ public class UIPickableFormRenderer extends UIFormRenderer
         }
 
         /* Draw axes */
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
-
-        builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
-
-        Draw.fillBox(builder, stack, 0, -outlineOffset, -outlineOffset, outlineSize, outlineOffset, outlineOffset, 0, 0, 0);
-        Draw.fillBox(builder, stack, -outlineOffset, 0, -outlineOffset, outlineOffset, outlineSize, outlineOffset, 0, 0, 0);
-        Draw.fillBox(builder, stack, -outlineOffset, -outlineOffset, 0, outlineOffset, outlineOffset, outlineSize, 0, 0, 0);
-        Draw.fillBox(builder, stack, -outlineOffset, -outlineOffset, -outlineOffset, outlineOffset, outlineOffset, outlineOffset, 0, 0, 0);
-
-        Draw.fillBox(builder, stack, 0, -axisOffset, -axisOffset, axisSize, axisOffset, axisOffset, 1, 0, 0);
-        Draw.fillBox(builder, stack, -axisOffset, 0, -axisOffset, axisOffset, axisSize, axisOffset, 0, 1, 0);
-        Draw.fillBox(builder, stack, -axisOffset, -axisOffset, 0, axisOffset, axisOffset, axisSize, 0, 0, 1);
-        Draw.fillBox(builder, stack, -axisOffset, -axisOffset, -axisOffset, axisOffset, axisOffset, axisOffset, 1, 1, 1);
-
-        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
         RenderSystem.disableDepthTest();
-
-        BufferRenderer.drawWithGlobalProgram(builder.end());
-
+        Draw.coolerAxes(stack, 0.25F, 0.01F, 0.26F, 0.02F);
         RenderSystem.enableDepthTest();
 
         stack.pop();
@@ -184,7 +180,7 @@ public class UIPickableFormRenderer extends UIFormRenderer
     {
         super.update();
 
-        if (this.update)
+        if (this.update && this.target != null)
         {
             this.form.update(this.entity);
         }
@@ -227,6 +223,15 @@ public class UIPickableFormRenderer extends UIFormRenderer
             }
 
             context.batcher.textCard(label, context.mouseX + 12, context.mouseY + 8);
+        }
+    }
+
+    @Override
+    protected void renderGrid(UIContext context)
+    {
+        if (this.renderForm == null || this.renderForm.get())
+        {
+            super.renderGrid(context);
         }
     }
 }

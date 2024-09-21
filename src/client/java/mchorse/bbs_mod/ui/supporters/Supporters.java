@@ -235,6 +235,9 @@ public class Supporters
         this.add("阿秩rank").withDate(8, 29);
         this.add("卿冬与千").withDate(8, 29);
         this.add("SqrtPi_").withDate(8, 30);
+        this.add("小啊雨大王").withDate(9, 9);
+        this.add("FoFTG", "https://space.bilibili.com/26032219/", "...").withDate(9, 9);
+        this.add("WHYHW2297").withDate(9, 9);
 
         /* Patreon */
         this.add("terbin", "https://www.youtube.com/channel/UCD4X2slLdD_WJxlW03JPVQQ", "...").withDate(2, 23);
@@ -419,7 +422,7 @@ public class Supporters
         this.add("Hangert").withDate(5, 10);
         this.add("C4ptainF0xy").withDate(5, 11);
         this.add("Hfsiu F.").withDate(5, 11);
-        this.add("gcon").withDate(5, 11);
+        this.add("inhisarlideliyakup").withDate(5, 11);
         this.add("KudoDerg").withDate(5, 11);
         this.add("EinfachJoey").withDate(5, 12);
         this.add("Santiago AAP").withDate(5, 12);
@@ -552,7 +555,7 @@ public class Supporters
         this.add("Sammy_Boy_Br 123").withDate(7, 28);
         this.add("Tse Tin").withDate(7, 29);
         this.add("Minaduk1").withDate(7, 30);
-        this.add("Riggih A.").withDate(7, 30);
+        this.add("Riggih A.", "...").withDate(7, 30);
         this.add("T4ddyGamesBR", "https://www.youtube.com/@BUNGas99").withDate(7, 30);
         this.add("ChillinWithDylan", "https://www.youtube.com/channel/UCM8yL498_xlj-oOMAjM7CPA").withDate(7, 31);
         this.add("Shaw O.").withDate(8, 3);
@@ -575,6 +578,8 @@ public class Supporters
         this.add("SpyQu", "https://www.youtube.com/@SpyQu").withDate(8, 25);
         this.add("The Coastal Tavern").withDate(8, 26);
         this.add("Leo A.").withDate(9, 1);
+        this.add("Nothing Count").withDate(9, 14);
+        this.add("Mr. Blaster").withDate(9, 14);
 
         // Thank you very much for donation! 😊 Is $ is the name you want to be included in BBS mod?
         // Thank you very much for donation! 😊 Is $ is the name you want to be included in BBS mod? Also, you can provide a link to your social media account (like YouTube, Twitter, TikTok, etc.)
@@ -668,9 +673,9 @@ public class Supporters
         this.add("Shkarkusha").withDate(8, 4);
         this.add("korupey").withDate(8, 8);
         this.add("Hosti1338").withDate(8, 29);
-        this.add("Hosti1338").withDate(8, 29);
         this.add("Mel1x").withDate(9, 5);
         this.add("Eda Hari").withDate(9, 5);
+        this.add("CTU4").withDate(9, 5);
 
         /* Custom */
         this.add("Hrymka", "...", "textures/banners/hrymka.png").withDate(3, 6);

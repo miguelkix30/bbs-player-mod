@@ -2,7 +2,9 @@ package mchorse.bbs_mod.settings.ui;
 
 import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.film.tts.UIVoiceColorsOverlayPanel;
+import mchorse.bbs_mod.film.tts.UIVoiceModelOverlayPanel;
 import mchorse.bbs_mod.film.tts.ValueVoiceColors;
+import mchorse.bbs_mod.film.tts.ValueVoiceModel;
 import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.settings.value.ValueKeyCombo;
 import mchorse.bbs_mod.settings.values.ValueBoolean;
@@ -126,7 +128,7 @@ public class UIValueMap
         {
             UIButton pick = new UIButton(UIKeys.TEXTURE_PICK_TEXTURE, (button) ->
             {
-                UITexturePicker.open(ui, value.get(), value::set);
+                UITexturePicker.open(ui.getContext(), value.get(), value::set);
             });
 
             pick.w(90);
@@ -168,6 +170,16 @@ public class UIValueMap
             UIButton button = new UIButton(UIKeys.VOICE_COLORS_OPEN, (b) ->
             {
                 UIOverlay.addOverlay(ui.getContext(), new UIVoiceColorsOverlayPanel(value));
+            });
+
+            return Arrays.asList(button);
+        });
+
+        register(ValueVoiceModel.class, (value, ui) ->
+        {
+            UIButton button = new UIButton(UIKeys.VOICE_MODEL_OPEN, (b) ->
+            {
+                UIOverlay.addOverlay(ui.getContext(), new UIVoiceModelOverlayPanel(value), 200, 0.5F);
             });
 
             return Arrays.asList(button);
