@@ -20,6 +20,8 @@ import mchorse.bbs_mod.network.ClientNetwork;
 import mchorse.bbs_mod.particles.ParticleManager;
 import mchorse.bbs_mod.resources.AssetProvider;
 import mchorse.bbs_mod.resources.Link;
+import mchorse.bbs_mod.resources.packs.URLRepository;
+import mchorse.bbs_mod.resources.packs.URLSourcePack;
 import mchorse.bbs_mod.selectors.EntitySelectors;
 import mchorse.bbs_mod.settings.values.ValueLanguage;
 import mchorse.bbs_mod.ui.UIKeys;
@@ -84,6 +86,7 @@ public class BBSModClient implements ClientModInitializer
     private static KeyBinding keyOpenReplays;
     private static KeyBinding keyOpenMorphing;
     private static KeyBinding keyDemorph;
+    private static KeyBinding keyTeleport;
 
     private static UIDashboard dashboard;
 
@@ -212,6 +215,11 @@ public class BBSModClient implements ClientModInitializer
         selectors.read();
         films = new Films();
 
+        URLRepository repository = new URLRepository(new File(parentFile, "url_cache"));
+
+        provider.register(new URLSourcePack("http", repository));
+        provider.register(new URLSourcePack("https", repository));
+
         KeybindSettings.registerClasses();
 
         BBSMod.setupConfig(Icons.KEY_CAP, "keybinds", new File(BBSMod.getSettingsFolder(), "keybinds.json"), KeybindSettings::register);
@@ -254,6 +262,7 @@ public class BBSModClient implements ClientModInitializer
         keyOpenReplays = this.createKey("open_replays", GLFW.GLFW_KEY_RIGHT_SHIFT);
         keyOpenMorphing = this.createKey("open_morphing", GLFW.GLFW_KEY_B);
         keyDemorph = this.createKey("demorph", GLFW.GLFW_KEY_PERIOD);
+        keyTeleport = this.createKey("teleport", GLFW.GLFW_KEY_Y);
 
         WorldRenderEvents.AFTER_ENTITIES.register((context) ->
         {
@@ -330,6 +339,7 @@ public class BBSModClient implements ClientModInitializer
                 dashboard.setPanel(dashboard.getPanel(UIMorphingPanel.class));
             }
             while (keyDemorph.wasPressed()) ClientNetwork.sendPlayerForm(null);
+            while (keyTeleport.wasPressed()) this.keyTeleport();
         });
 
         HudRenderCallback.EVENT.register((drawContext, tickDelta) ->
@@ -490,11 +500,11 @@ public class BBSModClient implements ClientModInitializer
             else
             {
                 Replay replay = panel.replayEditor.getReplay();
-                int index = panel.getFilm().replays.getList().indexOf(replay);
+                int index = panel.getData().replays.getList().indexOf(replay);
 
                 if (index >= 0)
                 {
-                    getFilms().startRecording(panel.getFilm(), index);
+                    getFilms().startRecording(panel.getData(), index);
                 }
             }
         }
@@ -523,6 +533,16 @@ public class BBSModClient implements ClientModInitializer
                     panel.openOverlay.clickItself();
                 }
             }
+        }
+    }
+
+    private void keyTeleport()
+    {
+        UIDashboard dashboard = getDashboard();
+
+        if (dashboard != null && dashboard.getPanels().panel instanceof UIFilmPanel panel)
+        {
+            panel.replayEditor.teleport();
         }
     }
 

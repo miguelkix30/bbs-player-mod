@@ -3,11 +3,14 @@ package mchorse.bbs_mod.ui.film.replays;
 import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.camera.clips.CameraClipContext;
 import mchorse.bbs_mod.camera.data.Position;
+import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.FormUtilsClient;
 import mchorse.bbs_mod.forms.forms.Form;
+import mchorse.bbs_mod.graphics.window.Window;
 import mchorse.bbs_mod.settings.values.ValueForm;
+import mchorse.bbs_mod.settings.values.base.BaseValue;
 import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
 import mchorse.bbs_mod.ui.forms.UIFormPalette;
@@ -50,7 +53,19 @@ public class UIReplayList extends UIList<Replay>
         {
             menu.action(Icons.ADD, UIKeys.SCENE_REPLAYS_CONTEXT_ADD, this::addReplay);
 
-            int duration = this.panel.getFilm().camera.calculateDuration();
+            if (this.isSelected())
+            {
+                menu.action(Icons.COPY, UIKeys.SCENE_REPLAYS_CONTEXT_COPY, this::copyReplay);
+            }
+
+            MapType copyReplay = Window.getClipboardMap("_CopyReplay");
+
+            if (copyReplay != null)
+            {
+                menu.action(Icons.PASTE, UIKeys.SCENE_REPLAYS_CONTEXT_PASTE, () -> this.pasteReplay(copyReplay));
+            }
+
+            int duration = this.panel.getData().camera.calculateDuration();
 
             if (duration > 0)
             {
@@ -63,6 +78,25 @@ public class UIReplayList extends UIList<Replay>
                 menu.action(Icons.REMOVE, UIKeys.SCENE_REPLAYS_CONTEXT_REMOVE, this::removeReplay);
             }
         });
+    }
+
+    private void copyReplay()
+    {
+        Replay replay = this.panel.replayEditor.getReplay();
+
+        Window.setClipboard((MapType) replay.toData(), "_CopyReplay");
+    }
+
+    private void pasteReplay(MapType data)
+    {
+        Film film = this.panel.getData();
+        Replay replay = film.replays.addReplay();
+
+        BaseValue.edit(replay, (r) -> r.fromData(data));
+
+        this.update();
+        this.panel.replayEditor.setReplay(replay);
+        this.updateFilmEditor();
     }
 
     public void openFormEditor(ValueForm form, boolean editing, Consumer<Form> consumer)
@@ -112,7 +146,7 @@ public class UIReplayList extends UIList<Replay>
     private void fromCamera(int duration)
     {
         Position position = new Position();
-        Clips camera = this.panel.getFilm().camera;
+        Clips camera = this.panel.getData().camera;
         CameraClipContext context = new CameraClipContext();
 
         Film film = this.panel.getData();

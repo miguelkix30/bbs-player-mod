@@ -84,7 +84,6 @@ public class UIInterpolationContextMenu extends UIContextMenu
         INTERP_ICON_MAP.put(Interpolations.CIRCLE_IN, Icons.INTERP_CIRCLE_IN);
         INTERP_ICON_MAP.put(Interpolations.CIRCLE_OUT, Icons.INTERP_CIRCLE_OUT);
         INTERP_ICON_MAP.put(Interpolations.CIRCLE_INOUT, Icons.INTERP_CIRCLE_INOUT);
-        INTERP_ICON_MAP.put(Interpolations.CIRCULAR, Icons.INTERP_CIRCLE_INOUT);
         INTERP_ICON_MAP.put(Interpolations.CUBIC, Icons.INTERP_CUBIC_INOUT);
         INTERP_ICON_MAP.put(Interpolations.HERMITE, Icons.INTERP_CUBIC_INOUT);
         INTERP_ICON_MAP.put(Interpolations.BEZIER, Icons.INTERP_BEZIER);
@@ -98,10 +97,26 @@ public class UIInterpolationContextMenu extends UIContextMenu
         int h = (int) Math.ceil(interpolation.getMap().values().size() / (w / 20F)) * 20;
         int gridY = PADDING + GRAPH_HEIGHT + MARGIN + ARGUMENTS_HEIGHT;
 
-        this.v1 = new UITrackpad((v) -> this.interpolation.setV1(v));
-        this.v2 = new UITrackpad((v) -> this.interpolation.setV2(v));
-        this.v3 = new UITrackpad((v) -> this.interpolation.setV3(v));
-        this.v4 = new UITrackpad((v) -> this.interpolation.setV4(v));
+        this.v1 = new UITrackpad((v) ->
+        {
+            this.interpolation.setV1(v);
+            this.accept();
+        });
+        this.v2 = new UITrackpad((v) ->
+        {
+            this.interpolation.setV2(v);
+            this.accept();
+        });
+        this.v3 = new UITrackpad((v) ->
+        {
+            this.interpolation.setV3(v);
+            this.accept();
+        });
+        this.v4 = new UITrackpad((v) ->
+        {
+            this.interpolation.setV4(v);
+            this.accept();
+        });
 
         this.v1.setValue(interpolation.getV1());
         this.v2.setValue(interpolation.getV2());
@@ -143,11 +158,7 @@ public class UIInterpolationContextMenu extends UIContextMenu
             UIIcon icon = new UIIcon(INTERP_ICON_MAP.getOrDefault(value, Icons.INTERP_LINEAR), (b) ->
             {
                 this.interpolation.setInterp(value);
-
-                if (this.callback != null)
-                {
-                    this.callback.run();
-                }
+                this.accept();
             });
 
             icon.tooltip(InterpolationUtils.getName(value));
@@ -162,6 +173,14 @@ public class UIInterpolationContextMenu extends UIContextMenu
 
         this.wh(w + PADDING * 2, gridY + h + PADDING);
         this.add(vs, this.grid);
+    }
+
+    private void accept()
+    {
+        if (this.callback != null)
+        {
+            this.callback.run();
+        }
     }
 
     private void setupKeybind(IInterp interp, UIIcon icon)

@@ -40,6 +40,7 @@ import mchorse.bbs_mod.ui.film.utils.undo.UIUndoHistoryOverlay;
 import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIIcon;
+import mchorse.bbs_mod.ui.framework.elements.overlay.UIMessageOverlayPanel;
 import mchorse.bbs_mod.ui.framework.elements.overlay.UIOverlay;
 import mchorse.bbs_mod.ui.framework.elements.overlay.UIPromptOverlayPanel;
 import mchorse.bbs_mod.ui.framework.elements.utils.UIDraggable;
@@ -867,11 +868,6 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         ClientNetwork.sendActionState(id, state, tick);
     }
 
-    public Film getFilm()
-    {
-        return this.data;
-    }
-
     public Camera getCamera()
     {
         return this.camera;
@@ -945,21 +941,42 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
 
     public void teleportToCamera()
     {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
         Vector3d cameraPos = this.getCamera().position;
         double posX = Math.floor(cameraPos.x);
         double posY = Math.floor(cameraPos.y);
         double posZ = Math.floor(cameraPos.z);
 
+        this.teleport(posX, posY, posZ);
+    }
+
+    public void teleport(double x, double y, double z)
+    {
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+
         if (!ClientNetwork.isIsBBSModOnServer())
         {
             String name = player.getGameProfile().getName();
 
-            player.networkHandler.sendCommand("tp " + name + " " + posX + " " + posY + " " + posZ);
+            player.networkHandler.sendCommand("tp " + name + " " + x + " " + y + " " + z);
         }
         else
         {
-            ClientNetwork.sendTeleport((int) posX, (int) posY, (int) posZ);
+            ClientNetwork.sendTeleport(x, y, z);
         }
+    }
+
+    public boolean checkShowNoCamera()
+    {
+        boolean noCamera = this.getData().camera.calculateDuration() <= 0;
+
+        if (noCamera)
+        {
+            UIOverlay.addOverlay(this.getContext(), new UIMessageOverlayPanel(
+                UIKeys.FILM_NO_CAMERA_TITLE,
+                UIKeys.FILM_NO_CAMERA_DESCRIPTION
+            ));
+        }
+
+        return noCamera;
     }
 }
