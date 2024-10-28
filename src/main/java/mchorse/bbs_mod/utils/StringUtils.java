@@ -1,5 +1,6 @@
 package mchorse.bbs_mod.utils;
 
+import net.minecraft.text.OrderedText;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 import org.joml.Vector4d;
@@ -11,6 +12,20 @@ import java.util.List;
 
 public class StringUtils
 {
+    public static String plainText(OrderedText text)
+    {
+        StringBuilder builder = new StringBuilder();
+
+        text.accept((index, style, c) ->
+        {
+            builder.append((char) c);
+
+            return true;
+        });
+
+        return builder.toString();
+    }
+
     public static String createTimestampFilename()
     {
         return new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
@@ -147,6 +162,13 @@ public class StringUtils
         int lastDot = path.lastIndexOf('.');
 
         return lastDot >= 0 ? path.substring(0, lastDot) : path;
+    }
+
+    public static String extension(String path)
+    {
+        int lastDot = path.lastIndexOf('.');
+
+        return lastDot >= 0 ? path.substring(lastDot + 1) : "";
     }
 
     public static String replaceExtension(String path, String extension)

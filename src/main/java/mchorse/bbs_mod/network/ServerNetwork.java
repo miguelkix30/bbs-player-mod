@@ -1,6 +1,7 @@
 package mchorse.bbs_mod.network;
 
 import mchorse.bbs_mod.BBSMod;
+import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.actions.ActionManager;
 import mchorse.bbs_mod.actions.ActionPlayer;
 import mchorse.bbs_mod.actions.ActionState;
@@ -16,11 +17,18 @@ import mchorse.bbs_mod.film.FilmManager;
 import mchorse.bbs_mod.forms.FormUtils;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.morphing.Morph;
+import mchorse.bbs_mod.resources.ISourcePack;
+import mchorse.bbs_mod.resources.Link;
+import mchorse.bbs_mod.resources.packs.ExternalAssetsSourcePack;
 import mchorse.bbs_mod.utils.CollectionUtils;
 import mchorse.bbs_mod.utils.EnumUtils;
+import mchorse.bbs_mod.utils.IOUtils;
+import mchorse.bbs_mod.utils.Pair;
+import mchorse.bbs_mod.utils.StringUtils;
 import mchorse.bbs_mod.utils.clips.Clips;
 import mchorse.bbs_mod.utils.repos.RepositoryOperation;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.entity.BlockEntity;
@@ -30,12 +38,25 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 public class ServerNetwork
 {
+    public static final List<String> EXTENSIONS = Arrays.asList("wav", "json", "vox", "png", "ogg");
+
     public static final Identifier CLIENT_CLICKED_MODEL_BLOCK_PACKET = new Identifier(BBSMod.MOD_ID, "c1");
     public static final Identifier CLIENT_PLAYER_FORM_PACKET = new Identifier(BBSMod.MOD_ID, "c2");
     public static final Identifier CLIENT_PLAY_FILM_PACKET = new Identifier(BBSMod.MOD_ID, "c3");
@@ -44,6 +65,8 @@ public class ServerNetwork
     public static final Identifier CLIENT_HANDSHAKE = new Identifier(BBSMod.MOD_ID, "c6");
     public static final Identifier CLIENT_RECORDED_ACTIONS = new Identifier(BBSMod.MOD_ID, "c7");
     public static final Identifier CLIENT_FORM_TRIGGER = new Identifier(BBSMod.MOD_ID, "c8");
+    public static final Identifier CLIENT_ASSET = new Identifier(BBSMod.MOD_ID, "c9");
+    public static final Identifier CLIENT_REQUEST_ASSET = new Identifier(BBSMod.MOD_ID, "c10");
 
     public static final Identifier SERVER_MODEL_BLOCK_FORM_PACKET = new Identifier(BBSMod.MOD_ID, "s1");
     public static final Identifier SERVER_MODEL_BLOCK_TRANSFORMS_PACKET = new Identifier(BBSMod.MOD_ID, "s2");
@@ -55,6 +78,8 @@ public class ServerNetwork
     public static final Identifier SERVER_ACTIONS_UPLOAD = new Identifier(BBSMod.MOD_ID, "s8");
     public static final Identifier SERVER_PLAYER_TP = new Identifier(BBSMod.MOD_ID, "s9");
     public static final Identifier SERVER_FORM_TRIGGER = new Identifier(BBSMod.MOD_ID, "s10");
+    public static final Identifier SERVER_REQUEST_ASSET = new Identifier(BBSMod.MOD_ID, "s11");
+    public static final Identifier SERVER_ASSET = new Identifier(BBSMod.MOD_ID, "s12");
 
     public static void setup()
     {
@@ -68,6 +93,8 @@ public class ServerNetwork
         ServerPlayNetworking.registerGlobalReceiver(SERVER_ACTIONS_UPLOAD, (server, player, handler, buf, responder) -> handleActionsUpload(server, player, buf));
         ServerPlayNetworking.registerGlobalReceiver(SERVER_PLAYER_TP, (server, player, handler, buf, responder) -> handleTeleportPlayer(server, player, buf));
         ServerPlayNetworking.registerGlobalReceiver(SERVER_FORM_TRIGGER, (server, player, handler, buf, responder) -> handleFormTrigger(server, player, buf));
+        ServerPlayNetworking.registerGlobalReceiver(SERVER_REQUEST_ASSET, (server, player, handler, buf, responder) -> handleRequestAssets(server, player, buf));
+        ServerPlayNetworking.registerGlobalReceiver(SERVER_ASSET, (server, player, handler, buf, responder) -> handleAssetPacket(server, player, buf));
     }
 
     /* Handlers */
@@ -370,6 +397,81 @@ public class ServerNetwork
         });
     }
 
+    private static void handleRequestAssets(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
+    {
+        String path = buf.readString();
+        Link link = Link.assets(path);
+        int index = buf.readInt();
+
+        sendAsset(player, link, index);
+    }
+
+    private static void handleAssetPacket(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
+    {
+        if (!BBSSettings.serverAssetManager.get().equals(player.getUuidAsString()))
+        {
+            player.sendMessage(Text.literal("You don't have permission to upload files"), true);
+
+            return;
+        }
+
+        String path = buf.readString();
+        int index = buf.readInt();
+
+        /* If index is -1, we gotta delete the file */
+        if (index == -1)
+        {
+            ISourcePack sourcePack = BBSMod.getDynamicSourcePack().getSourcePack();
+
+            if (sourcePack instanceof ExternalAssetsSourcePack pack)
+            {
+                File file = new File(pack.getFolder(), path);
+
+                if (file.exists())
+                {
+                    file.delete();
+                }
+            }
+
+            return;
+        }
+
+        int total = buf.readInt();
+        int size = buf.readInt();
+        byte[] bytes = new byte[size];
+
+        buf.readBytes(bytes);
+
+        ISourcePack sourcePack = BBSMod.getDynamicSourcePack().getSourcePack();
+
+        if (sourcePack instanceof ExternalAssetsSourcePack pack)
+        {
+            File file = new File(pack.getFolder(), path);
+
+            file.getParentFile().mkdirs();
+
+            try (OutputStream stream = new FileOutputStream(file, index != 0))
+            {
+                stream.write(bytes);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+
+            if (index != total - 1)
+            {
+                server.execute(() -> sendRequestAsset(player, path, index + 1));
+            }
+            else
+            {
+                System.out.println("[Server] Received completely: " + path);
+            }
+
+            BBSMod.getResourceTracker().timer.mark();
+        }
+    }
+
     /* API */
 
     public static void sendMorph(ServerPlayerEntity player, int playerId, Form form)
@@ -488,5 +590,97 @@ public class ServerNetwork
         DataStorageUtils.writeToPacket(newBuf, clips.toData());
 
         ServerPlayNetworking.send(player, CLIENT_RECORDED_ACTIONS, newBuf);
+    }
+
+    public static void sendHandshake(MinecraftServer server, PacketSender packetSender)
+    {
+        packetSender.sendPacket(ServerNetwork.CLIENT_HANDSHAKE, createHandshakeBuf(server));
+    }
+
+    public static void sendHandshake(MinecraftServer server, ServerPlayerEntity player)
+    {
+        ServerPlayNetworking.send(player, ServerNetwork.CLIENT_HANDSHAKE, createHandshakeBuf(server));
+    }
+
+    private static PacketByteBuf createHandshakeBuf(MinecraftServer server)
+    {
+        PacketByteBuf buf = PacketByteBufs.create();
+        String id = BBSSettings.serverId.get().trim();
+
+        /* No need to do that in singleplayer */
+        if (server.isSingleplayer())
+        {
+            id = "";
+        }
+
+        buf.writeString(id);
+
+        if (!id.isEmpty())
+        {
+            Collection<Link> links = BBSMod.getProvider().getLinksFromPath(Link.assets(""));
+            List<Pair<String, Long>> assets = new ArrayList<>();
+
+            for (Link link : links)
+            {
+                String extension = StringUtils.extension(link.path);
+
+                if (!extension.equals(link.path) && EXTENSIONS.contains(extension.toLowerCase()) && !link.path.startsWith("audio/elevenlabs/"))
+                {
+                    File file = BBSMod.getProvider().getFile(link);
+                    long l = file.lastModified();
+
+                    assets.add(new Pair<>(link.path, l));
+                }
+            }
+
+            buf.writeInt(assets.size());
+
+            for (Pair<String, Long> asset : assets)
+            {
+                buf.writeString(asset.a);
+                buf.writeLong(asset.b);
+            }
+        }
+
+        return buf;
+    }
+
+    public static void sendAsset(ServerPlayerEntity player, Link link, int index)
+    {
+        try
+        {
+            InputStream stream = BBSMod.getOriginalSourcePack().getAsset(link);
+            byte[] bytes = IOUtils.readBytes(stream);
+
+            int placeholder = 1000;
+            int bufferSize = (BBSSettings.unlimitedPacketSize.get() ? 1048576 : 32767) - placeholder;
+            int total = (int) Math.ceil(bytes.length / (float) bufferSize);
+            int offset = index * bufferSize;
+
+            PacketByteBuf buf = PacketByteBufs.create();
+            int size = Math.min(bufferSize, bytes.length - offset);
+
+            buf.writeString(link.path);
+            buf.writeInt(index);
+            buf.writeInt(total);
+            buf.writeInt(size);
+            buf.writeBytes(bytes, offset, size);
+
+            ServerPlayNetworking.send(player, CLIENT_ASSET, buf);
+        }
+        catch (IOException e)
+        {
+            System.err.println("Failed to read asset: " + link);
+        }
+    }
+
+    public static void sendRequestAsset(ServerPlayerEntity player, String asset, int index)
+    {
+        PacketByteBuf buf = PacketByteBufs.create();
+
+        buf.writeString(asset);
+        buf.writeInt(index);
+
+        ServerPlayNetworking.send(player, ServerNetwork.CLIENT_REQUEST_ASSET, buf);
     }
 }
