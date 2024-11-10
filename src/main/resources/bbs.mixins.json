@@ -13,7 +13,8 @@
         "LivingEntityMixin",
         "ServerPlayerEntityMixin",
         "LimbAnimatorAccessor",
-        "CustomPayloadC2SPacketMixin"
+        "CustomPayloadC2SPacketMixin",
+        "LevelPropertiesAccessor"
     ],
     "injectors": {
         "defaultRequire": 1

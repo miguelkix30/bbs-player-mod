@@ -52,6 +52,7 @@ import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.utils.CollectionUtils;
 import mchorse.bbs_mod.utils.Direction;
 import mchorse.bbs_mod.utils.MathUtils;
+import mchorse.bbs_mod.utils.PlayerUtils;
 import mchorse.bbs_mod.utils.Timer;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.colors.Colors;
@@ -790,7 +791,7 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
 
             max = Math.min(max, this.data.camera.calculateDuration());
 
-            if (!this.recorder.isRecording() && min >= 0 && max >= 0 && min < max && (this.runner.ticks >= max - 1 || this.runner.ticks < min))
+            if (!this.recorder.isRecording() && min >= 0 && max >= 0 && min < max && (this.runner.ticks >= max - 1 || this.runner.ticks < min) && !this.controller.isRecording())
             {
                 this.setCursor((int) min);
             }
@@ -957,28 +958,13 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
 
     public void teleportToCamera()
     {
-        Vector3d cameraPos = this.getCamera().position;
-        double posX = Math.floor(cameraPos.x);
-        double posY = Math.floor(cameraPos.y);
-        double posZ = Math.floor(cameraPos.z);
+        Camera camera = this.getCamera();
+        Vector3d cameraPos = camera.position;
+        double x = cameraPos.x;
+        double y = cameraPos.y;
+        double z = cameraPos.z;
 
-        this.teleport(posX, posY, posZ);
-    }
-
-    public void teleport(double x, double y, double z)
-    {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
-
-        if (!ClientNetwork.isIsBBSModOnServer())
-        {
-            String name = player.getGameProfile().getName();
-
-            player.networkHandler.sendCommand("tp " + name + " " + x + " " + y + " " + z);
-        }
-        else
-        {
-            ClientNetwork.sendTeleport(x, y, z);
-        }
+        PlayerUtils.teleport(x, y, z, MathUtils.toDeg(camera.rotation.y) - 180F, MathUtils.toDeg(camera.rotation.x));
     }
 
     public boolean checkShowNoCamera()

@@ -173,6 +173,7 @@ public class UIKeys
     public static final IKey CAMERA_TIMELINE_CONTEXT_SHIFT_DURATION = L10n.lang("bbs.ui.camera.timeline.context.shift_duration");
     public static final IKey CAMERA_TIMELINE_KEYS_CLIPS = L10n.lang("bbs.ui.camera.timeline.keys.clips");
     public static final IKey CAMERA_TIMELINE_KEYS_ENABLED = L10n.lang("bbs.ui.camera.timeline.keys.enabled");
+    public static final IKey CAMERA_TIMELINE_CANT_FIT_NOTIFICATION = L10n.lang("bbs.ui.camera.timeline.cant_fit-notification");
     public static final IKey CAMERA_TOOLTIPS_OPEN_VIDEOS = L10n.lang("bbs.ui.camera.tooltips.open_videos");
     public static final IKey CAMERA_TOOLTIPS_RECORD = L10n.lang("bbs.ui.camera.tooltips.record");
     public static final IKey COLOR_CONTEXT_FAVORITES_ADD = L10n.lang("bbs.ui.color.context.favorites.add");
@@ -268,6 +269,7 @@ public class UIKeys
     public static final IKey FORMS_CATEGORIES_CONTEXT_COPY_FORM = L10n.lang("bbs.ui.forms.categories.context.copy_form");
     public static final IKey FORMS_CATEGORIES_CONTEXT_COPY_TO = L10n.lang("bbs.ui.forms.categories.context.copy_to");
     public static final IKey FORMS_CATEGORIES_CONTEXT_COPY_TO_CATEGORY = L10n.lang("bbs.ui.forms.categories.context.copy_to_category");
+    public static final IKey FORMS_CATEGORIES_CONTEXT_COPY_COMMAND = L10n.lang("bbs.ui.forms.categories.context.copy_command");
     public static final IKey FORMS_CATEGORIES_CONTEXT_EXPORT_MODEL = L10n.lang("bbs.ui.forms.categories.context.export_model");
     public static final IKey FORMS_CATEGORIES_CONTEXT_EXPORT_MODEL_DESCRIPTION = L10n.lang("bbs.ui.forms.categories.context.export_model-description");
     public static final IKey FORMS_CATEGORIES_CONTEXT_EXPORT_MODEL_TITLE = L10n.lang("bbs.ui.forms.categories.context.export_model-title");
@@ -428,6 +430,7 @@ public class UIKeys
     public static final IKey MODEL_BLOCKS_GLOBAL = L10n.lang("bbs.ui.model_blocks.global");
     public static final IKey MODEL_BLOCKS_KEYS_MOVE_TO = L10n.lang("bbs.ui.model_blocks.keys.move_to");
     public static final IKey MODEL_BLOCKS_KEYS_TOGGLE_RENDERING = L10n.lang("bbs.ui.model_blocks.keys.toggle_rendering");
+    public static final IKey MODEL_BLOCKS_KEYS_TELEPORT = L10n.lang("bbs.ui.model_blocks.keys.teleport");
     public static final IKey MODEL_BLOCKS_SHADOW = L10n.lang("bbs.ui.model_blocks.shadow");
     public static final IKey MODEL_BLOCKS_TITLE = L10n.lang("bbs.ui.model_blocks.title");
     public static final IKey MODEL_BLOCKS_TRANSFORM_FIRST_PERSON = L10n.lang("bbs.ui.model_blocks.transform.first_person");
@@ -674,6 +677,7 @@ public class UIKeys
     public static final IKey TRANSFORMS_ROTATE2 = L10n.lang("bbs.ui.transforms.rotate2");
     public static final IKey TRANSFORMS_SCALE = L10n.lang("bbs.ui.transforms.scale");
     public static final IKey TRANSFORMS_TRANSLATE = L10n.lang("bbs.ui.transforms.translate");
+    public static final IKey TRANSFORMS_KEYS_TOGGLE_AXES = L10n.lang("bbs.ui.transforms.keys.toggle_axes");
     public static final IKey UTILITY_ANALYZE_LANG = L10n.lang("studio.ui.utility.analyze_lang");
     public static final IKey UTILITY_AUDIO = L10n.lang("studio.ui.utility.audio");
     public static final IKey UTILITY_COMPILE_LANG = L10n.lang("studio.ui.utility.compile_lang");
