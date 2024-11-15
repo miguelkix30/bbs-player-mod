@@ -156,6 +156,7 @@ public class UIKeys
     public static final IKey CAMERA_PANELS_VOICE_UUID_DESCRIPTION = L10n.lang("bbs.ui.camera.panels.voice_line.uuid-description");
     public static final IKey CAMERA_PANELS_VOICE_UUID_TITLE = L10n.lang("bbs.ui.camera.panels.voice_line.uuid-title");
     public static final IKey CAMERA_PANELS_YAW = L10n.lang("bbs.ui.camera.panels.yaw");
+    public static final IKey CAMERA_TIMELINE_INCOMPATIBLE_PASTE = L10n.lang("bbs.ui.camera.timeline.incompatible_paste");
     public static final IKey CAMERA_TIMELINE_CONTEXT_ADD = L10n.lang("bbs.ui.camera.timeline.context.add");
     public static final IKey CAMERA_TIMELINE_CONTEXT_ADD_AT_CURSOR = L10n.lang("bbs.ui.camera.timeline.context.add_at_cursor");
     public static final IKey CAMERA_TIMELINE_CONTEXT_ADD_AT_TICK = L10n.lang("bbs.ui.camera.timeline.context.add_at_tick");
@@ -238,6 +239,7 @@ public class UIKeys
     public static final IKey FILM_REPLAY_CONTEXT_ADD = L10n.lang("bbs.ui.film.replay.context.add");
     public static final IKey FILM_REPLAY_CONTEXT_MOVE_HERE = L10n.lang("bbs.ui.film.replay.context.move_here");
     public static final IKey FILM_REPLAY_LABEL = L10n.lang("bbs.ui.film.replay.label");
+    public static final IKey FILM_REPLAY_NAME_TAG = L10n.lang("bbs.ui.film.replay.name_tag");
     public static final IKey FILM_REPLAY_ORBIT_CAMERA = L10n.lang("bbs.ui.film.replay.orbit.camera");
     public static final IKey FILM_REPLAY_ORBIT_FREE = L10n.lang("bbs.ui.film.replay.orbit.free");
     public static final IKey FILM_REPLAY_ORBIT_FIRST_PERSON = L10n.lang("bbs.ui.film.replay.orbit.first_person");
