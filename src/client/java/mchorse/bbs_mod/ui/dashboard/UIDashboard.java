@@ -32,6 +32,7 @@ import mchorse.bbs_mod.ui.particles.UIParticleSchemePanel;
 import mchorse.bbs_mod.ui.selectors.UISelectorsOverlayPanel;
 import mchorse.bbs_mod.ui.supporters.UISupportersPanel;
 import mchorse.bbs_mod.ui.utility.UIUtilityOverlayPanel;
+import mchorse.bbs_mod.ui.utility.audio.UIAudioEditorPanel;
 import mchorse.bbs_mod.ui.utils.UIDataUtils;
 import mchorse.bbs_mod.ui.utils.UIUtils;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
@@ -58,7 +59,7 @@ public class UIDashboard extends UIBaseMenu
 
     /* Camera data */
     public final UIOrbitCamera orbitUI = new UIOrbitCamera();
-    public final UIOrbitCameraKeys orbitKeysUI = new UIOrbitCameraKeys(this.orbitUI);
+    public final UIOrbitCameraKeys orbitKeysUI = new UIOrbitCameraKeys(this);
     public final OrbitCamera orbit = this.orbitUI.orbit;
     public final OrbitCameraController camera = new OrbitCameraController(this.orbit, 5);
 
@@ -251,6 +252,7 @@ public class UIDashboard extends UIBaseMenu
         this.panels.registerPanel(new UIModelBlockPanel(this), UIKeys.MODEL_BLOCKS_TITLE, Icons.BLOCK);
         this.panels.registerPanel(new UIParticleSchemePanel(this), UIKeys.PANELS_PARTICLES, Icons.PARTICLE).marginLeft(10);
         this.panels.registerPanel(new UITextureManagerPanel(this), UIKeys.TEXTURES_TOOLTIP, Icons.MATERIAL);
+        this.panels.registerPanel(new UIAudioEditorPanel(this), UIKeys.AUDIO_TITLE, Icons.SOUND);
         this.panels.registerPanel(new UIGraphPanel(this), UIKeys.GRAPH_TOOLTIP, Icons.GRAPH);
 
         if (FabricLoader.getInstance().isDevelopmentEnvironment())

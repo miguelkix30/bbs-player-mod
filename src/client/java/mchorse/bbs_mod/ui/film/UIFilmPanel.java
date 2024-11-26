@@ -33,6 +33,7 @@ import mchorse.bbs_mod.ui.dashboard.panels.IFlightSupported;
 import mchorse.bbs_mod.ui.dashboard.panels.UIDashboardPanels;
 import mchorse.bbs_mod.ui.dashboard.panels.UIDataDashboardPanel;
 import mchorse.bbs_mod.ui.dashboard.panels.overlay.UICRUDOverlayPanel;
+import mchorse.bbs_mod.ui.dashboard.utils.IUIOrbitKeysHandler;
 import mchorse.bbs_mod.ui.film.controller.UIFilmController;
 import mchorse.bbs_mod.ui.film.replays.UIReplaysEditor;
 import mchorse.bbs_mod.ui.film.screenplay.UIScreenplayEditor;
@@ -71,7 +72,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSupported
+public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSupported, IUIOrbitKeysHandler
 {
     private static VoiceLines voiceLines = new VoiceLines(null);
 
@@ -304,6 +305,14 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         {
             this.resize();
             this.resize();
+        }
+    }
+
+    public void pickClip(Clip clip, UIClipsPanel panel)
+    {
+        if (panel == this.cameraEditor)
+        {
+            this.setFlight(false);
         }
     }
 
@@ -676,10 +685,9 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
      */
     public void setFlight(boolean flight)
     {
-        this.runner.setManual(flight ? this.position : null);
-
         if (!this.isRunning() || !flight)
         {
+            this.runner.setManual(flight ? this.position : null);
             this.dashboard.orbitUI.setControl(flight);
 
             /* Marking the latest undo as unmergeable */
@@ -726,6 +734,8 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
     @Override
     public void render(UIContext context)
     {
+        this.controller.orbit.update(context);
+
         if (this.undoHandler != null)
         {
             this.undoHandler.submitUndo();
@@ -980,5 +990,11 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         }
 
         return noCamera;
+    }
+
+    @Override
+    public boolean handleKeyPressed(UIContext context)
+    {
+        return this.isFlying() && this.controller.orbit.keyPressed(context);
     }
 }
