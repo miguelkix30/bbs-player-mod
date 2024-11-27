@@ -394,6 +394,8 @@ public class BBSModClient implements ClientModInitializer
                 modelBlockItemRenderer.update();
             }
 
+            BBSResources.update();
+
             while (keyDashboard.wasPressed()) UIScreen.open(getDashboard());
             while (keyModelBlockEditor.wasPressed()) this.keyOpenModelBlockEditor(mc);
             while (keyPlayFilm.wasPressed()) this.keyPlayFilm();
@@ -434,11 +436,11 @@ public class BBSModClient implements ClientModInitializer
 
                 if (error == URLError.FFMPEG)
                 {
-                    menu.context.notify(UIKeys.TEXTURE_URL_ERROR_FFMPEG.format(url), Colors.RED);
+                    menu.context.notifyError(UIKeys.TEXTURE_URL_ERROR_FFMPEG.format(url));
                 }
                 else if (error == URLError.HTTP_ERROR)
                 {
-                    menu.context.notify(UIKeys.TEXTURE_URL_ERROR_HTTP.format(url), Colors.RED);
+                    menu.context.notifyError(UIKeys.TEXTURE_URL_ERROR_HTTP.format(url));
                 }
             }
         });
