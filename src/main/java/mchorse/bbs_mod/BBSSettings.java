@@ -33,6 +33,7 @@ public class BBSSettings
     public static ValueBoolean hsvColorPicker;
     public static ValueBoolean forceQwerty;
     public static ValueBoolean freezeModels;
+    public static ValueFloat axesScale;
 
     public static ValueBoolean enableCursorRendering;
     public static ValueBoolean enableMouseButtonRendering;
@@ -65,6 +66,7 @@ public class BBSSettings
     public static ValueBoolean editorHorizontalFlight;
     public static ValueEditorLayout editorLayoutSettings;
     public static ValueOnionSkin editorOnionSkin;
+    public static ValueBoolean editorSnapToMarkers;
 
     public static ValueFloat recordingCountdown;
     public static ValueInt recordingNextVariable;
@@ -124,6 +126,7 @@ public class BBSSettings
         hsvColorPicker = builder.getBoolean("hsv_color_picker", true);
         forceQwerty = builder.getBoolean("force_qwerty", false);
         freezeModels = builder.getBoolean("freeze_models", false);
+        axesScale = builder.getFloat("axes_scale", 1F, 0F, 2F);
 
         favoriteColors = new ValueColors("favorite_colors");
         builder.register(favoriteColors);
@@ -160,6 +163,7 @@ public class BBSSettings
         editorHorizontalFlight = builder.getBoolean("horizontal_flight", false);
         builder.register(editorLayoutSettings = new ValueEditorLayout("layout"));
         builder.register(editorOnionSkin = new ValueOnionSkin("onion_skin"));
+        editorSnapToMarkers = builder.getBoolean("snap_to_markers", false);
 
         recordingCountdown = builder.category("recording").getFloat("countdown", 1.5F, 0F, 30F);
         recordingNextVariable = builder.getInt("next", 1, 1, 100);

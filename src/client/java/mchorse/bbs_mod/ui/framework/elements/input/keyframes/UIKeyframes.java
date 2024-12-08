@@ -18,9 +18,12 @@ import mchorse.bbs_mod.ui.utils.Scale;
 import mchorse.bbs_mod.ui.utils.ScrollDirection;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.utils.CollectionUtils;
+import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.Pair;
 import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.keyframes.Keyframe;
+import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
+import mchorse.bbs_mod.utils.keyframes.KeyframeSegment;
 import mchorse.bbs_mod.utils.keyframes.factories.IKeyframeFactory;
 import mchorse.bbs_mod.utils.keyframes.factories.KeyframeFactories;
 import org.lwjgl.glfw.GLFW;
@@ -46,6 +49,9 @@ public class UIKeyframes extends UIElement
     private boolean scaling;
     private long scalingAnchor;
     private Map<Keyframe, Long> scaleTicks = new HashMap<>();
+
+    private boolean stacking;
+    private int stackOffset;
 
     private int lastX;
     private int lastY;
@@ -152,6 +158,48 @@ public class UIKeyframes extends UIElement
         }).category(category).active(canModify);
         this.keys().register(Keys.KEYFRAMES_SELECT_SAME, this::selectSame).category(category).active(canModify);
         this.keys().register(Keys.KEYFRAMES_SCALE_TIME, this::scaleTime).inside().category(category);
+        this.keys().register(Keys.KEYFRAMES_STACK_KEYFRAMES, () -> this.stackKeyframes(false)).inside().category(category);
+        this.keys().register(Keys.KEYFRAMES_SELECT_PREV, () -> this.selectNextKeyframe(-1)).category(category);
+        this.keys().register(Keys.KEYFRAMES_SELECT_NEXT, () -> this.selectNextKeyframe(1)).category(category);
+    }
+
+    public UIKeyframeDopeSheet getDopeSheet()
+    {
+        return this.dopeSheet;
+    }
+
+    protected void selectNextKeyframe(int direction)
+    {
+        IUIKeyframeGraph graph = this.getGraph();
+        Keyframe keyframe = graph.getSelected();
+
+        if (keyframe == null)
+        {
+            UIContext context = this.getContext();
+            UIKeyframeSheet sheet = this.getGraph().getSheet(context.mouseY);
+            KeyframeSegment segment = sheet.channel.find((float) this.fromGraphX(context.mouseX));
+
+            if (segment != null)
+            {
+                keyframe = direction < 0 ? segment.a : segment.b;
+
+                graph.clearSelection();
+                graph.selectKeyframe(keyframe);
+
+                return;
+            }
+        }
+
+        if (keyframe != null)
+        {
+            KeyframeChannel channel = (KeyframeChannel) keyframe.getParent();
+            int existingIndex = channel.getKeyframes().indexOf(keyframe);
+            int index = MathUtils.cycler(existingIndex + direction, 0, channel.getAll().size() - 1);
+            Keyframe nextKeyframe = channel.get(index);
+
+            graph.clearSelection();
+            graph.selectKeyframe(nextKeyframe);
+        }
     }
 
     private void selectAfter(int mouseX, int mouseY, int direction)
@@ -225,6 +273,78 @@ public class UIKeyframes extends UIElement
                 this.scalingAnchor = Math.min(this.scalingAnchor, keyframe.getTick());
             }
         }
+    }
+
+    private void stackKeyframes(boolean cancel)
+    {
+        if (this.stacking)
+        {
+            this.stacking = false;
+
+            if (!cancel)
+            {
+                UIContext context = this.getContext();
+                List<UIKeyframeSheet> sheets = new ArrayList<>();
+                long currentTick = Math.round(this.fromGraphX(context.mouseX));
+
+                for (UIKeyframeSheet sheet : this.getGraph().getSheets())
+                {
+                    if (sheet.selection.hasAny())
+                    {
+                        sheets.add(sheet);
+                    }
+                }
+
+                for (UIKeyframeSheet current : sheets)
+                {
+                    List<Keyframe> selected = current.selection.getSelected();
+                    int mMin = Integer.MAX_VALUE;
+                    int mMax = Integer.MIN_VALUE;
+
+                    for (Keyframe keyframe : selected)
+                    {
+                        mMin = Math.min((int) keyframe.getTick(), mMin);
+                        mMax = Math.max((int) keyframe.getTick(), mMax);
+                    }
+
+                    int length = mMax - mMin + this.getStackOffset();
+                    int times = (int) Math.max(1, Math.ceil((currentTick - mMax) / (float) length));
+                    int x = 0;
+
+                    current.selection.clear();
+
+                    for (int i = 0; i < times; i++)
+                    {
+                        for (Keyframe keyframe : selected)
+                        {
+                            long tick = mMax + this.getStackOffset() + (keyframe.getTick() - mMin) + x;
+                            int index = current.channel.insert(tick, keyframe.getFactory().copy(keyframe.getValue()));
+                            Keyframe kf = current.channel.get(index);
+
+                            kf.getInterpolation().setInterp(keyframe.getInterpolation().getInterp());
+                            current.selection.add(index);
+                        }
+
+                        x += length;
+                    }
+                }
+            }
+
+            return;
+        }
+
+        this.stacking = true;
+        this.stackOffset = 1;
+    }
+
+    public boolean isStacking()
+    {
+        return this.stacking;
+    }
+
+    public int getStackOffset()
+    {
+        return this.stackOffset;
     }
 
     /* Sheet editing */
@@ -599,6 +719,13 @@ public class UIKeyframes extends UIElement
             return true;
         }
 
+        if (this.stacking)
+        {
+            this.stackKeyframes(context.mouseButton == 1);
+
+            return true;
+        }
+
         if (this.area.isInside(context))
         {
             this.lastX = this.originalX = context.mouseX;
@@ -729,6 +856,13 @@ public class UIKeyframes extends UIElement
     @Override
     protected boolean subMouseScrolled(UIContext context)
     {
+        if (this.area.isInside(context) && this.stacking)
+        {
+            this.stackOffset = Math.max(1, this.stackOffset + (int) Math.copySign(1, context.mouseWheel));
+
+            return true;
+        }
+
         if (this.area.isInside(context) && !this.navigating && !this.scaling)
         {
             this.currentGraph.mouseScrolled(context);
@@ -742,10 +876,15 @@ public class UIKeyframes extends UIElement
     @Override
     protected boolean subKeyPressed(UIContext context)
     {
-        if (this.scaling && context.isPressed(GLFW.GLFW_KEY_ESCAPE))
+        if ((this.scaling || this.stacking) && context.isPressed(GLFW.GLFW_KEY_ESCAPE))
         {
             /* Reset scaling */
             this.scaling = false;
+
+            if (this.stacking)
+            {
+                this.stackKeyframes(true);
+            }
 
             for (Map.Entry<Keyframe, Long> entry : this.scaleTicks.entrySet())
             {
@@ -890,6 +1029,13 @@ public class UIKeyframes extends UIElement
         }
 
         this.currentGraph.pickSelected();
+    }
+
+    public void copyViewport(UIKeyframes lastEditor)
+    {
+        this.getDopeSheet().setTrackHeight(lastEditor.getDopeSheet().getTrackHeight());
+        this.getXAxis().copy(lastEditor.getXAxis());
+        this.getDopeSheet().getYAxis().copy(lastEditor.getDopeSheet().getYAxis());
     }
 
     private static class PastedKeyframes

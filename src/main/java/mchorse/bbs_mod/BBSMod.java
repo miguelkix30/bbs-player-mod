@@ -35,6 +35,7 @@ import mchorse.bbs_mod.camera.clips.modifiers.MathClip;
 import mchorse.bbs_mod.camera.clips.modifiers.OrbitClip;
 import mchorse.bbs_mod.camera.clips.modifiers.RemapperClip;
 import mchorse.bbs_mod.camera.clips.modifiers.ShakeClip;
+import mchorse.bbs_mod.camera.clips.modifiers.TrackerClip;
 import mchorse.bbs_mod.camera.clips.modifiers.TranslateClip;
 import mchorse.bbs_mod.camera.clips.overwrite.CircularClip;
 import mchorse.bbs_mod.camera.clips.overwrite.DollyClip;
@@ -372,7 +373,8 @@ public class BBSMod implements ModInitializer
             .register(Link.bbs("remapper"), RemapperClip.class, new ClipFactoryData(Icons.TIME, 0x222222))
             .register(Link.bbs("audio"), AudioClip.class, new ClipFactoryData(Icons.SOUND, 0xffc825))
             .register(Link.bbs("subtitle"), SubtitleClip.class, new ClipFactoryData(Icons.FONT, 0x888899))
-            .register(Link.bbs("curve"), CurveClip.class, new ClipFactoryData(Icons.ARC, 0xff1493));
+            .register(Link.bbs("curve"), CurveClip.class, new ClipFactoryData(Icons.ARC, 0xff1493))
+            .register(Link.bbs("tracker"), TrackerClip.class, new ClipFactoryData(Icons.USER, 0xffffff));
 
         factoryScreenplayClips = new MapFactory<Clip, ClipFactoryData>()
             .register(Link.bbs("voice_line"), VoicelineClip.class, new ClipFactoryData(Icons.SOUND, 0xffc825));

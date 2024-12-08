@@ -195,7 +195,7 @@ public class Scroll
 
     public void scrollToEnd()
     {
-        this.scrollTo(Integer.MAX_VALUE);
+        this.setScroll(Integer.MAX_VALUE);
     }
 
     public void scrollIntoView(int x)
@@ -235,6 +235,15 @@ public class Scroll
         {
             this.targetScroll = MathUtils.clamp(this.targetScroll, 0, this.scrollSize - size);
         }
+
+        this.scroll = this.targetScroll;
+    }
+
+    public void copy(Scroll scroll)
+    {
+        this.scroll = scroll.scroll;
+        this.targetScroll = scroll.targetScroll;
+        this.scrollSize = scroll.scrollSize;
     }
 
     /**
@@ -428,7 +437,11 @@ public class Scroll
      */
     public void drag(int x, int y)
     {
-        this.scroll = Lerps.lerp(this.scroll, this.targetScroll, 0.2F);
+        float delta = MinecraftClient.getInstance().getLastFrameDuration();
+
+        /* The higher the FPS, the smaller the lerp factor is,
+         * the lower the FPS, the bigger the factor is */
+        this.scroll = Lerps.lerp(this.scroll, this.targetScroll, Math.min(1F, delta / 2.5F));
 
         if (this.dragging)
         {

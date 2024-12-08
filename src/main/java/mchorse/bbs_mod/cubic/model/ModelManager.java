@@ -95,7 +95,7 @@ public class ModelManager implements IWatchDogListener
     {
         CubicModel model = null;
         Link modelLink = Link.assets(MODELS_PREFIX + id);
-        Collection<Link> links = this.provider.getLinksFromPath(modelLink, false);
+        Collection<Link> links = this.provider.getLinksFromPath(modelLink, true);
         MapType config = this.loadConfig(modelLink);
 
         for (IModelLoader loader : this.loaders)
@@ -148,13 +148,14 @@ public class ModelManager implements IWatchDogListener
             return false;
         }
 
-        if (link.path.contains("/animations/"))
+        if (link.path.contains("/animations/") || link.path.contains("/shapes/"))
         {
             return false;
         }
 
         return link.path.endsWith(".bbs.json")
             || link.path.endsWith(".geo.json")
+            || link.path.endsWith(".obj")
             || link.path.endsWith(".animation.json")
             || link.path.endsWith(".vox");
     }

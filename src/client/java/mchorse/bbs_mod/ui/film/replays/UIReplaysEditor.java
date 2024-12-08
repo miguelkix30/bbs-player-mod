@@ -9,6 +9,11 @@ import mchorse.bbs_mod.camera.CameraUtils;
 import mchorse.bbs_mod.camera.clips.misc.AudioClip;
 import mchorse.bbs_mod.camera.utils.TimeUtils;
 import mchorse.bbs_mod.cubic.CubicModel;
+import mchorse.bbs_mod.cubic.CubicModelAnimator;
+import mchorse.bbs_mod.cubic.MolangHelper;
+import mchorse.bbs_mod.cubic.data.animation.Animation;
+import mchorse.bbs_mod.cubic.data.animation.AnimationPart;
+import mchorse.bbs_mod.cubic.data.animation.AnimationVector;
 import mchorse.bbs_mod.cubic.data.model.ModelGroup;
 import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.film.replays.Replay;
@@ -35,6 +40,7 @@ import mchorse.bbs_mod.ui.framework.elements.input.keyframes.UIKeyframeEditor;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.UIKeyframeSheet;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.UIKeyframes;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.factories.UIPoseKeyframeFactory;
+import mchorse.bbs_mod.ui.framework.elements.overlay.UIOverlay;
 import mchorse.bbs_mod.ui.utils.Area;
 import mchorse.bbs_mod.ui.utils.Scale;
 import mchorse.bbs_mod.ui.utils.StencilFormFramebuffer;
@@ -53,6 +59,9 @@ import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.keyframes.Keyframe;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
 import mchorse.bbs_mod.utils.keyframes.KeyframeSegment;
+import mchorse.bbs_mod.utils.keyframes.factories.KeyframeFactories;
+import mchorse.bbs_mod.utils.pose.Pose;
+import mchorse.bbs_mod.utils.pose.PoseTransform;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.hit.BlockHitResult;
@@ -61,9 +70,12 @@ import net.minecraft.world.World;
 import org.joml.Vector3d;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class UIReplaysEditor extends UIElement
@@ -111,6 +123,7 @@ public class UIReplaysEditor extends UIElement
         COLORS.put("transform", Colors.GREEN);
         COLORS.put("color", Colors.INACTIVE);
         COLORS.put("lighting", Colors.YELLOW);
+        COLORS.put("shape_keys", Colors.PINK);
         COLORS.put("actions", Colors.MAGENTA);
 
         COLORS.put("item_main_hand", Colors.ORANGE);
@@ -134,6 +147,7 @@ public class UIReplaysEditor extends UIElement
         ICONS.put("color", Icons.BUCKET);
         ICONS.put("lighting", Icons.LIGHT);
         ICONS.put("actions", Icons.CONVERT);
+        ICONS.put("shape_keys", Icons.HEART_ALT);
         ICONS.put("text", Icons.FONT);
 
         ICONS.put("stick_lx", Icons.LEFT_STICK);
@@ -170,7 +184,7 @@ public class UIReplaysEditor extends UIElement
                 {
                     for (ModelGroup modelGroup : groups)
                     {
-                        menu.action(Icons.LIMB, IKey.raw(modelGroup.id), () -> consumer.accept(modelGroup.id));
+                        menu.action(Icons.LIMB, IKey.constant(modelGroup.id), () -> consumer.accept(modelGroup.id));
                     }
 
                     menu.autoKeys();
@@ -201,7 +215,7 @@ public class UIReplaysEditor extends UIElement
                 {
                     for (ModelGroup modelGroup : groups)
                     {
-                        menu.action(Icons.LIMB, IKey.raw(modelGroup.id), () -> consumer.accept(modelGroup.id));
+                        menu.action(Icons.LIMB, IKey.constant(modelGroup.id), () -> consumer.accept(modelGroup.id));
                     }
 
                     menu.autoKeys();
@@ -324,9 +338,13 @@ public class UIReplaysEditor extends UIElement
 
     public void updateChannelsList()
     {
+        UIKeyframes lastEditor = null;
+
         if (this.keyframeEditor != null)
         {
             this.keyframeEditor.removeFromParent();
+
+            lastEditor = this.keyframeEditor.view;
         }
 
         if (this.replay == null)
@@ -366,6 +384,12 @@ public class UIReplaysEditor extends UIElement
             this.keyframeEditor = new UIKeyframeEditor((consumer) -> new UIFilmKeyframes(this.filmPanel.cameraEditor, consumer).absolute()).target(this.filmPanel.editArea);
             this.keyframeEditor.full(this);
 
+            /* Reset */
+            if (lastEditor != null)
+            {
+                this.keyframeEditor.view.copyViewport(lastEditor);
+            }
+
             this.keyframeEditor.view.backgroundRenderer((context) ->
             {
                 UIKeyframes view = this.keyframeEditor.view;
@@ -391,6 +415,19 @@ public class UIReplaysEditor extends UIElement
                 }
             });
             this.keyframeEditor.view.duration(() -> this.film.camera.calculateDuration());
+            this.keyframeEditor.view.context((menu) ->
+            {
+                if (this.replay.form.get() instanceof ModelForm modelForm)
+                {
+                    int mouseY = this.getContext().mouseY;
+                    UIKeyframeSheet sheet = this.keyframeEditor.view.getGraph().getSheet(mouseY);
+
+                    if (sheet.channel.getFactory() == KeyframeFactories.POSE && sheet.id.equals("pose"))
+                    {
+                        menu.action(Icons.POSE, UIKeys.FILM_REPLAY_CONTEXT_ANIMATION_TO_KEYFRAMES, () -> this.animationToPoses(modelForm, sheet));
+                    }
+                }
+            });
 
             for (UIKeyframeSheet sheet : sheets)
             {
@@ -402,10 +439,91 @@ public class UIReplaysEditor extends UIElement
 
         this.resize();
 
-        if (this.keyframeEditor != null)
+        if (this.keyframeEditor != null && lastEditor == null)
         {
             this.keyframeEditor.view.resetView();
         }
+    }
+
+    private void animationToPoses(ModelForm modelForm, UIKeyframeSheet sheet)
+    {
+        CubicModel model = ModelFormRenderer.getModel(modelForm);
+
+        if (model != null)
+        {
+            UIOverlay.addOverlay(this.getContext(), new UIAnimationToPoseOverlayPanel(this, modelForm, sheet), 200, 197);
+        }
+    }
+
+    public void animationToPoseKeyframes(ModelForm modelForm, UIKeyframeSheet sheet, String animationKey, boolean onlyKeyframes, int length, int step)
+    {
+        CubicModel model = ModelFormRenderer.getModel(modelForm);
+        Animation animation = model.animations.get(animationKey);
+
+        if (animation != null)
+        {
+            int current = this.filmPanel.getCursor();
+            IEntity entity = this.filmPanel.getController().getCurrentEntity();
+
+            this.keyframeEditor.view.getDopeSheet().clearSelection();
+
+            if (onlyKeyframes)
+            {
+                Set<Integer> integers = new HashSet<>();
+
+                for (AnimationPart value : animation.parts.values())
+                {
+                    for (AnimationVector keyframe : value.position.keyframes) integers.add(TimeUtils.toTick((float) keyframe.time));
+                    for (AnimationVector keyframe : value.rotation.keyframes) integers.add(TimeUtils.toTick((float) keyframe.time));
+                    for (AnimationVector keyframe : value.scale.keyframes) integers.add(TimeUtils.toTick((float) keyframe.time));
+                }
+
+                List<Integer> list = new ArrayList<>(integers);
+
+                Collections.sort(list);
+
+                for (int i : list)
+                {
+                    this.fillAnimationPose(sheet, i, model, entity, animation, current);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < length; i += step)
+                {
+                    this.fillAnimationPose(sheet, i, model, entity, animation, current);
+                }
+            }
+
+            this.keyframeEditor.view.getDopeSheet().pickSelected();
+        }
+    }
+
+    private void fillAnimationPose(UIKeyframeSheet sheet, int i, CubicModel model, IEntity entity, Animation animation, int current)
+    {
+        MolangHelper.setMolangVariables(model.model.parser, entity, i, 0F);
+        CubicModelAnimator.resetPose(model.model);
+        CubicModelAnimator.animate(model.model, animation, i, 1F, false);
+
+        Pose pose = new Pose();
+
+        for (String key : model.model.getAllGroupKeys())
+        {
+            PoseTransform poseTransform = pose.get(key);
+            ModelGroup group = model.model.getGroup(key);
+
+            poseTransform.copy(group.current);
+            poseTransform.translate.sub(group.initial.translate);
+            poseTransform.rotate.sub(group.initial.rotate);
+
+            poseTransform.rotate.x = MathUtils.toRad(poseTransform.rotate.x);
+            poseTransform.rotate.y = MathUtils.toRad(poseTransform.rotate.y);
+            poseTransform.rotate.z = MathUtils.toRad(poseTransform.rotate.z);
+        }
+
+        int insert = sheet.channel.insert(current + i, pose);
+
+        sheet.selection.add(insert);
     }
 
     public void pickForm(Form form, String bone)
@@ -435,7 +553,7 @@ public class UIReplaysEditor extends UIElement
                 continue;
             }
 
-            manager.action(getIcon(formProperty.getKey()), IKey.raw(formProperty.getKey()), () ->
+            manager.action(getIcon(formProperty.getKey()), IKey.constant(formProperty.getKey()), () ->
             {
                 this.pickProperty(bone, StringUtils.combinePaths(path, formProperty.getKey()), shift);
             });
@@ -478,7 +596,10 @@ public class UIReplaysEditor extends UIElement
         {
             Keyframe closest = segment.getClosest();
 
-            this.keyframeEditor.view.getGraph().selectKeyframe(closest);
+            if (this.keyframeEditor.view.getGraph().getSelected() != closest)
+            {
+                this.keyframeEditor.view.getGraph().selectKeyframe(closest);
+            }
 
             if (this.keyframeEditor.editor instanceof UIPoseKeyframeFactory poseFactory)
             {
@@ -559,6 +680,13 @@ public class UIReplaysEditor extends UIElement
 
                 return true;
             }
+        }
+
+        if (area.isInside(context) && this.filmPanel.getController().orbit.enabled)
+        {
+            this.filmPanel.getController().orbit.start(context);
+
+            return true;
         }
 
         return false;

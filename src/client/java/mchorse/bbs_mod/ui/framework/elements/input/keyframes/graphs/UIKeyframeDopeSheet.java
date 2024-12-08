@@ -43,7 +43,12 @@ public class UIKeyframeDopeSheet implements IUIKeyframeGraph
         this.setTrackHeight(16);
     }
 
-    private void setTrackHeight(double height)
+    public double getTrackHeight()
+    {
+        return this.trackHeight;
+    }
+
+    public void setTrackHeight(double height)
     {
         this.trackHeight = MathUtils.clamp(height, 8D, 100D);
         this.dopeSheet.scrollSpeed = (int) this.trackHeight * 2;
@@ -53,6 +58,11 @@ public class UIKeyframeDopeSheet implements IUIKeyframeGraph
     }
 
     /* Graphing */
+
+    public Scroll getYAxis()
+    {
+        return this.dopeSheet;
+    }
 
     public int getDopeSheetY()
     {
@@ -231,11 +241,7 @@ public class UIKeyframeDopeSheet implements IUIKeyframeGraph
             int y = (int) (this.sheets.indexOf(sheet) * this.trackHeight) + TOP_MARGIN;
 
             this.keyframes.getXAxis().shiftIntoMiddle(x);
-
-            if (y < this.keyframes.area.y || y > this.keyframes.area.y)
-            {
-                this.dopeSheet.scrollIntoView(y, (int) (this.trackHeight * 2), (int) (this.trackHeight * 2));
-            }
+            this.dopeSheet.scrollTo((int) (y - (this.dopeSheet.area.h - this.trackHeight) / 2));
         }
     }
 
@@ -341,7 +347,49 @@ public class UIKeyframeDopeSheet implements IUIKeyframeGraph
             return;
         }
 
-        if (Window.isCtrlPressed())
+        if (this.keyframes.isStacking())
+        {
+            List<UIKeyframeSheet> sheets = new ArrayList<>();
+            long currentTick = Math.round(this.keyframes.fromGraphX(context.mouseX));
+
+            for (UIKeyframeSheet sheet : this.getSheets())
+            {
+                if (sheet.selection.hasAny())
+                {
+                    sheets.add(sheet);
+                }
+            }
+
+            for (UIKeyframeSheet current : sheets)
+            {
+                List<Keyframe> selected = current.selection.getSelected();
+                int mmin = Integer.MAX_VALUE;
+                int mmax = Integer.MIN_VALUE;
+
+                for (Keyframe keyframe : selected)
+                {
+                    mmin = Math.min((int) keyframe.getTick(), mmin);
+                    mmax = Math.max((int) keyframe.getTick(), mmax);
+                }
+
+                int length = mmax - mmin + this.keyframes.getStackOffset();
+                int times = (int) Math.max(1, Math.ceil((currentTick - mmax) / (float) length));
+                int x = 0;
+
+                for (int i = 0; i < times; i++)
+                {
+                    for (Keyframe keyframe : selected)
+                    {
+                        long tick = mmax + this.keyframes.getStackOffset() + (keyframe.getTick() - mmin) + x;
+
+                        this.renderPreviewKeyframe(context, current, tick, Colors.YELLOW);
+                    }
+
+                    x += length;
+                }
+            }
+        }
+        else if (Window.isCtrlPressed())
         {
             UIKeyframeSheet sheet = this.getSheet(context.mouseY);
 

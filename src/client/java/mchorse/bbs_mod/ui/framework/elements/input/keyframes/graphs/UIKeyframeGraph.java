@@ -354,13 +354,46 @@ public class UIKeyframeGraph implements IUIKeyframeGraph
             return;
         }
 
-        if (Window.isCtrlPressed())
+        long currentTick = Math.round(this.keyframes.fromGraphX(context.mouseX));
+
+        if (this.keyframes.isStacking())
+        {
+            UIKeyframeSheet current = this.sheet;
+            List<Keyframe> selected = current.selection.getSelected();
+            IKeyframeFactory factory = current.channel.getFactory();
+            int mMin = Integer.MAX_VALUE;
+            int mMax = Integer.MIN_VALUE;
+
+            for (Keyframe keyframe : selected)
+            {
+                mMin = Math.min((int) keyframe.getTick(), mMin);
+                mMax = Math.max((int) keyframe.getTick(), mMax);
+            }
+
+            int length = mMax - mMin + this.keyframes.getStackOffset();
+            int times = (int) Math.max(1, Math.ceil((currentTick - mMax) / (float) length));
+            int x = 0;
+
+            for (int i = 0; i < times; i++)
+            {
+                for (Keyframe keyframe : selected)
+                {
+                    int y = (int) this.yAxis.to(factory.getY(keyframe.getValue()));
+                    long tick = mMax + this.keyframes.getStackOffset() + (keyframe.getTick() - mMin) + x;
+
+                    this.renderPreviewKeyframe(context, current, tick, y, Colors.YELLOW);
+                }
+
+                x += length;
+            }
+        }
+        else if (Window.isCtrlPressed())
         {
             UIKeyframeSheet sheet = this.getSheet(context.mouseY);
 
             if (sheet != null)
             {
-                this.renderPreviewKeyframe(context, sheet, Math.round(this.keyframes.fromGraphX(context.mouseX)), context.mouseY, Colors.WHITE);
+                this.renderPreviewKeyframe(context, sheet, currentTick, context.mouseY, Colors.WHITE);
             }
         }
         else if (Window.isAltPressed())
@@ -375,7 +408,7 @@ public class UIKeyframeGraph implements IUIKeyframeGraph
                 Keyframe keyframe = selected.get(i);
                 int y = (int) this.yAxis.to(factory.getY(keyframe.getValue()));
 
-                this.renderPreviewKeyframe(context, current, Math.round(this.keyframes.fromGraphX(context.mouseX)) + (keyframe.getTick() - first.getTick()), y, Colors.YELLOW);
+                this.renderPreviewKeyframe(context, current, currentTick + (keyframe.getTick() - first.getTick()), y, Colors.YELLOW);
             }
         }
     }
@@ -407,6 +440,7 @@ public class UIKeyframeGraph implements IUIKeyframeGraph
         for (int i = 0; i < keyframes.size(); i++)
         {
             Keyframe frame = (Keyframe) keyframes.get(i);
+            Keyframe prev = i > 0 ? (Keyframe) keyframes.get(i - 1) : null;
             int x = this.keyframes.toGraphX(frame.getTick());
             int y = this.toGraphY(sheet.channel.getFactory().getY(frame.getValue()));
 
@@ -415,9 +449,8 @@ public class UIKeyframeGraph implements IUIKeyframeGraph
                 lineBuilder.add(this.keyframes.area.x, y);
             }
 
-            if (i != 0)
+            if (prev != null)
             {
-                Keyframe prev = (Keyframe) keyframes.get(i - 1);
                 IInterp interp = prev.getInterpolation().getInterp();
                 int px = this.keyframes.toGraphX(prev.getTick());
                 int py = this.toGraphY(sheet.channel.getFactory().getY(prev.getValue()));
@@ -450,6 +483,38 @@ public class UIKeyframeGraph implements IUIKeyframeGraph
             {
                 lineBuilder.add(this.keyframes.area.ex(), y);
             }
+
+            boolean add = false;
+
+            if (frame.getInterpolation().getInterp() == Interpolations.BEZIER)
+            {
+                int rx = this.keyframes.toGraphX(frame.getTick() + frame.rx);
+                int ry = this.toGraphY(sheet.channel.getFactory().getY(frame.getValue()) + frame.ry);
+
+                lineBuilder.push();
+                lineBuilder.add(x, y);
+                lineBuilder.add(rx, ry);
+
+                add = true;
+            }
+
+            if (prev != null && prev.getInterpolation().getInterp() == Interpolations.BEZIER)
+            {
+                int lx = this.keyframes.toGraphX(frame.getTick() - frame.lx);
+                int ly = this.toGraphY(sheet.channel.getFactory().getY(frame.getValue()) + frame.ly);
+
+                lineBuilder.push();
+                lineBuilder.add(x, y);
+                lineBuilder.add(lx, ly);
+
+                add = true;
+            }
+
+            if (add)
+            {
+                lineBuilder.push();
+                lineBuilder.add(x, y);
+            }
         }
 
         lineBuilder.render(context.batcher, SolidColorLineRenderer.get(Colors.COLOR.set(Colors.setA(sheet.color, 1F))));
@@ -463,6 +528,7 @@ public class UIKeyframeGraph implements IUIKeyframeGraph
         for (int i = 0; i < keyframes.size(); i++)
         {
             Keyframe frame = (Keyframe) keyframes.get(i);
+            Keyframe prev = i > 0 ? (Keyframe) keyframes.get(i - 1) : null;
             long tick = frame.getTick();
             int x1 = this.keyframes.toGraphX(tick);
             int x2 = this.keyframes.toGraphX(tick + frame.getDuration());
@@ -497,16 +563,49 @@ public class UIKeyframeGraph implements IUIKeyframeGraph
             }
 
             this.renderSquare(context, builder, matrix, x1, y, toRemove ? 4 : 3, c);
+
+            if (frame.getInterpolation().getInterp() == Interpolations.BEZIER)
+            {
+                int rx = this.keyframes.toGraphX(frame.getTick() + frame.rx);
+                int ry = this.toGraphY(sheet.channel.getFactory().getY(frame.getValue()) + frame.ry);
+
+                this.renderSquare(context, builder, matrix, rx, ry, 3, c);
+            }
+
+            if (prev != null && prev.getInterpolation().getInterp() == Interpolations.BEZIER)
+            {
+                int lx = this.keyframes.toGraphX(frame.getTick() - frame.lx);
+                int ly = this.toGraphY(sheet.channel.getFactory().getY(frame.getValue()) + frame.ly);
+
+                this.renderSquare(context, builder, matrix, lx, ly, 3, c);
+            }
         }
 
         /* Render keyframe handles (inner) */
         for (int j = 0; j < keyframes.size(); j++)
         {
             Keyframe frame = (Keyframe) keyframes.get(j);
+            Keyframe prev = j > 0 ? (Keyframe) keyframes.get(j - 1) : null;
             int y = this.toGraphY(sheet.channel.getFactory().getY(frame.getValue()));
             int c = sheet.selection.has(j) ? Colors.ACTIVE : 0;
 
             this.renderSquare(context, builder, matrix, this.keyframes.toGraphX(frame.getTick()), y, 2, c | Colors.A100);
+
+            if (frame.getInterpolation().getInterp() == Interpolations.BEZIER)
+            {
+                int rx = this.keyframes.toGraphX(frame.getTick() + frame.rx);
+                int ry = this.toGraphY(sheet.channel.getFactory().getY(frame.getValue()) + frame.ry);
+
+                this.renderSquare(context, builder, matrix, rx, ry, 2, c | Colors.A100);
+            }
+
+            if (prev != null && prev.getInterpolation().getInterp() == Interpolations.BEZIER)
+            {
+                int lx = this.keyframes.toGraphX(frame.getTick() - frame.lx);
+                int ly = this.toGraphY(sheet.channel.getFactory().getY(frame.getValue()) + frame.ly);
+
+                this.renderSquare(context, builder, matrix, lx, ly, 2, c | Colors.A100);
+            }
         }
 
         RenderSystem.enableBlend();

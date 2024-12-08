@@ -15,6 +15,7 @@ import mchorse.bbs_mod.actions.types.item.UseItemActionClip;
 import mchorse.bbs_mod.camera.clips.misc.AudioClientClip;
 import mchorse.bbs_mod.camera.clips.misc.CurveClip;
 import mchorse.bbs_mod.camera.clips.misc.SubtitleClip;
+import mchorse.bbs_mod.camera.clips.misc.TrackerClientClip;
 import mchorse.bbs_mod.camera.clips.misc.VoicelineClip;
 import mchorse.bbs_mod.camera.clips.modifiers.AngleClip;
 import mchorse.bbs_mod.camera.clips.modifiers.DragClip;
@@ -94,6 +95,7 @@ public abstract class UIClip <T extends Clip> extends UIElement
         register(ShakeClip.class, UIShakeClip::new);
         register(MathClip.class, UIMathClip::new);
         register(LookClip.class, UILookClip::new);
+        register(TrackerClientClip.class, UITrackerClip::new);
         register(OrbitClip.class, UIOrbitClip::new);
         register(RemapperClip.class, UIRemapperClip::new);
         register(AudioClientClip.class, UIAudioClip::new);

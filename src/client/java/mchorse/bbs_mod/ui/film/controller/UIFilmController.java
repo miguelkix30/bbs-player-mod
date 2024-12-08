@@ -521,18 +521,9 @@ public class UIFilmController extends UIElement
                     {
                         int index = this.entities.indexOf(entity);
 
-                        menu.action(Icons.POSE, IKey.raw(this.panel.getData().replays.getList().get(index).getName()), () -> this.pickEntity(entity));
+                        menu.action(Icons.POSE, IKey.constant(this.panel.getData().replays.getList().get(index).getName()), () -> this.pickEntity(entity));
                     }
                 });
-
-                return true;
-            }
-
-            Area area = this.panel.preview.getViewport();
-
-            if (area.isInside(context) && this.panel.isFlying() && this.orbit.enabled)
-            {
-                this.orbit.start(context);
 
                 return true;
             }
@@ -1192,7 +1183,7 @@ public class UIFilmController extends UIElement
         RenderSystem.disableDepthTest();
     }
 
-    private Pair<String, Boolean> getBone()
+    public Pair<String, Boolean> getBone()
     {
         UIKeyframeEditor keyframeEditor = this.panel.replayEditor.keyframeEditor;
 
