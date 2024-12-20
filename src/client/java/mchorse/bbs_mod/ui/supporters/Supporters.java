@@ -241,7 +241,8 @@ public class Supporters
         this.add("tianmen").withDate(10, 4);
         this.add("寄水晶").withDate(10, 8);
         this.add("Easecation").withDate(11, 8);
-        this.add("The_Crispy", "https://space.bilibili.com/3546733667682452").withDate(12, 1);
+        this.add("The_Crispy", "https://space.bilibili.com/3546733667682452").withDate(12, 16);
+        this.add("九思").withDate(12, 1);
 
         /* Patreon */
         this.add("terbin", "https://www.youtube.com/channel/UCD4X2slLdD_WJxlW03JPVQQ", "...").withDate(2, 23);
@@ -535,7 +536,7 @@ public class Supporters
         this.add("MENYX").withDate(7, 15);
         this.add("Filipfico").withDate(7, 15);
         this.add("Budder Productions").withDate(7, 16);
-        this.add("Pink").withDate(7, 17);
+        this.add("Pink", "https://youtube.com/@pinkthegoober").withDate(7, 17);
         this.add("BenlikesSharks").withDate(7, 17);
         this.add("Custom").withDate(7, 17);
         this.add("Alex Gorcas").withDate(7, 19);
@@ -604,7 +605,7 @@ public class Supporters
         this.add("Hafidz J.").withDate(10, 14);
         this.add("Alemanni").withDate(10, 24);
         this.add("zeyxon 24").withDate(10, 27);
-        this.add("fankung555", "...").withDate(10, 30);
+        this.add("fanku", "https://ytjobs.co/talent/profile/22147").withDate(10, 30);
         this.add("Ace").withDate(11, 1);
         this.add("Stalling Set").withDate(11, 2);
         this.add("Creative Studio").withDate(11, 3);

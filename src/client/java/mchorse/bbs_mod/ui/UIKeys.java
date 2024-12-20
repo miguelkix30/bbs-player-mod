@@ -351,6 +351,17 @@ public class UIKeys
     public static final IKey FORMS_EDITORS_LABEL_SHADOW_OFFSET = L10n.lang("bbs.ui.forms.editors.label.shadow_offset");
     public static final IKey FORMS_EDITORS_LABEL_TITLE = L10n.lang("bbs.ui.forms.editors.label.title");
     public static final IKey FORMS_EDITORS_MOB_TITLE = L10n.lang("bbs.ui.forms.editors.mob.title");
+    public static final IKey FORMS_EDITORS_VANILLA_PARTICLE_TITLE = L10n.lang("bbs.ui.forms.editors.vanilla_particle.title");
+    public static final IKey FORMS_EDITORS_VANILLA_PARTICLE_PAUSED = L10n.lang("bbs.ui.forms.editors.vanilla_particle.paused");
+    public static final IKey FORMS_EDITORS_VANILLA_PARTICLE_VELOCITY = L10n.lang("bbs.ui.forms.editors.vanilla_particle.velocity");
+    public static final IKey FORMS_EDITORS_VANILLA_PARTICLE_EMISSION = L10n.lang("bbs.ui.forms.editors.vanilla_particle.emission");
+    public static final IKey FORMS_EDITORS_VANILLA_PARTICLE_FREQUENCY = L10n.lang("bbs.ui.forms.editors.vanilla_particle.frequency");
+    public static final IKey FORMS_EDITORS_VANILLA_PARTICLE_COUNT = L10n.lang("bbs.ui.forms.editors.vanilla_particle.count");
+    public static final IKey FORMS_EDITORS_VANILLA_PARTICLE_SCATTER = L10n.lang("bbs.ui.forms.editors.vanilla_particle.scatter");
+    public static final IKey FORMS_EDITORS_VANILLA_PARTICLE_HORIZONTAL = L10n.lang("bbs.ui.forms.editors.vanilla_particle.horizontal");
+    public static final IKey FORMS_EDITORS_VANILLA_PARTICLE_VERTICAL = L10n.lang("bbs.ui.forms.editors.vanilla_particle.vertical");
+    public static final IKey FORMS_EDITORS_VANILLA_PARTICLE_EDITOR_PICK = L10n.lang("bbs.ui.forms.editors.vanilla_particle.editor.pick");
+    public static final IKey FORMS_EDITORS_VANILLA_PARTICLE_EDITOR_TITLE = L10n.lang("bbs.ui.forms.editors.vanilla_particle.editor.title");
     public static final IKey FORMS_EDITORS_MODEL_ACTIONS = L10n.lang("bbs.ui.forms.editors.model.actions");
     public static final IKey FORMS_EDITORS_MODEL_POSE = L10n.lang("bbs.ui.forms.editors.model.pose");
     public static final IKey FORMS_EDITOR_BONE = L10n.lang("bbs.ui.forms.editor.bone");
@@ -403,6 +414,7 @@ public class UIKeys
     public static final IKey IMPORTER_MPEG = L10n.lang("bbs.ui.importer.mpeg");
     public static final IKey IMPORTER_FLAC = L10n.lang("bbs.ui.importer.flac");
     public static final IKey IMPORTER_AIFF = L10n.lang("bbs.ui.importer.aiff");
+    public static final IKey IMPORTER_WEBP = L10n.lang("bbs.ui.importer.webp");
     public static final IKey IMPORTER_OLD_SKIN = L10n.lang("bbs.ui.importer.old_skin");
     public static final IKey IMPORTER_PNG = L10n.lang("bbs.ui.importer.png");
     public static final IKey IMPORTER_SUCCESS_NOTIFICATION = L10n.lang("bbs.ui.importer.success-notification");
