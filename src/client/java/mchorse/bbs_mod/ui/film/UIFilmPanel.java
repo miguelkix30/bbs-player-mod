@@ -342,6 +342,11 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         this.screenplayEditor.setVisible(false);
 
         element.setVisible(true);
+
+        if (this.isFlying())
+        {
+            this.toggleFlight();
+        }
     }
 
     public UIFilmController getController()
@@ -734,6 +739,11 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
     @Override
     public void render(UIContext context)
     {
+        if (this.controller.isControlling())
+        {
+            context.mouseX = context.mouseY = -1;
+        }
+
         this.controller.orbit.update(context);
 
         if (this.undoHandler != null)

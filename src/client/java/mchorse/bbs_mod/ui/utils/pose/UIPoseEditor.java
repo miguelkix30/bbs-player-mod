@@ -16,9 +16,13 @@ import mchorse.bbs_mod.utils.pose.PoseManager;
 import mchorse.bbs_mod.utils.pose.PoseTransform;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class UIPoseEditor extends UIElement
 {
+    private static String lastLimb = "";
+
     public UIStringList groups;
     public UITrackpad fix;
     public UIColor color;
@@ -27,6 +31,7 @@ public class UIPoseEditor extends UIElement
 
     private String group = "";
     private Pose pose;
+    private Map<String, String> flippedParts;
 
     public UIPoseEditor()
     {
@@ -47,7 +52,7 @@ public class UIPoseEditor extends UIElement
             {
                 String current = this.groups.getCurrentFirst();
 
-                this.changedPose(() -> this.pose.flip());
+                this.changedPose(() -> this.pose.flip(this.flippedParts));
                 this.pickBone(current);
             });
 
@@ -99,8 +104,10 @@ public class UIPoseEditor extends UIElement
         this.group = group;
     }
 
-    public void fillGroups(Collection<String> groups)
+    public void fillGroups(Collection<String> groups, Map<String, String> flippedParts)
     {
+        this.flippedParts = flippedParts;
+
         this.groups.clear();
         this.groups.add(groups);
         this.groups.sort();
@@ -109,12 +116,17 @@ public class UIPoseEditor extends UIElement
         this.color.setVisible(!groups.isEmpty());
         this.transform.setVisible(!groups.isEmpty());
 
-        this.groups.setIndex(0);
+        List<String> list = this.groups.getList();
+        int i = list.indexOf(lastLimb);
+
+        this.groups.setIndex(Math.max(i, 0));
         this.pickBone(this.groups.getCurrentFirst());
     }
 
     public void selectBone(String bone)
     {
+        lastLimb = bone;
+
         this.groups.setCurrentScroll(bone);
         this.pickBone(bone);
     }
@@ -133,6 +145,8 @@ public class UIPoseEditor extends UIElement
 
     private void pickBone(String bone)
     {
+        lastLimb = bone;
+
         PoseTransform poseTransform = this.pose.get(bone);
 
         if (poseTransform != null)

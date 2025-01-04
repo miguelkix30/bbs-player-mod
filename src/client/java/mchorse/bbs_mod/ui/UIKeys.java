@@ -212,7 +212,7 @@ public class UIKeys
     public static final IKey FILM_CONTROLLER_KEYS_RESTART_ACTIONS = L10n.lang("bbs.ui.film.controller.keys.restart_actions");
     public static final IKey FILM_CONTROLLER_KEYS_START_RECORDING = L10n.lang("bbs.ui.film.controller.keys.start_recording");
     public static final IKey FILM_CONTROLLER_KEYS_TOGGLE_CONTROL = L10n.lang("bbs.ui.film.controller.keys.toggle_control");
-    public static final IKey FILM_CONTROLLER_KEYS_TOGGLE_ORBIT_MODE = L10n.lang("bbs.ui.film.controller.keys.toggle_orbit_mode");
+    public static final IKey FILM_CONTROLLER_KEYS_CHANGE_CAMERA_MODE = L10n.lang("bbs.ui.film.controller.keys.change_camera_mode");
     public static final IKey FILM_CONTROLLER_ONION_SKIN_ALL_DESCRIPTION = L10n.lang("bbs.ui.film.controller.onion_skin.all-description");
     public static final IKey FILM_CONTROLLER_ONION_SKIN_GROUP = L10n.lang("bbs.ui.film.controller.onion_skin.group");
     public static final IKey FILM_CONTROLLER_ONION_SKIN_KEYS_TOGGLE = L10n.lang("bbs.ui.film.controller.onion_skin.keys.toggle");
@@ -224,6 +224,7 @@ public class UIKeys
     public static final IKey FILM_CONTROLLER_SERVER_WARNING = L10n.lang("bbs.ui.film.controller.server_warning");
     public static final IKey FILM_CONTROLLER_SPEED = L10n.lang("bbs.ui.film.controller.speed");
     public static final IKey FILM_CONTROLLER_TICKS = L10n.lang("bbs.ui.film.controller.ticks");
+    public static final IKey FILM_CONTROLLER_CONTROL_MODE_TOOLTIP = L10n.lang("bbs.ui.film.controller.control_mode-tooltip");
     public static final IKey FILM_GROUPS_ALL = L10n.lang("bbs.ui.film.groups.all");
     public static final IKey FILM_GROUPS_EXTRA_1 = L10n.lang("bbs.ui.film.groups.extra_1");
     public static final IKey FILM_GROUPS_EXTRA_2 = L10n.lang("bbs.ui.film.groups.extra_2");
@@ -493,6 +494,7 @@ public class UIKeys
     public static final IKey PANELS_MODALS_RENAME = L10n.lang("bbs.ui.panels.modals.rename");
     public static final IKey PANELS_MODALS_RENAME_FOLDER = L10n.lang("bbs.ui.panels.modals.rename_folder");
     public static final IKey PANELS_MODALS_RENAME_FOLDER_TITLE = L10n.lang("bbs.ui.panels.modals.rename_folder-title");
+    public static final IKey PANELS_MODALS_EMPTY = L10n.lang("bbs.ui.panels.modals.empty");
     public static final IKey PANELS_PARTICLES = L10n.lang("bbs.ui.panels.particles");
     public static final IKey PANELS_SAVED_NOTIFICATION = L10n.lang("bbs.ui.panels.saved-notification");
     public static final IKey POSE_CONTEXT_COPY = L10n.lang("bbs.ui.pose.context.copy");
@@ -734,6 +736,7 @@ public class UIKeys
     public static final IKey UTILITY_AUDIO = L10n.lang("studio.ui.utility.audio");
     public static final IKey UTILITY_COMPILE_LANG = L10n.lang("studio.ui.utility.compile_lang");
     public static final IKey UTILITY_COMPILE_LANG_DESCRIPTION = L10n.lang("studio.ui.utility.compile_lang-description");
+    public static final IKey UTILITY_EXECUTE_DEFAULT_COMMANDS = L10n.lang("studio.ui.utility.execute_default_commands");
     public static final IKey UTILITY_LANG_EDITOR = L10n.lang("studio.ui.utility.lang_editor");
     public static final IKey UTILITY_LANG_LABEL = L10n.lang("studio.ui.utility.lang");
     public static final IKey UTILITY_OPEN_AUDIO_EDITOR = L10n.lang("studio.ui.utility.open_audio_editor");

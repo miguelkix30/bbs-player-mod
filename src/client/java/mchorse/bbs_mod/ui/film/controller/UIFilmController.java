@@ -45,6 +45,7 @@ import mchorse.bbs_mod.ui.framework.elements.utils.StencilMap;
 import mchorse.bbs_mod.ui.utils.Area;
 import mchorse.bbs_mod.ui.utils.StencilFormFramebuffer;
 import mchorse.bbs_mod.ui.utils.UIUtils;
+import mchorse.bbs_mod.ui.utils.icons.Icon;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.ui.utils.keys.KeyAction;
 import mchorse.bbs_mod.utils.AABB;
@@ -320,6 +321,8 @@ public class UIFilmController extends UIElement
 
     public void toggleControl()
     {
+        this.getContext().unfocus();
+
         boolean replacePlayer = ClientNetwork.isIsBBSModOnServer();
 
         if (this.controlled != null)
@@ -569,7 +572,14 @@ public class UIFilmController extends UIElement
     {
         if (this.canControl())
         {
-            if (context.getKeyAction() == KeyAction.PRESSED && context.getKeyCode() >= GLFW.GLFW_KEY_1 && context.getKeyCode() <= GLFW.GLFW_KEY_6)
+            if (this.isControlling() && context.isPressed(GLFW.GLFW_KEY_ESCAPE))
+            {
+                this.toggleControl();
+                UIUtils.playClick();
+
+                return true;
+            }
+            else if (context.getKeyAction() == KeyAction.PRESSED && context.getKeyCode() >= GLFW.GLFW_KEY_1 && context.getKeyCode() <= GLFW.GLFW_KEY_6)
             {
                 /* Switch mouse input mode */
                 this.setMouseMode(context.getKeyCode() - GLFW.GLFW_KEY_1);
@@ -639,6 +649,22 @@ public class UIFilmController extends UIElement
         ));
     }
 
+    public Icon getOrbitModeIcon()
+    {
+        return this.getOrbitModeIcon(this.getPovMode());
+    }
+
+    public Icon getOrbitModeIcon(int povMode)
+    {
+        if (povMode == UIFilmController.CAMERA_MODE_FREE) return Icons.REFRESH;
+        else if (povMode == UIFilmController.CAMERA_MODE_ORBIT) return Icons.ORBIT;
+        else if (povMode == UIFilmController.CAMERA_MODE_FIRST_PERSON) return Icons.VISIBLE;
+        else if (povMode == UIFilmController.CAMERA_MODE_THIRD_PERSON_BACK) return Icons.ARROW_UP;
+        else if (povMode == UIFilmController.CAMERA_MODE_THIRD_PERSON_FRONT) return Icons.ARROW_DOWN;
+
+        return Icons.CAMERA;
+    }
+
     public void toggleOrbitMode()
     {
         if (this.controlled != null)
@@ -650,12 +676,14 @@ public class UIFilmController extends UIElement
 
         this.getContext().replaceContextMenu((menu) ->
         {
-            menu.autoKeys().action(Icons.CAMERA, UIKeys.FILM_REPLAY_ORBIT_CAMERA, this.pov == CAMERA_MODE_CAMERA, () -> this.setPov(0));
-            menu.action(Icons.REFRESH, UIKeys.FILM_REPLAY_ORBIT_FREE, this.pov == CAMERA_MODE_FREE, () -> this.setPov(1));
-            menu.action(Icons.ORBIT, UIKeys.FILM_REPLAY_ORBIT_ORBIT, this.pov == CAMERA_MODE_ORBIT, () -> this.setPov(2));
-            menu.action(Icons.VISIBLE, UIKeys.FILM_REPLAY_ORBIT_FIRST_PERSON, this.pov == CAMERA_MODE_FIRST_PERSON, () -> this.setPov(3));
-            menu.action(Icons.POSE, UIKeys.FILM_REPLAY_ORBIT_THIRD_PERSON_BACK, this.pov == CAMERA_MODE_THIRD_PERSON_BACK, () -> this.setPov(4));
-            menu.action(Icons.POSE, UIKeys.FILM_REPLAY_ORBIT_THIRD_PERSON_FRONT, this.pov == CAMERA_MODE_THIRD_PERSON_FRONT, () -> this.setPov(5));
+            menu.autoKeys();
+
+            menu.action(this.getOrbitModeIcon(0), UIKeys.FILM_REPLAY_ORBIT_CAMERA, this.pov == CAMERA_MODE_CAMERA, () -> this.setPov(0));
+            menu.action(this.getOrbitModeIcon(1), UIKeys.FILM_REPLAY_ORBIT_FREE, this.pov == CAMERA_MODE_FREE, () -> this.setPov(1));
+            menu.action(this.getOrbitModeIcon(2), UIKeys.FILM_REPLAY_ORBIT_ORBIT, this.pov == CAMERA_MODE_ORBIT, () -> this.setPov(2));
+            menu.action(this.getOrbitModeIcon(3), UIKeys.FILM_REPLAY_ORBIT_FIRST_PERSON, this.pov == CAMERA_MODE_FIRST_PERSON, () -> this.setPov(3));
+            menu.action(this.getOrbitModeIcon(4), UIKeys.FILM_REPLAY_ORBIT_THIRD_PERSON_BACK, this.pov == CAMERA_MODE_THIRD_PERSON_BACK, () -> this.setPov(4));
+            menu.action(this.getOrbitModeIcon(5), UIKeys.FILM_REPLAY_ORBIT_THIRD_PERSON_FRONT, this.pov == CAMERA_MODE_THIRD_PERSON_FRONT, () -> this.setPov(5));
         });
     }
 
@@ -961,7 +989,7 @@ public class UIFilmController extends UIElement
                 context.batcher.box(bx - 4, by - 4, bx + 4, by + 4, color);
             }
 
-            /* Render reording overlay */
+            /* Render recording overlay */
             if (this.recording)
             {
                 int x = area.x + 5 + 16;
@@ -980,8 +1008,8 @@ public class UIFilmController extends UIElement
             }
         }
 
-        int x = area.ex() - 5;
-        int y = area.ey() - 5 - font.getHeight();
+        int x = area.ex() - 4;
+        int y = area.y + 5;
 
         if (this.panel.isFlying())
         {
@@ -990,7 +1018,7 @@ public class UIFilmController extends UIElement
 
             context.batcher.textCard(label, x - w, y, Colors.WHITE, Colors.A50);
 
-            y += font.getHeight() + 2;
+            y += font.getHeight() + 7;
         }
 
         Replay replay = this.panel.replayEditor.getReplay();
