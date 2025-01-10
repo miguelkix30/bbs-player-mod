@@ -1137,11 +1137,15 @@ public class UIClips extends UIElement
     {
         if (this.area.isInside(context) && !this.scrolling && !this.hasEmbeddedView())
         {
-            if (Window.isShiftPressed())
+            if (context.mouseWheelHorizontal != 0D)
+            {
+                this.scale.setShift(this.scale.getShift() - (25F * BBSSettings.scrollingSensitivityHorizontal.get() * context.mouseWheelHorizontal) / this.scale.getZoom());
+            }
+            else if (Window.isShiftPressed())
             {
                 this.vertical.mouseScroll(context);
             }
-            else
+            else if (context.mouseWheel != 0D)
             {
                 this.scale.zoomAnchor(Scale.getAnchorX(context, this.area), Math.copySign(this.scale.getZoomFactor(), context.mouseWheel));
             }
