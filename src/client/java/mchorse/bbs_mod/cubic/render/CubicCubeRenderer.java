@@ -38,28 +38,20 @@ public class CubicCubeRenderer implements ICubicRenderer
     private static Matrix4f modelM = new Matrix4f();
     private static Matrix3f normalM = new Matrix3f();
 
-    protected float r = 1;
-    protected float g = 1;
-    protected float b = 1;
-    protected float a = 1;
+    protected float r = 1F;
+    protected float g = 1F;
+    protected float b = 1F;
+    protected float a = 1F;
     protected int light;
     protected int overlay;
+    protected boolean picking;
 
     /* Temporary variables to avoid allocating and GC vectors */
     protected Vector3f normal = new Vector3f();
     protected Vector4f vertex = new Vector4f();
 
     private ModelVertex modelVertex = new ModelVertex();
-    private boolean picking;
     private ShapeKeys shapeKeys;
-
-    public CubicCubeRenderer(int light, int overlay, boolean picking, ShapeKeys shapeKeys)
-    {
-        this.light = light;
-        this.overlay = overlay;
-        this.picking = picking;
-        this.shapeKeys = shapeKeys;
-    }
 
     public static void moveToPivot(MatrixStack stack, Vector3f pivot)
     {
@@ -105,6 +97,14 @@ public class CubicCubeRenderer implements ICubicRenderer
         stack.translate(-pivot.x / 16F, -pivot.y / 16F, -pivot.z / 16F);
     }
 
+    public CubicCubeRenderer(int light, int overlay, boolean picking, ShapeKeys shapeKeys)
+    {
+        this.light = light;
+        this.overlay = overlay;
+        this.picking = picking;
+        this.shapeKeys = shapeKeys;
+    }
+
     public void setColor(float r, float g, float b, float a)
     {
         this.r = r;
@@ -129,7 +129,7 @@ public class CubicCubeRenderer implements ICubicRenderer
         return false;
     }
 
-    private void renderCube(BufferBuilder builder, MatrixStack stack, ModelGroup group, ModelCube cube)
+    protected void renderCube(BufferBuilder builder, MatrixStack stack, ModelGroup group, ModelCube cube)
     {
         stack.push();
         moveToPivot(stack, cube.pivot);
@@ -155,7 +155,7 @@ public class CubicCubeRenderer implements ICubicRenderer
         stack.pop();
     }
 
-    private void renderMesh(BufferBuilder builder, MatrixStack stack, Model model, ModelGroup group, ModelMesh mesh)
+    protected void renderMesh(BufferBuilder builder, MatrixStack stack, Model model, ModelGroup group, ModelMesh mesh)
     {
         stack.push();
         moveToPivot(stack, mesh.origin);
