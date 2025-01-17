@@ -9,7 +9,7 @@ import mchorse.bbs_mod.utils.keyframes.factories.IKeyframeFactory;
 
 public class Keyframe <T> extends ValueGroup
 {
-    private long tick;
+    private float tick;
     private T value;
 
     public float lx = 5;
@@ -21,12 +21,12 @@ public class Keyframe <T> extends ValueGroup
      * Forced duration that would be used instead of the difference
      * between two keyframes, if not 0
      */
-    private int duration;
+    private float duration;
     private final Interpolation interp = new Interpolation("interp", Interpolations.MAP);
 
     private final IKeyframeFactory<T> factory;
 
-    public Keyframe(String id, IKeyframeFactory<T> factory, long tick, T value)
+    public Keyframe(String id, IKeyframeFactory<T> factory, float tick, T value)
     {
         this(id, factory);
 
@@ -46,17 +46,17 @@ public class Keyframe <T> extends ValueGroup
         return this.factory;
     }
 
-    public long getTick()
+    public float getTick()
     {
         return this.tick;
     }
 
-    public void setTick(long tick)
+    public void setTick(float tick)
     {
         this.setTick(tick, false);
     }
 
-    public void setTick(long tick, boolean dirty)
+    public void setTick(float tick, boolean dirty)
     {
         if (dirty) this.preNotifyParent();
 
@@ -65,12 +65,12 @@ public class Keyframe <T> extends ValueGroup
         if (dirty) this.postNotifyParent();
     }
 
-    public int getDuration()
+    public float getDuration()
     {
         return this.duration;
     }
 
-    public void setDuration(int duration)
+    public void setDuration(float duration)
     {
         this.preNotifyParent();
         this.duration = Math.max(0, duration);
@@ -119,8 +119,8 @@ public class Keyframe <T> extends ValueGroup
     {
         MapType data = new MapType();
 
-        data.putLong("tick", this.tick);
-        data.putInt("duration", this.duration);
+        data.putFloat("tick", this.tick);
+        data.putFloat("duration", this.duration);
         data.put("value", this.factory.toData(this.value));
         data.put("interp", this.interp.toData());
         if (this.lx != 5F) data.putFloat("lx", this.lx);
@@ -141,8 +141,8 @@ public class Keyframe <T> extends ValueGroup
 
         MapType map = data.asMap();
 
-        if (map.has("tick")) this.tick = map.getLong("tick");
-        if (map.has("duration")) this.duration = map.getInt("duration");
+        if (map.has("tick")) this.tick = map.getFloat("tick");
+        if (map.has("duration")) this.duration = map.getFloat("duration");
         if (map.has("value")) this.value = this.factory.fromData(map.get("value"));
         if (map.has("interp")) this.interp.fromData(map.get("interp"));
         if (map.has("lx")) this.lx = map.getFloat("lx");

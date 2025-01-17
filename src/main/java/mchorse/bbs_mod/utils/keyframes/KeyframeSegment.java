@@ -15,7 +15,7 @@ public class KeyframeSegment <T>
 
     public Keyframe<T> preA;
     public Keyframe<T> postB;
-    public int duration;
+    public float duration;
     public float offset;
     public float x;
 
@@ -58,11 +58,11 @@ public class KeyframeSegment <T>
 
     public void setup(float ticks)
     {
-        int forcedDuration = this.a.getDuration();
+        float forcedDuration = this.a.getDuration();
 
-        this.duration = forcedDuration > 0 ? forcedDuration : (int) (this.b.getTick() - this.a.getTick());
+        this.duration = forcedDuration > 0 ? forcedDuration : this.b.getTick() - this.a.getTick();
         this.offset = ticks - this.a.getTick();
-        this.x = this.duration == 0 ? 0F : this.offset / (float) this.duration;
+        this.x = this.duration == 0 ? 0F : this.offset / this.duration;
     }
 
     public T createInterpolated()

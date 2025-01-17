@@ -4,6 +4,8 @@ import mchorse.bbs_mod.client.render.ModelVAO;
 import mchorse.bbs_mod.cubic.data.animation.Animations;
 import mchorse.bbs_mod.cubic.data.model.Model;
 import mchorse.bbs_mod.cubic.data.model.ModelGroup;
+import mchorse.bbs_mod.cubic.model.ArmorSlot;
+import mchorse.bbs_mod.cubic.model.ArmorType;
 import mchorse.bbs_mod.cubic.render.CubicRenderer;
 import mchorse.bbs_mod.cubic.render.CubicVAOBuilderRenderer;
 import mchorse.bbs_mod.data.DataStorageUtils;
@@ -41,6 +43,7 @@ public class CubicModel implements ICubicModel
     public List<String> itemsMain = new ArrayList<>();
     public List<String> itemsOff = new ArrayList<>();
     public Map<String, String> flippedParts = new HashMap<>();
+    public Map<ArmorType, ArmorSlot> armorSlots = new HashMap<>();
 
     private Map<ModelGroup, ModelVAO> vaos = new HashMap<>();
 
@@ -123,6 +126,24 @@ public class CubicModel implements ICubicModel
                 }
             }
         }
+        if (config.has("armor_slots"))
+        {
+            MapType map = config.getMap("armor_slots");
+
+            for (String key : map.keys())
+            {
+                try
+                {
+                    ArmorType type = ArmorType.valueOf(key.toUpperCase());
+                    ArmorSlot slot = new ArmorSlot();
+
+                    slot.fromData(map.getMap(key));
+                    this.armorSlots.put(type, slot);
+                }
+                catch (Exception e)
+                {}
+            }
+        }
     }
 
     public void setup()
@@ -137,6 +158,11 @@ public class CubicModel implements ICubicModel
         {
             CubicRenderer.processRenderModel(new CubicVAOBuilderRenderer(this.vaos), null, new MatrixStack(), this.model);
         });
+    }
+
+    public boolean isVAORendered()
+    {
+        return this.model.getShapeKeys().isEmpty();
     }
 
     public void delete()

@@ -9,6 +9,7 @@ import mchorse.bbs_mod.ui.forms.UIFormPalette;
 import mchorse.bbs_mod.ui.forms.UINestedEdit;
 import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
+import mchorse.bbs_mod.ui.framework.elements.buttons.UIToggle;
 import mchorse.bbs_mod.ui.framework.elements.input.text.UITextarea;
 import mchorse.bbs_mod.ui.framework.elements.input.text.UITextbox;
 import mchorse.bbs_mod.ui.framework.elements.input.text.utils.TextLine;
@@ -27,13 +28,13 @@ public class UISelectorsOverlayPanel extends UIOverlayPanel
     public UISelectorList selectors;
 
     public UIElement column;
+    public UIToggle enabled;
     public UINestedEdit form;
     public UITextbox entity;
     public UITextbox name;
     public UITextarea<TextLine> nbt;
 
     private EntitySelector current;
-    private boolean changed;
 
     public UISelectorsOverlayPanel()
     {
@@ -43,12 +44,18 @@ public class UISelectorsOverlayPanel extends UIOverlayPanel
         this.selectors.setList(BBSModClient.getSelectors().selectors);
         this.selectors.update();
 
+        this.enabled = new UIToggle(UIKeys.CAMERA_PANELS_ENABLED, (b) ->
+        {
+            this.current.enabled = b.getValue();
+
+            BBSModClient.getSelectors().update();
+        });
+
         this.form = new UINestedEdit((editing) ->
         {
             UIFormPalette.open(this.getParent(UIOverlay.class), editing, this.current.form, true, (form) ->
             {
                 this.current.form = FormUtils.copy(form);
-                this.changed = true;
 
                 BBSModClient.getSelectors().update();
             });
@@ -66,14 +73,11 @@ public class UISelectorsOverlayPanel extends UIOverlayPanel
                 this.current.entity = null;
             }
 
-            this.changed = true;
-
             BBSModClient.getSelectors().update();
         });
         this.name = new UITextbox(100, (t) ->
         {
             this.current.name = t;
-            this.changed = true;
 
             BBSModClient.getSelectors().update();
         });
@@ -82,7 +86,6 @@ public class UISelectorsOverlayPanel extends UIOverlayPanel
             try
             {
                 this.current.nbt = (new StringNbtReader(new StringReader(t))).parseCompound();
-                this.changed = true;
 
                 BBSModClient.getSelectors().update();
             }
@@ -103,8 +106,6 @@ public class UISelectorsOverlayPanel extends UIOverlayPanel
                 this.selectors.add(element);
                 this.setSelector(element, true);
                 BBSModClient.getSelectors().update();
-
-                this.changed = true;
             });
 
             if (this.current != null)
@@ -116,13 +117,12 @@ public class UISelectorsOverlayPanel extends UIOverlayPanel
                     list.remove(this.current);
                     this.setSelector(list.isEmpty() ? null : list.get(0), true);
                     BBSModClient.getSelectors().update();
-
-                    this.changed = true;
                 });
             }
         });
 
         this.column = UI.column(5, 10,
+            this.enabled,
             this.form,
             UI.label(UIKeys.SELECTORS_ENTITY_ID).marginTop(6),
             this.entity,
@@ -138,14 +138,6 @@ public class UISelectorsOverlayPanel extends UIOverlayPanel
         this.add(this.column, this.selectors);
 
         this.setSelector(this.selectors.getList().isEmpty() ? null : this.selectors.getList().get(0), true);
-
-        this.onClose((panel) ->
-        {
-            if (this.changed)
-            {
-                BBSModClient.getSelectors().save();
-            }
-        });
     }
 
     private void setSelector(EntitySelector selector, boolean select)
@@ -156,6 +148,7 @@ public class UISelectorsOverlayPanel extends UIOverlayPanel
 
         if (selector != null)
         {
+            this.enabled.setValue(selector.enabled);
             this.form.setForm(selector.form);
             this.entity.setText(selector.entity == null ? "" : selector.entity.toString());
             this.name.setText(selector.name);

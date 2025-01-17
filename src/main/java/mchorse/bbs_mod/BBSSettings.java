@@ -18,8 +18,6 @@ import mchorse.bbs_mod.utils.colors.Colors;
 
 public class BBSSettings
 {
-    public static ValueString version;
-
     public static ValueString serverId;
     public static ValueString serverAssetManager;
 
@@ -75,6 +73,8 @@ public class BBSSettings
     public static ValueInt recordingNextVariable;
     public static ValueBoolean recordingSwipeDamage;
 
+    public static ValueString entitySelectorsPropertyWhitelist;
+
     public static ValueBoolean damageControl;
 
     public static ValueBoolean audioWaveformVisible;
@@ -116,9 +116,6 @@ public class BBSSettings
 
         builder.getCategory().invisible();
         builder.category("appearance");
-
-        version = builder.getString("version", BBSMod.SIGNIFICANT_VERSION);
-        version.invisible();
 
         builder.register(language = new ValueLanguage("language"));
         primaryColor = builder.getInt("primary_color", Colors.ACTIVE).color();
@@ -174,6 +171,8 @@ public class BBSSettings
         recordingCountdown = builder.category("recording").getFloat("countdown", 1.5F, 0F, 30F);
         recordingNextVariable = builder.getInt("next", 1, 1, 100);
         recordingSwipeDamage = builder.getBoolean("swipe_damage", false);
+
+        entitySelectorsPropertyWhitelist = builder.category("entity_selectors").getString("whitelist", "CustomName,Name");
 
         damageControl = builder.category("dc").getBoolean("enabled", true);
 

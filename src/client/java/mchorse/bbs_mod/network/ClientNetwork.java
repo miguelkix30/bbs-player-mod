@@ -8,7 +8,8 @@ import mchorse.bbs_mod.blocks.entities.ModelBlockEntity;
 import mchorse.bbs_mod.data.DataStorageUtils;
 import mchorse.bbs_mod.data.types.BaseType;
 import mchorse.bbs_mod.data.types.MapType;
-import mchorse.bbs_mod.entity.ActorEntity;
+import mchorse.bbs_mod.entity.GunProjectileEntity;
+import mchorse.bbs_mod.entity.IEntityFormProvider;
 import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.film.Films;
 import mchorse.bbs_mod.forms.FormUtils;
@@ -17,6 +18,7 @@ import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.forms.ModelForm;
 import mchorse.bbs_mod.forms.renderers.ModelFormRenderer;
 import mchorse.bbs_mod.forms.triggers.StateTrigger;
+import mchorse.bbs_mod.items.GunProperties;
 import mchorse.bbs_mod.morphing.Morph;
 import mchorse.bbs_mod.resources.ISourcePack;
 import mchorse.bbs_mod.resources.Link;
@@ -97,8 +99,9 @@ public class ClientNetwork
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_REQUEST_ASSET, (client, handler, buf, responseSender) -> handleRequestAssetPacket(client, buf));
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_CHEATS_PERMISSION, (client, handler, buf, responseSender) -> handleCheatsPermissionPacket(client, buf));
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_SHARED_FORM, (client, handler, buf, responseSender) -> handleShareFormPacket(client, buf));
-        ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_ACTOR_FORM, (client, handler, buf, responseSender) -> handleActorFormPacket(client, buf));
+        ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_ENTITY_FORM, (client, handler, buf, responseSender) -> handleEntityFormPacket(client, buf));
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_ACTORS, (client, handler, buf, responseSender) -> handleActorsPacket(client, buf));
+        ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_GUN_PROPERTIES, (client, handler, buf, responseSender) -> handleGunPropertiesPacket(client, buf));
     }
 
     /* Handlers */
@@ -353,7 +356,7 @@ public class ClientNetwork
         });
     }
 
-    private static void handleActorFormPacket(MinecraftClient client, PacketByteBuf buf)
+    private static void handleEntityFormPacket(MinecraftClient client, PacketByteBuf buf)
     {
         crusher.receive(buf, (bytes, packetByteBuf) ->
         {
@@ -370,9 +373,9 @@ public class ClientNetwork
             {
                 Entity entity = client.world.getEntityById(entityId);
 
-                if (entity instanceof ActorEntity actor)
+                if (entity instanceof IEntityFormProvider provider)
                 {
-                    actor.setForm(finalForm);
+                    provider.setForm(finalForm);
                 }
             });
         });
@@ -398,6 +401,25 @@ public class ClientNetwork
 
             panel.updateActors(filmId, actors);
             BBSModClient.getFilms().updateActors(filmId, actors);
+        });
+    }
+
+    private static void handleGunPropertiesPacket(MinecraftClient client, PacketByteBuf buf)
+    {
+        GunProperties properties = new GunProperties();
+        int entityId = buf.readInt();
+
+        properties.fromNetwork(buf);
+
+        client.execute(() ->
+        {
+            Entity entity = client.world.getEntityById(entityId);
+
+            if (entity instanceof GunProjectileEntity projectile)
+            {
+                projectile.setProperties(properties);
+                projectile.calculateDimensions();
+            }
         });
     }
 

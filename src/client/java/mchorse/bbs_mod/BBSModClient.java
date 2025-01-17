@@ -7,9 +7,11 @@ import mchorse.bbs_mod.camera.clips.misc.AudioClientClip;
 import mchorse.bbs_mod.camera.clips.misc.TrackerClientClip;
 import mchorse.bbs_mod.camera.controller.CameraController;
 import mchorse.bbs_mod.client.BBSRendering;
-import mchorse.bbs_mod.client.renderer.ActorEntityRenderer;
 import mchorse.bbs_mod.client.renderer.ModelBlockEntityRenderer;
-import mchorse.bbs_mod.client.renderer.ModelBlockItemRenderer;
+import mchorse.bbs_mod.client.renderer.entity.ActorEntityRenderer;
+import mchorse.bbs_mod.client.renderer.entity.GunProjectileEntityRenderer;
+import mchorse.bbs_mod.client.renderer.item.GunItemRenderer;
+import mchorse.bbs_mod.client.renderer.item.ModelBlockItemRenderer;
 import mchorse.bbs_mod.cubic.model.ModelManager;
 import mchorse.bbs_mod.film.Films;
 import mchorse.bbs_mod.film.Recorder;
@@ -60,13 +62,11 @@ import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.impl.client.rendering.BlockEntityRendererRegistryImpl;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.Window;
 import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import org.apache.commons.io.IOUtils;
 import org.lwjgl.glfw.GLFW;
@@ -96,7 +96,7 @@ public class BBSModClient implements ClientModInitializer
     private static ParticleManager particles;
 
     private static KeyBinding keyDashboard;
-    private static KeyBinding keyModelBlockEditor;
+    private static KeyBinding keyItemEditor;
     private static KeyBinding keyPlayFilm;
     private static KeyBinding keyRecordReplay;
     private static KeyBinding keyRecordVideo;
@@ -109,6 +109,7 @@ public class BBSModClient implements ClientModInitializer
 
     private static CameraController cameraController = new CameraController();
     private static ModelBlockItemRenderer modelBlockItemRenderer = new ModelBlockItemRenderer();
+    private static GunItemRenderer gunItemRenderer = new GunItemRenderer();
     private static Films films;
 
     private static boolean requestToggleRecording;
@@ -324,7 +325,7 @@ public class BBSModClient implements ClientModInitializer
 
         /* Keybinds */
         keyDashboard = this.createKey("dashboard", GLFW.GLFW_KEY_0);
-        keyModelBlockEditor = this.createKey("block_editor", GLFW.GLFW_KEY_HOME);
+        keyItemEditor = this.createKey("item_editor", GLFW.GLFW_KEY_HOME);
         keyPlayFilm = this.createKey("play_film", GLFW.GLFW_KEY_RIGHT_CONTROL);
         keyRecordReplay = this.createKey("record_replay", GLFW.GLFW_KEY_RIGHT_ALT);
         keyRecordVideo = this.createKey("record_video", GLFW.GLFW_KEY_F4);
@@ -395,12 +396,13 @@ public class BBSModClient implements ClientModInitializer
             {
                 films.update();
                 modelBlockItemRenderer.update();
+                gunItemRenderer.update();
             }
 
             BBSResources.update();
 
             while (keyDashboard.wasPressed()) UIScreen.open(getDashboard());
-            while (keyModelBlockEditor.wasPressed()) this.keyOpenModelBlockEditor(mc);
+            while (keyItemEditor.wasPressed()) this.keyOpenModelBlockEditor(mc);
             while (keyPlayFilm.wasPressed()) this.keyPlayFilm();
             while (keyRecordReplay.wasPressed()) this.keyRecordReplay();
             while (keyRecordVideo.wasPressed()) requestToggleRecording = true;
@@ -457,10 +459,12 @@ public class BBSModClient implements ClientModInitializer
 
         /* Entity renderers */
         EntityRendererRegistry.register(BBSMod.ACTOR_ENTITY, ActorEntityRenderer::new);
+        EntityRendererRegistry.register(BBSMod.GUN_PROJECTILE_ENTITY, GunProjectileEntityRenderer::new);
 
         BlockEntityRendererRegistryImpl.register(BBSMod.MODEL_BLOCK_ENTITY, ModelBlockEntityRenderer::new);
 
         BuiltinItemRendererRegistry.INSTANCE.register(BBSMod.MODEL_BLOCK_ITEM, modelBlockItemRenderer);
+        BuiltinItemRendererRegistry.INSTANCE.register(BBSMod.GUN_ITEM, gunItemRenderer);
 
         this.setupModels();
     }
@@ -479,10 +483,6 @@ public class BBSModClient implements ClientModInitializer
         {}
 
         BBSMod.getAudioFolder().mkdirs();
-
-        /* Whenever we're in a dev environment, resource assets can't be found
-         * directly, so we have to copy files this crude way */
-        isForge = isForge || FabricLoader.getInstance().isDevelopmentEnvironment();
 
         this.insert(isForge, "/assets/bbs/assets/models/player/steve/", BBSMod.getAssetsPath("models/player/steve"), Arrays.asList("config.json", "steve.bbs.json", "steve.png"));
         this.insert(isForge, "/assets/bbs/assets/models/player/alex/", BBSMod.getAssetsPath("models/player/alex"), Arrays.asList("config.json", "alex.bbs.json", "alex.png"));
@@ -540,15 +540,16 @@ public class BBSModClient implements ClientModInitializer
     private void keyOpenModelBlockEditor(MinecraftClient mc)
     {
         ItemStack stack = mc.player.getEquippedStack(EquipmentSlot.MAINHAND);
+        ModelBlockItemRenderer.Item item = modelBlockItemRenderer.get(stack);
+        GunItemRenderer.Item gunItem = gunItemRenderer.get(stack);
 
-        if (stack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() == BBSMod.MODEL_BLOCK)
+        if (item != null)
         {
-            ModelBlockItemRenderer.Item item = modelBlockItemRenderer.get(stack);
-
-            if (item != null)
-            {
-                UIScreen.open(new UIModelBlockEditorMenu(item));
-            }
+            UIScreen.open(new UIModelBlockEditorMenu(item.entity.getProperties()));
+        }
+        else if (gunItem != null)
+        {
+            UIScreen.open(new UIModelBlockEditorMenu(gunItem.properties));
         }
     }
 

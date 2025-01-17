@@ -74,7 +74,7 @@ public class UIFilmUndoHandler
             ValueChangeUndo change = (ValueChangeUndo) anotherUndo;
 
             this.panel.showPanel(change.panel);
-            this.panel.replayEditor.setReplay(CollectionUtils.getSafe(this.panel.getData().replays.getList(), change.replay));
+            this.panel.replayEditor.setReplay(CollectionUtils.getSafe(this.panel.getData().replays.getList(), change.replay), false);
 
             List<Integer> cameraSelection = change.cameraClips.getSelection(redo);
             List<Integer> voiceLineSelection = change.voiceLinesClips.getSelection(redo);
@@ -213,14 +213,22 @@ public class UIFilmUndoHandler
 
         if (
             path.endsWith("/replays") ||
+            path.endsWith("/keyframes") ||
             path.contains("/keyframes/x") ||
             path.contains("/keyframes/y") ||
             path.contains("/keyframes/z") ||
             path.contains("/keyframes/item_main_hand") ||
             path.contains("/keyframes/item_off_hand") ||
             path.endsWith("/actor") ||
-            path.endsWith("/keyframes")
+            path.endsWith("/form")
         ) {
+            return true;
+        }
+
+        /* Specifically for overwriting full replay like what's done when recording
+         * data in the world! */
+        if (value.getParent() != null && value.getParent().getId().equals("replays"))
+        {
             return true;
         }
 

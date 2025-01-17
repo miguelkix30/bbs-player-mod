@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ActorEntity extends LivingEntity
+public class ActorEntity extends LivingEntity implements IEntityFormProvider
 {
     public static DefaultAttributeContainer.Builder createActorAttributes()
     {
@@ -50,11 +50,19 @@ public class ActorEntity extends LivingEntity
         return this.entity;
     }
 
+    @Override
+    public int getEntityId()
+    {
+        return this.getId();
+    }
+
+    @Override
     public Form getForm()
     {
         return this.form;
     }
 
+    @Override
     public void setForm(Form form)
     {
         this.form = form;
@@ -97,16 +105,17 @@ public class ActorEntity extends LivingEntity
 
         this.tickHandSwing();
 
-        if (this.getWorld().isClient)
-        {
-            return;
-        }
-
         if (this.form != null)
         {
             this.form.update(this.entity);
         }
 
+        if (this.getWorld().isClient)
+        {
+            return;
+        }
+
+        /* Pickup items */
         Box box = this.getBoundingBox().expand(1D, 0.5D, 1D);
         List<Entity> list = this.getWorld().getOtherEntities(this, box);
 
@@ -142,13 +151,7 @@ public class ActorEntity extends LivingEntity
     {
         super.onStartedTrackingBy(player);
 
-        ServerNetwork.sendActorForm(player, this);
-    }
-
-    @Override
-    public void onStoppedTrackingBy(ServerPlayerEntity player)
-    {
-        super.onStoppedTrackingBy(player);
+        ServerNetwork.sendEntityForm(player, this);
     }
 
     @Override

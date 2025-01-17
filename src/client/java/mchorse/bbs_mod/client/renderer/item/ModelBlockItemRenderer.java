@@ -1,8 +1,9 @@
-package mchorse.bbs_mod.client.renderer;
+package mchorse.bbs_mod.client.renderer.item;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import mchorse.bbs_mod.BBSMod;
 import mchorse.bbs_mod.blocks.entities.ModelBlockEntity;
+import mchorse.bbs_mod.blocks.entities.ModelProperties;
 import mchorse.bbs_mod.forms.FormUtilsClient;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.entities.StubEntity;
@@ -52,14 +53,14 @@ public class ModelBlockItemRenderer implements BuiltinItemRendererRegistry.Dynam
 
         if (item != null)
         {
-            ModelBlockEntity.Properties properties = item.entity.getProperties();
-            Form form = this.getForm(properties, mode);
+            ModelProperties properties = item.entity.getProperties();
+            Form form = properties.getForm(mode);
 
             if (form != null)
             {
                 item.expiration = 20;
 
-                Transform transform = this.getTransform(properties, mode);
+                Transform transform = properties.getTransform(mode);
 
                 matrices.push();
                 matrices.translate(0.5F, 0F, 0.5F);
@@ -74,48 +75,13 @@ public class ModelBlockItemRenderer implements BuiltinItemRendererRegistry.Dynam
         }
     }
 
-    private Form getForm(ModelBlockEntity.Properties properties, ModelTransformationMode mode)
-    {
-        Form form = properties.getForm();
-
-        if (mode == ModelTransformationMode.GUI && properties.getFormInventory() != null)
-        {
-            form = properties.getFormInventory();
-        }
-        else if ((mode == ModelTransformationMode.THIRD_PERSON_LEFT_HAND || mode == ModelTransformationMode.THIRD_PERSON_RIGHT_HAND) && properties.getFormThirdPerson() != null)
-        {
-            form = properties.getFormThirdPerson();
-        }
-        else if ((mode == ModelTransformationMode.FIRST_PERSON_LEFT_HAND || mode == ModelTransformationMode.FIRST_PERSON_RIGHT_HAND) && properties.getFormFirstPerson() != null)
-        {
-            form = properties.getFormFirstPerson();
-        }
-
-        return form;
-    }
-
-    private Transform getTransform(ModelBlockEntity.Properties properties, ModelTransformationMode mode)
-    {
-        Transform transform = properties.getTransformThirdPerson();
-
-        if (mode == ModelTransformationMode.GUI)
-        {
-            transform = properties.getTransformInventory();
-        }
-        else if (mode == ModelTransformationMode.FIRST_PERSON_LEFT_HAND || mode == ModelTransformationMode.FIRST_PERSON_RIGHT_HAND)
-        {
-            transform = properties.getTransformFirstPerson();
-        }
-        else if (mode == ModelTransformationMode.GROUND)
-        {
-            transform = properties.getTransform();
-        }
-
-        return transform;
-    }
-
     public Item get(ItemStack stack)
     {
+        if (stack == null || stack.getItem() != BBSMod.MODEL_BLOCK_ITEM)
+        {
+            return null;
+        }
+
         if (this.map.containsKey(stack))
         {
             return this.map.get(stack);
