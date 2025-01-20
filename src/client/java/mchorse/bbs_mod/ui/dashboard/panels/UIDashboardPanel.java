@@ -1,8 +1,8 @@
 package mchorse.bbs_mod.ui.dashboard.panels;
 
 import mchorse.bbs_mod.ui.dashboard.UIDashboard;
+import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
-import mchorse.bbs_mod.ui.utils.Area;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 
 public class UIDashboardPanel extends UIElement
@@ -58,8 +58,6 @@ public class UIDashboardPanel extends UIElement
     public void renderInWorld(WorldRenderContext context)
     {}
 
-    public Area getOrbitViewport()
-    {
-        return this.area;
-    }
+    public void renderPanelBackground(UIContext context)
+    {}
 }
