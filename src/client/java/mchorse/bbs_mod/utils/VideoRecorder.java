@@ -4,12 +4,15 @@ import mchorse.bbs_mod.BBSMod;
 import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.ui.utils.UIUtils;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
+import org.lwjgl.opengl.GL30;
 import org.lwjgl.system.MemoryUtil;
+import sun.misc.Unsafe;
 
 import java.io.File;
+import java.io.FilterOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
@@ -49,6 +52,8 @@ public class VideoRecorder
     {
         return this.counter;
     }
+
+    private int pbo = -1;
 
     /**
      * Start recording the video using ffmpeg
@@ -106,6 +111,11 @@ public class VideoRecorder
 
             System.out.println("Recording video with following arguments: " + args);
 
+            this.pbo = GL30.glGenBuffers();
+            GL30.glBindBuffer(GL30.GL_PIXEL_PACK_BUFFER, this.pbo);
+            GL30.glBufferData(GL30.GL_PIXEL_PACK_BUFFER, width * height * 3, GL30.GL_STREAM_READ);
+            GL30.glBindBuffer(GL30.GL_PIXEL_PACK_BUFFER, 0);
+
             ProcessBuilder builder = new ProcessBuilder(args);
             File log = path.resolve(movieName.concat(".log")).toFile();
 
@@ -120,7 +130,30 @@ public class VideoRecorder
 
             this.process = builder.start();
 
+            // Java wraps the process output stream into a BufferedOutputStream,
+            // but its little buffer is just slowing everything down with the
+            // huge amount of data we're dealing here, so unwrap it with this little
+            // hack.
             OutputStream os = this.process.getOutputStream();
+            Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+
+            theUnsafe.setAccessible(true);
+
+            Unsafe unsafe = (Unsafe) theUnsafe.get(null);
+
+            if (os instanceof FilterOutputStream)
+            {
+                try
+                {
+                    Field outField = FilterOutputStream.class.getDeclaredField("out");
+
+                    os = (OutputStream) unsafe.getObject(os, unsafe.objectFieldOffset(outField));
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
 
             this.channel = Channels.newChannel(os);
             this.recording = true;
@@ -145,6 +178,9 @@ public class VideoRecorder
             return;
         }
 
+        GL30.glDeleteBuffers(this.pbo);
+
+        this.pbo = -1;
         this.textureId = -1;
 
         if (this.buffer != null)
@@ -156,25 +192,33 @@ public class VideoRecorder
 
         try
         {
-            if (this.channel.isOpen())
+            if (this.channel != null && this.channel.isOpen())
             {
                 this.channel.close();
             }
+
+            this.channel = null;
         }
-        catch (Exception e)
+        catch (IOException ex)
         {
-            e.printStackTrace();
+            ex.printStackTrace();
         }
 
         try
         {
-            this.process.waitFor(1, TimeUnit.MINUTES);
-            this.process.destroy();
+            if (this.process != null)
+            {
+                this.process.waitFor(1, TimeUnit.MINUTES);
+                this.process.destroy();
+            }
+
+            this.process = null;
         }
-        catch (Exception e)
+        catch (InterruptedException ex)
         {
-            e.printStackTrace();
+            ex.printStackTrace();
         }
+
 
         this.recording = false;
 
@@ -193,15 +237,23 @@ public class VideoRecorder
             return;
         }
 
-        this.buffer.rewind();
-        GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 1);
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.textureId);
-        GL11.glGetTexImage(GL11.GL_TEXTURE_2D, 0, GL12.GL_BGR, GL11.GL_UNSIGNED_BYTE, this.buffer);
-        this.buffer.rewind();
-
         try
         {
-            this.channel.write(this.buffer);
+            GL30.glPixelStorei(GL30.GL_PACK_ALIGNMENT, 1);
+            GL30.glBindBuffer(GL30.GL_PIXEL_PACK_BUFFER, this.pbo);
+            GL30.glBindTexture(GL30.GL_TEXTURE_2D, this.textureId);
+            GL30.glGetTexImage(GL30.GL_TEXTURE_2D, 0, GL30.GL_BGR, GL30.GL_UNSIGNED_BYTE, 0);
+
+            ByteBuffer mappedBuffer = GL30.glMapBuffer(GL30.GL_PIXEL_PACK_BUFFER, GL30.GL_READ_ONLY);
+
+            if (mappedBuffer != null)
+            {
+                this.channel.write(mappedBuffer);
+
+                GL30.glUnmapBuffer(GL30.GL_PIXEL_PACK_BUFFER);
+            }
+
+            GL30.glBindBuffer(GL30.GL_PIXEL_PACK_BUFFER, 0);
         }
         catch (Exception e)
         {
