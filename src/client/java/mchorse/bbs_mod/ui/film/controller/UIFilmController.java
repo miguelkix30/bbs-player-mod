@@ -66,7 +66,6 @@ import net.minecraft.client.Mouse;
 import net.minecraft.client.gl.GlUniform;
 import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.option.GameOptions;
-import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
@@ -503,14 +502,6 @@ public class UIFilmController extends UIElement
     {
         if (this.canControl())
         {
-            InputUtil.Key utilKey = InputUtil.Type.MOUSE.createFromCode(context.mouseButton);
-
-            if (this.canControlWithKeyboard(utilKey))
-            {
-                KeyBinding.setKeyPressed(utilKey, true);
-                KeyBinding.onKeyPressed(utilKey);
-            }
-
             return true;
         }
 
@@ -561,13 +552,6 @@ public class UIFilmController extends UIElement
     {
         if (this.canControl())
         {
-            InputUtil.Key utilKey = InputUtil.Type.MOUSE.createFromCode(context.mouseButton);
-
-            if (this.canControlWithKeyboard(utilKey))
-            {
-                KeyBinding.setKeyPressed(utilKey, false);
-            }
-
             return true;
         }
 
@@ -600,16 +584,6 @@ public class UIFilmController extends UIElement
 
             if (this.canControlWithKeyboard(utilKey))
             {
-                if (context.getKeyAction() == KeyAction.RELEASED)
-                {
-                    KeyBinding.setKeyPressed(utilKey, false);
-                }
-                else
-                {
-                    KeyBinding.setKeyPressed(utilKey, true);
-                    KeyBinding.onKeyPressed(utilKey);
-                }
-
                 return true;
             }
         }
@@ -1129,6 +1103,45 @@ public class UIFilmController extends UIElement
         }
     }
 
+    public void startRenderFrame(float tickDelta)
+    {
+        boolean isPlaying = this.isPlaying();
+        int tick = this.getTick();
+        float transition = isPlaying ? tickDelta : 0F;
+
+        for (int i = 0; i < this.entities.size(); i++)
+        {
+            IEntity entity = this.entities.get(i);
+            boolean isCurrent = entity == this.getCurrentEntity();
+
+            if (this.getPovMode() == CAMERA_MODE_FIRST_PERSON && isCurrent && this.orbit.enabled)
+            {
+                continue;
+            }
+
+            Replay replay = this.panel.getData().replays.getList().get(i);
+            int ticks = replay.getTick(tick);
+
+            replay.applyProperties(ticks + transition, entity.getForm());
+
+            if (this.actors != null)
+            {
+                Integer entityId = this.actors.get(replay.getId());
+
+                if (entityId != null)
+                {
+                    Entity anEntity = MinecraftClient.getInstance().world.getEntityById(entityId);
+
+                    if (anEntity instanceof ActorEntity actor)
+                    {
+                        /* Force synchronize entity angles */
+                        replay.applyProperties(ticks + transition, actor.getForm());
+                    }
+                }
+            }
+        }
+    }
+
     public void renderFrame(WorldRenderContext context)
     {
         boolean isPlaying = this.isPlaying();
@@ -1157,24 +1170,6 @@ public class UIFilmController extends UIElement
             if (value == null)
             {
                 value = replay.properties.get("pose");
-            }
-
-            replay.applyProperties(ticks + transition, entity.getForm());
-
-            if (this.actors != null)
-            {
-                Integer entityId = this.actors.get(replay.getId());
-
-                if (entityId != null)
-                {
-                    Entity anEntity = MinecraftClient.getInstance().world.getEntityById(entityId);
-
-                    if (anEntity instanceof ActorEntity actor)
-                    {
-                        /* Force synchronize entity angles */
-                        replay.applyProperties(ticks + transition, actor.getForm());
-                    }
-                }
             }
 
             if (!replay.actor.get())
