@@ -427,7 +427,7 @@ public class UIReplaysEditor extends UIElement
         {
             for (String s : BBSSettings.disabledSheets.get())
             {
-                if (v.id.endsWith(s))
+                if (v.id.equals(s) || v.id.endsWith("/" + s))
                 {
                     return true;
                 }
@@ -506,7 +506,7 @@ public class UIReplaysEditor extends UIElement
                     {
                         UIKeyframeSheetFilterOverlayPanel panel = new UIKeyframeSheetFilterOverlayPanel(BBSSettings.disabledSheets.get(), this.keys);
 
-                        UIOverlay.addOverlay(this.getContext(), panel);
+                        UIOverlay.addOverlay(this.getContext(), panel, 240, 0.9F);
 
                         panel.onClose((e) ->
                         {

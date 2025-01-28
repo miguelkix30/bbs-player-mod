@@ -10,8 +10,6 @@ import mchorse.bbs_mod.utils.interps.Interpolations;
 
 public class UIKeys
 {
-
-
     public static final IKey ACTIONS_ATTACK_DAMAGE = L10n.lang("bbs.ui.actions.attack.damage");
     public static final IKey ACTIONS_BLOCK_DIRECTION = L10n.lang("bbs.ui.actions.block.direction");
     public static final IKey ACTIONS_BLOCK_DIRECTION_DOWN = L10n.lang("bbs.ui.actions.block.direction.down");
@@ -402,6 +400,7 @@ public class UIKeys
     public static final IKey GENERAL_OK = L10n.lang("bbs.ui.ok");
     public static final IKey GENERAL_PASTE = L10n.lang("bbs.ui.paste");
     public static final IKey GENERAL_PICK = L10n.lang("bbs.ui.pick");
+    public static final IKey GENERAL_PRESETS = L10n.lang("bbs.ui.presets");
     public static final IKey GENERAL_REMOVE = L10n.lang("bbs.ui.remove");
     public static final IKey GENERAL_RENAME = L10n.lang("bbs.ui.rename");
     public static final IKey GENERAL_RIGHT_CLICK = L10n.lang("bbs.ui.right_click");
@@ -424,6 +423,8 @@ public class UIKeys
     public static final IKey GUN_COMMANDS_TICKING_TOOLTIP = L10n.lang("bbs.ui.gun.commands.ticking-tooltip");
     public static final IKey GUN_COMMANDS_TITLE = L10n.lang("bbs.ui.gun.commands.title");
     public static final IKey GUN_COMMANDS_VANISH = L10n.lang("bbs.ui.gun.commands.vanish");
+    public static final IKey GUN_CONTEXT_COPY = L10n.lang("bbs.ui.gun.context.copy");
+    public static final IKey GUN_CONTEXT_PASTE = L10n.lang("bbs.ui.gun.context.paste");
     public static final IKey GUN_IMPACT_BLOCKS = L10n.lang("bbs.ui.gun.impact.blocks");
     public static final IKey GUN_IMPACT_BOUNCES = L10n.lang("bbs.ui.gun.impact.bounces");
     public static final IKey GUN_IMPACT_BOUNCE_DAMPING = L10n.lang("bbs.ui.gun.impact.bounce_damping");
@@ -519,6 +520,7 @@ public class UIKeys
     public static final IKey MODEL_BLOCKS_KEYS_TOGGLE_RENDERING = L10n.lang("bbs.ui.model_blocks.keys.toggle_rendering");
     public static final IKey MODEL_BLOCKS_SHADOW = L10n.lang("bbs.ui.model_blocks.shadow");
     public static final IKey MODEL_BLOCKS_TITLE = L10n.lang("bbs.ui.model_blocks.title");
+    public static final IKey MODEL_BLOCKS_TRANSFORM_DEFAULT = L10n.lang("bbs.ui.model_blocks.transform.default");
     public static final IKey MODEL_BLOCKS_TRANSFORM_FIRST_PERSON = L10n.lang("bbs.ui.model_blocks.transform.first_person");
     public static final IKey MODEL_BLOCKS_TRANSFORM_INVENTORY = L10n.lang("bbs.ui.model_blocks.transform.inventory");
     public static final IKey MODEL_BLOCKS_TRANSFORM_THIRD_PERSON = L10n.lang("bbs.ui.model_blocks.transform.third_person");
@@ -551,6 +553,11 @@ public class UIKeys
     public static final IKey POSE_CONTEXT_PASTE = L10n.lang("bbs.ui.pose.context.paste");
     public static final IKey POSE_CONTEXT_RESET = L10n.lang("bbs.ui.pose.context.reset");
     public static final IKey POSE_CONTEXT_SAVE = L10n.lang("bbs.ui.pose.context.save");
+    public static final IKey PRESETS_OPEN = L10n.lang("bbs.ui.presets.open");
+    public static final IKey PRESETS_SAVE = L10n.lang("bbs.ui.presets.save");
+    public static final IKey PRESETS_SAVE_DESCRIPTION = L10n.lang("bbs.ui.presets.save-description");
+    public static final IKey PRESETS_SAVE_TITLE = L10n.lang("bbs.ui.presets.save-title");
+    public static final IKey PRESETS_TITLE = L10n.lang("bbs.ui.presets.title");
     public static final IKey SCENE_REPLAYS_CONTEXT_ADD = L10n.lang("bbs.ui.scene.replays.context.add");
     public static final IKey SCENE_REPLAYS_CONTEXT_COPY = L10n.lang("bbs.ui.scene.replays.context.copy");
     public static final IKey SCENE_REPLAYS_CONTEXT_DUPE = L10n.lang("bbs.ui.scene.replays.context.dupe");

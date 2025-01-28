@@ -17,7 +17,10 @@ import mchorse.bbs_mod.ui.framework.elements.input.keyframes.graphs.UIKeyframeGr
 import mchorse.bbs_mod.ui.utils.Area;
 import mchorse.bbs_mod.ui.utils.Scale;
 import mchorse.bbs_mod.ui.utils.ScrollDirection;
+import mchorse.bbs_mod.ui.utils.UIUtils;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
+import mchorse.bbs_mod.ui.utils.presets.UICopyPasteController;
+import mchorse.bbs_mod.ui.utils.presets.UIPresetContextMenu;
 import mchorse.bbs_mod.utils.CollectionUtils;
 import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.Pair;
@@ -27,6 +30,7 @@ import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
 import mchorse.bbs_mod.utils.keyframes.KeyframeSegment;
 import mchorse.bbs_mod.utils.keyframes.factories.IKeyframeFactory;
 import mchorse.bbs_mod.utils.keyframes.factories.KeyframeFactories;
+import mchorse.bbs_mod.utils.presets.PresetManager;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -76,9 +80,21 @@ public class UIKeyframes extends UIElement
 
     private IAxisConverter converter;
 
+    private UICopyPasteController copyPasteController;
+
     public UIKeyframes(Consumer<Keyframe> callback)
     {
         this.callback = callback;
+
+        this.copyPasteController = new UICopyPasteController(PresetManager.KEYFRAMES, "_CopyKeyframes")
+            .supplier(this::serializeKeyframes)
+            .consumer((data, mouseX, mouseY) ->
+            {
+                double offset = Math.round(this.fromGraphX(mouseX));
+
+                this.pasteKeyframes(this.parseKeyframes(data), (float) offset, mouseY);
+            })
+            .canCopy(() -> this.currentGraph.getSelected() != null);
 
         /* Context menu items */
         this.context((menu) ->
@@ -87,6 +103,9 @@ public class UIKeyframes extends UIElement
             int mouseX = context.mouseX;
             int mouseY = context.mouseY;
             boolean hasSelected = this.currentGraph.getSelected() != null;
+
+            menu.custom(new UIPresetContextMenu(this.copyPasteController, mouseX, mouseY)
+                .labels(UIKeys.KEYFRAMES_CONTEXT_COPY, UIKeys.KEYFRAMES_CONTEXT_PASTE));
 
             if (this.isEditing())
             {
@@ -111,21 +130,6 @@ public class UIKeyframes extends UIElement
             if (hasSelected)
             {
                 menu.action(Icons.REMOVE, UIKeys.KEYFRAMES_CONTEXT_REMOVE, () -> this.currentGraph.removeSelected());
-                menu.action(Icons.COPY, UIKeys.KEYFRAMES_CONTEXT_COPY, this::copyKeyframes);
-            }
-
-            Map<String, PastedKeyframes> pasted = this.parseKeyframes();
-
-            if (pasted != null)
-            {
-                final Map<String, PastedKeyframes> keyframes = pasted;
-                double offset = this.fromGraphX(mouseX);
-
-                menu.action(Icons.PASTE, UIKeys.KEYFRAMES_CONTEXT_PASTE, () -> this.pasteKeyframes(keyframes, (float) offset, mouseY));
-            }
-
-            if (hasSelected)
-            {
                 menu.action(Icons.OUTLINE_SPHERE, UIKeys.KEYFRAMES_CONTEXT_ROUND, () ->
                 {
                     for (UIKeyframeSheet sheet : this.getGraph().getSheets())
@@ -151,20 +155,26 @@ public class UIKeyframes extends UIElement
 
         this.keys().register(Keys.KEYFRAMES_MAXIMIZE, this::resetView).inside().category(category);
         this.keys().register(Keys.KEYFRAMES_SELECT_ALL, () -> this.currentGraph.selectAll()).inside().category(category).active(canModify);
-        this.keys().register(Keys.COPY, this::copyKeyframes).inside().category(category);
+        this.keys().register(Keys.COPY, () ->
+        {
+            if (this.copyPasteController.copy()) UIUtils.playClick();
+        }).inside().category(category);
         this.keys().register(Keys.PASTE, () ->
         {
-            Map<String, PastedKeyframes> pasted = this.parseKeyframes();
+            UIContext context = this.getContext();
 
-            if (pasted != null)
-            {
-                UIContext context = this.getContext();
-                double offset = this.fromGraphX(context.mouseX);
-                int mouseY = context.mouseY;
-
-                this.pasteKeyframes(pasted, (float) offset, mouseY);
-            }
+            if (this.copyPasteController.paste(context.mouseX, context.mouseY)) UIUtils.playClick();
         }).inside().category(category).active(canModify);
+        this.keys().register(Keys.PRESETS, () ->
+        {
+            UIContext context = this.getContext();
+
+            if (this.copyPasteController.canPreviewPresets())
+            {
+                this.copyPasteController.openPresets(context, context.mouseX, context.mouseY);
+                UIUtils.playClick();
+            }
+        }).category(category).active(canModify);
         this.keys().register(Keys.DELETE, () -> this.currentGraph.removeSelected()).inside().category(category).active(canModify);
         this.keys().register(Keys.KEYFRAMES_SELECT_LEFT, () ->
         {
@@ -451,14 +461,6 @@ public class UIKeyframes extends UIElement
 
     /* Copy-pasting */
 
-    /**
-     * Parse keyframes from clipboard
-     */
-    private Map<String, PastedKeyframes> parseKeyframes()
-    {
-        return this.parseKeyframes(Window.getClipboardMap("_CopyKeyframes"));
-    }
-
     private Map<String, PastedKeyframes> parseKeyframes(MapType data)
     {
         if (data == null)
@@ -485,14 +487,6 @@ public class UIKeyframes extends UIElement
         }
 
         return temp.isEmpty() ? null : temp;
-    }
-
-    /**
-     * Copy keyframes to clipboard
-     */
-    private void copyKeyframes()
-    {
-        Window.setClipboard(this.serializeKeyframes(), "_CopyKeyframes");
     }
 
     private MapType serializeKeyframes()

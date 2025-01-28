@@ -46,10 +46,13 @@ import mchorse.bbs_mod.ui.framework.elements.utils.UIRenderable;
 import mchorse.bbs_mod.ui.utils.UI;
 import mchorse.bbs_mod.ui.utils.context.ContextMenuManager;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
+import mchorse.bbs_mod.ui.utils.presets.UICopyPasteController;
+import mchorse.bbs_mod.ui.utils.presets.UIPresetContextMenu;
 import mchorse.bbs_mod.utils.Direction;
 import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.Pair;
 import mchorse.bbs_mod.utils.colors.Colors;
+import mchorse.bbs_mod.utils.presets.PresetManager;
 
 import java.util.HashMap;
 import java.util.List;
@@ -85,6 +88,7 @@ public class UIFormEditor extends UIElement implements IUIFormList
     public Form form;
 
     private Consumer<Form> callback;
+    private UICopyPasteController copyPasteController;
 
     static
     {
@@ -120,6 +124,22 @@ public class UIFormEditor extends UIElement implements IUIFormList
     public UIFormEditor(UIFormPalette palette)
     {
         this.palette = palette;
+
+        this.copyPasteController = new UICopyPasteController(PresetManager.BODY_PARTS, "_FormEditorBodyPart")
+            .supplier(this::copyBodyPart)
+            .consumer(this::pasteBodyPart)
+            .canCopy(() ->
+            {
+                UIForms.FormEntry current = this.forms.getCurrentFirst();
+
+                return current != null && current.part != null;
+            })
+            .canPaste(() ->
+            {
+                UIForms.FormEntry current = this.forms.getCurrentFirst();
+
+                return current != null && current.getForm() != null;
+            });
 
         this.formsArea = new UIElement();
         this.formsArea.relative(this).x(20).w(TREE_WIDTH).h(1F);
@@ -226,6 +246,9 @@ public class UIFormEditor extends UIElement implements IUIFormList
 
         if (current != null)
         {
+            menu.custom(new UIPresetContextMenu(this.copyPasteController)
+                .labels(UIKeys.FORMS_EDITOR_CONTEXT_COPY, UIKeys.FORMS_EDITOR_CONTEXT_PASTE));
+
             if (current.getForm() != null)
             {
                 menu.action(Icons.ADD, UIKeys.FORMS_EDITOR_CONTEXT_ADD, () -> this.addBodyPart(new BodyPart()));
@@ -252,18 +275,6 @@ public class UIFormEditor extends UIElement implements IUIFormList
                     if (index > 0) menu.action(Icons.ARROW_UP, UIKeys.FORMS_EDITOR_CONTEXT_MOVE_UP, () -> this.moveBodyPart(current, -1));
                     if (index < all.size() - 1) menu.action(Icons.ARROW_DOWN, UIKeys.FORMS_EDITOR_CONTEXT_MOVE_DOWN, () -> this.moveBodyPart(current, 1));
                 }
-            }
-
-            if (current.part != null)
-            {
-                menu.action(Icons.COPY, UIKeys.FORMS_EDITOR_CONTEXT_COPY, this::copyBodyPart);
-            }
-
-            MapType data = Window.getClipboardMap("_FormEditorBodyPart");
-
-            if (current.getForm() != null && data != null)
-            {
-                menu.action(Icons.PASTE, UIKeys.FORMS_EDITOR_CONTEXT_PASTE, () -> this.pasteBodyPart(data));
             }
 
             if (current.part != null)
@@ -313,12 +324,12 @@ public class UIFormEditor extends UIElement implements IUIFormList
         this.refreshFormList();
     }
 
-    private void copyBodyPart()
+    private MapType copyBodyPart()
     {
-        Window.setClipboard(this.forms.getCurrentFirst().part.toData(), "_FormEditorBodyPart");
+        return this.forms.getCurrentFirst().part.toData();
     }
 
-    private void pasteBodyPart(MapType data)
+    private void pasteBodyPart(MapType data, int mouseX, int mouseY)
     {
         BodyPart part = new BodyPart();
 

@@ -28,15 +28,19 @@ import mchorse.bbs_mod.ui.utils.Area;
 import mchorse.bbs_mod.ui.utils.Scale;
 import mchorse.bbs_mod.ui.utils.Scroll;
 import mchorse.bbs_mod.ui.utils.ScrollDirection;
+import mchorse.bbs_mod.ui.utils.UIUtils;
 import mchorse.bbs_mod.ui.utils.context.ContextAction;
 import mchorse.bbs_mod.ui.utils.context.ContextMenuManager;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
+import mchorse.bbs_mod.ui.utils.presets.UICopyPasteController;
+import mchorse.bbs_mod.ui.utils.presets.UIPresetContextMenu;
 import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.clips.Clips;
 import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.factory.IFactory;
 import mchorse.bbs_mod.utils.keyframes.Keyframe;
+import mchorse.bbs_mod.utils.presets.PresetManager;
 import org.joml.Vector3i;
 import org.lwjgl.glfw.GLFW;
 
@@ -97,6 +101,8 @@ public class UIClips extends UIElement
     private Set<Integer> snappingPoints = new HashSet<>();
     private List<Vector3i> grabbedData = new ArrayList<>();
 
+    private UICopyPasteController copyPasteController;
+
     /**
      * Render cursor that displays the full duration of the camera work,
      * and also current tick within the camera work.
@@ -123,6 +129,11 @@ public class UIClips extends UIElement
     {
         super();
 
+        this.copyPasteController = new UICopyPasteController(PresetManager.CLIPS, "_CopyClips")
+            .supplier(this::copyClips)
+            .consumer(this::pasteClips)
+            .canCopy(() -> this.delegate.getClip() != null);
+
         this.delegate = delegate;
         this.factory = factory;
 
@@ -136,19 +147,15 @@ public class UIClips extends UIElement
             int mouseY = context.mouseY;
             boolean hasSelected = this.delegate.getClip() != null;
 
+            menu.custom(new UIPresetContextMenu(this.copyPasteController, mouseX, mouseY)
+                .labels(UIKeys.CAMERA_TIMELINE_CONTEXT_COPY, UIKeys.CAMERA_TIMELINE_CONTEXT_PASTE));
+
             if (this.fromLayerY(mouseY) < 0)
             {
                 return;
             }
 
             menu.action(Icons.ADD, UIKeys.CAMERA_TIMELINE_CONTEXT_ADD, () -> this.showAdds(mouseX, mouseY));
-
-            if (hasSelected)
-            {
-                menu.action(Icons.COPY, UIKeys.CAMERA_TIMELINE_CONTEXT_COPY, this::copyClips);
-            }
-
-            this.addPaste(menu, this.fromGraphX(mouseX));
 
             if (hasSelected)
             {
@@ -174,14 +181,24 @@ public class UIClips extends UIElement
         this.keys().register(Keys.ADD_ON_TOP, this::showAddsOnTop).category(KEYS_CATEGORY).active(canUseKeybindsSelected);
         this.keys().register(Keys.ADD_AT_CURSOR, this::showAddsAtCursor).category(KEYS_CATEGORY).active(canUseKeybinds);
         this.keys().register(Keys.ADD_AT_TICK, this::showAddsAtTick).category(KEYS_CATEGORY).active(canUseKeybinds);
-        this.keys().register(Keys.COPY, this::copyClips).category(KEYS_CATEGORY).active(canUseKeybindsSelected);
+        this.keys().register(Keys.COPY, () ->
+        {
+            if (this.copyPasteController.copy()) UIUtils.playClick();
+        }).category(KEYS_CATEGORY).active(canUseKeybindsSelected);
         this.keys().register(Keys.PASTE, () ->
         {
-            MapType data = Window.getClipboardMap("_CopyClips");
+            UIContext context = this.getContext();
 
-            if (data != null)
+            if (this.copyPasteController.paste(context.mouseX, context.mouseY)) UIUtils.playClick();
+        }).category(KEYS_CATEGORY).active(canUseKeybinds);
+        this.keys().register(Keys.PRESETS, () ->
+        {
+            UIContext context = this.getContext();
+
+            if (this.copyPasteController.canPreviewPresets())
             {
-                this.paste(data, this.fromGraphX(this.getContext().mouseX));
+                this.copyPasteController.openPresets(context, context.mouseX, context.mouseY);
+                UIUtils.playClick();
             }
         }).category(KEYS_CATEGORY).active(canUseKeybinds);
         this.keys().register(Keys.CLIP_CUT, this::cut).category(KEYS_CATEGORY).active(canUseKeybinds);
@@ -387,7 +404,7 @@ public class UIClips extends UIElement
         this.pickClip(clip);
     }
 
-    private void copyClips()
+    private MapType copyClips()
     {
         MapType data = new MapType();
         ListType clips = new ListType();
@@ -399,23 +416,18 @@ public class UIClips extends UIElement
             clips.add(this.factory.toData(clip));
         }
 
-        Window.setClipboard(data, "_CopyClips");
+        return data;
     }
 
-    private void addPaste(ContextMenuManager menu, int tick)
+    private void pasteClips(MapType data, int mouseX, int mouseY)
     {
-        MapType data = Window.getClipboardMap("_CopyClips");
-
-        if (data != null)
-        {
-            menu.action(Icons.PASTE, UIKeys.CAMERA_TIMELINE_CONTEXT_PASTE, () -> this.paste(data, tick));
-        }
+        this.pasteClips(data, this.fromGraphX(mouseX));
     }
 
     /**
      * Paste given clip data to timeline.
      */
-    private void paste(MapType data, int tick)
+    private void pasteClips(MapType data, int tick)
     {
         this.clearSelection();
 

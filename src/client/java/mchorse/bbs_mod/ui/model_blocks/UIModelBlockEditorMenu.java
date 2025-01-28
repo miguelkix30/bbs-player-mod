@@ -25,10 +25,13 @@ import mchorse.bbs_mod.ui.framework.elements.utils.Batcher2D;
 import mchorse.bbs_mod.ui.utils.Area;
 import mchorse.bbs_mod.ui.utils.UI;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
+import mchorse.bbs_mod.ui.utils.presets.UICopyPasteController;
+import mchorse.bbs_mod.ui.utils.presets.UIPresetContextMenu;
 import mchorse.bbs_mod.utils.CollectionUtils;
 import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.pose.Transform;
+import mchorse.bbs_mod.utils.presets.PresetManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.option.Perspective;
@@ -43,6 +46,7 @@ public class UIModelBlockEditorMenu extends UIBaseMenu
     private static int lastSection;
 
     public UIElement iconBar;
+    public UIIcon def;
     public UIIcon thirdPerson;
     public UIIcon firstPerson;
     public UIIcon inventory;
@@ -53,6 +57,7 @@ public class UIModelBlockEditorMenu extends UIBaseMenu
 
     public Map<UIElement, UIIcon> sections = new HashMap<>();
     public UIElement currentSection;
+    public UIElement sectionDefault;
     public UIElement sectionTp;
     public UIElement sectionFp;
     public UIElement sectionInventory;
@@ -69,6 +74,8 @@ public class UIModelBlockEditorMenu extends UIBaseMenu
     private UIOrbitCamera uiOrbitCamera;
     private OrbitCameraController orbitCameraController;
 
+    private UICopyPasteController copyPasteController;
+
     public UIModelBlockEditorMenu(ModelProperties properties)
     {
         this.properties = properties;
@@ -82,6 +89,7 @@ public class UIModelBlockEditorMenu extends UIBaseMenu
         OrbitDistanceCamera orbit = new OrbitDistanceCamera();
 
         orbit.distance.setX(14);
+        orbit.setFovRoll(false);
         this.uiOrbitCamera = new UIOrbitCamera();
         this.uiOrbitCamera.setControl(true);
         this.uiOrbitCamera.orbit = orbit;
@@ -89,7 +97,41 @@ public class UIModelBlockEditorMenu extends UIBaseMenu
         this.orbitCameraController.camera.position.set(player.getPos().x, player.getPos().y + 1D, player.getPos().z);
         this.orbitCameraController.camera.rotation.set(0, MathUtils.toRad(player.bodyYaw), 0);
 
+        if (this.gunProperties != null)
+        {
+            this.copyPasteController = new UICopyPasteController(PresetManager.GUNS, "_CopyGun")
+                .supplier(() -> this.gunProperties.toData())
+                .consumer((data, x, y) ->
+                {
+                    this.gunProperties.fromData(data);
+
+                    this.saveSection();
+                    this.createUI();
+                    this.main.resize();
+                });
+
+            this.main.context((menu) ->
+            {
+                menu.custom(new UIPresetContextMenu(this.copyPasteController)
+                    .labels(UIKeys.GUN_CONTEXT_COPY, UIKeys.GUN_CONTEXT_PASTE));
+            });
+        }
+
+        this.createUI();
+    }
+
+    private void createUI()
+    {
+        this.sections.clear();
+        this.main.removeAll();
+
         /* Initiate sections */
+        this.sectionDefault = this.createTransform(
+            this.properties.getTransform(),
+            () -> this.properties.getForm(),
+            (f) -> this.properties.setForm(f)
+        );
+
         this.sectionTp = this.createTransform(
             this.properties.getTransformThirdPerson(),
             () -> this.properties.getFormThirdPerson(),
@@ -249,6 +291,8 @@ public class UIModelBlockEditorMenu extends UIBaseMenu
             this.commands.tooltip(UIKeys.GUN_COMMANDS_TITLE);
         }
 
+        this.def = new UIIcon(Icons.OUTLINE_SPHERE, (b) -> this.setSection(this.sectionDefault));
+        this.def.tooltip(UIKeys.MODEL_BLOCKS_TRANSFORM_DEFAULT);
         this.thirdPerson = new UIIcon(Icons.POSE, (b) -> this.setSection(this.sectionTp));
         this.thirdPerson.tooltip(UIKeys.MODEL_BLOCKS_TRANSFORM_THIRD_PERSON);
         this.firstPerson = new UIIcon(Icons.LIMB, (b) -> this.setSection(this.sectionFp));
@@ -256,16 +300,17 @@ public class UIModelBlockEditorMenu extends UIBaseMenu
         this.inventory = new UIIcon(Icons.SPHERE, (b) -> this.setSection(this.sectionInventory));
         this.inventory.tooltip(UIKeys.MODEL_BLOCKS_TRANSFORM_INVENTORY);
 
+        this.sections.put(this.sectionDefault, this.def);
         this.sections.put(this.sectionTp, this.thirdPerson);
         this.sections.put(this.sectionFp, this.firstPerson);
         this.sections.put(this.sectionInventory, this.inventory);
 
-        this.iconBar = UI.row(0, this.thirdPerson, this.firstPerson, this.inventory, this.gun, this.projectile, this.impact, this.commands);
+        this.iconBar = UI.row(0, this.def, this.thirdPerson, this.firstPerson, this.inventory, this.gun, this.projectile, this.impact, this.commands);
         this.iconBar.row().resize();
         this.iconBar.relative(this.viewport).x(0.5F).h(20).anchor(0.5F, 0F);
 
         this.main.add(this.uiOrbitCamera, this.iconBar);
-        this.main.add(this.sectionTp, this.sectionFp, this.sectionInventory);
+        this.main.add(this.sectionDefault, this.sectionTp, this.sectionFp, this.sectionInventory);
 
         if (gun != null)
         {
@@ -313,10 +358,14 @@ public class UIModelBlockEditorMenu extends UIBaseMenu
     {
         super.onClose(nextMenu);
 
-        lastSection = this.iconBar.getChildren().indexOf(this.sections.get(this.currentSection));
-
+        this.saveSection();
         BBSModClient.getCameraController().remove(this.orbitCameraController);
         ClientNetwork.sendModelBlockTransforms(this.properties.toData());
+    }
+
+    private void saveSection()
+    {
+        lastSection = this.iconBar.getChildren().indexOf(this.sections.get(this.currentSection));
     }
 
     private void setSection(UIElement element)

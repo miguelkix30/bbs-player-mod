@@ -1,5 +1,6 @@
 package mchorse.bbs_mod.ui.utils.pose;
 
+import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIIcon;
@@ -10,6 +11,7 @@ import mchorse.bbs_mod.ui.framework.elements.input.UITrackpad;
 import mchorse.bbs_mod.ui.framework.elements.input.list.UIStringList;
 import mchorse.bbs_mod.ui.utils.UI;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
+import mchorse.bbs_mod.ui.utils.presets.UIDataContextMenu;
 import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.pose.Pose;
 import mchorse.bbs_mod.utils.pose.PoseManager;
@@ -31,7 +33,7 @@ public class UIPoseEditor extends UIElement
 
     private String group = "";
     private Pose pose;
-    private Map<String, String> flippedParts;
+    protected Map<String, String> flippedParts;
 
     public UIPoseEditor()
     {
@@ -40,21 +42,8 @@ public class UIPoseEditor extends UIElement
         this.groups.scroll.cancelScrolling();
         this.groups.context(() ->
         {
-            UIDataContextMenu menu = new UIDataContextMenu(PoseManager.INSTANCE, this.group, () -> this.pose.toData(), (data) ->
-            {
-                String current = this.groups.getCurrentFirst();
-
-                this.changedPose(() -> this.pose.fromData(data));
-                this.pickBone(current);
-            });
-
-            UIIcon flip = new UIIcon(Icons.CONVERT, (b) ->
-            {
-                String current = this.groups.getCurrentFirst();
-
-                this.changedPose(() -> this.pose.flip(this.flippedParts));
-                this.pickBone(current);
-            });
+            UIDataContextMenu menu = new UIDataContextMenu(PoseManager.INSTANCE, this.group, () -> this.pose.toData(), this::pastePose);
+            UIIcon flip = new UIIcon(Icons.CONVERT, (b) -> this.flipPose());
 
             flip.tooltip(UIKeys.POSE_CONTEXT_FLIP_POSE);
             menu.row.addBefore(menu.save, flip);
@@ -96,6 +85,22 @@ public class UIPoseEditor extends UIElement
     public String getGroup()
     {
         return this.groups.getCurrentFirst();
+    }
+
+    protected void pastePose(MapType data)
+    {
+        String current = this.groups.getCurrentFirst();
+
+        this.changedPose(() -> this.pose.fromData(data));
+        this.pickBone(current);
+    }
+
+    protected void flipPose()
+    {
+        String current = this.groups.getCurrentFirst();
+
+        this.changedPose(() -> this.pose.flip(this.flippedParts));
+        this.pickBone(current);
     }
 
     public void setPose(Pose pose, String group)
@@ -143,7 +148,7 @@ public class UIPoseEditor extends UIElement
         runnable.run();
     }
 
-    private void pickBone(String bone)
+    protected void pickBone(String bone)
     {
         lastLimb = bone;
 
