@@ -227,11 +227,12 @@ public class ClientNetwork
         {
             String filmId = packetByteBuf.readString();
             int replayId = packetByteBuf.readInt();
+            int tick = packetByteBuf.readInt();
             BaseType data = DataStorageUtils.readFromBytes(bytes);
 
             client.execute(() ->
             {
-                BBSModClient.getDashboard().getPanels().getPanel(UIFilmPanel.class).receiveActions(filmId, replayId, data);
+                BBSModClient.getDashboard().getPanels().getPanel(UIFilmPanel.class).receiveActions(filmId, replayId, tick, data);
             });
         });
     }
@@ -475,13 +476,14 @@ public class ClientNetwork
         });
     }
 
-    public static void sendActionRecording(String filmId, int replayId, int tick, boolean state)
+    public static void sendActionRecording(String filmId, int replayId, int tick, int countdown, boolean state)
     {
         PacketByteBuf buf = PacketByteBufs.create();
 
         buf.writeString(filmId);
         buf.writeInt(replayId);
         buf.writeInt(tick);
+        buf.writeInt(countdown);
         buf.writeBoolean(state);
 
         ClientPlayNetworking.send(ServerNetwork.SERVER_ACTION_RECORDING, buf);

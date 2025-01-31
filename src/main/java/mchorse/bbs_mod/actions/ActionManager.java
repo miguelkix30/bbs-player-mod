@@ -81,14 +81,14 @@ public class ActionManager
 
     public ActionPlayer play(ServerWorld world, Film film, int tick)
     {
-        return this.play(world, film, tick, -1);
+        return this.play(world, film, tick, 0, -1);
     }
 
-    public ActionPlayer play(ServerWorld world, Film film, int tick, int exception)
+    public ActionPlayer play(ServerWorld world, Film film, int tick, int countdown, int exception)
     {
         if (film != null)
         {
-            ActionPlayer player = new ActionPlayer(world, film, tick, exception);
+            ActionPlayer player = new ActionPlayer(world, film, tick, countdown, exception);
 
             this.players.add(player);
             this.trackDamage(world);
@@ -118,9 +118,9 @@ public class ActionManager
 
     /* Actions recording */
 
-    public void startRecording(Film film, ServerPlayerEntity entity, int tick)
+    public void startRecording(Film film, ServerPlayerEntity entity, int tick, int countdown)
     {
-        this.recorders.put(entity, new ActionRecorder(film, tick));
+        this.recorders.put(entity, new ActionRecorder(film, tick, countdown));
     }
 
     public void addAction(ServerPlayerEntity entity, Supplier<ActionClip> supplier)
@@ -138,16 +138,13 @@ public class ActionManager
         }
     }
 
-    public Clips stopRecording(ServerPlayerEntity entity)
+    public ActionRecorder stopRecording(ServerPlayerEntity entity)
     {
         ActionRecorder remove = this.recorders.remove(entity);
-        Clips clips = remove.getClips();
-
-        clips.sortLayers();
 
         this.stop(remove.getFilm().getId());
 
-        return clips;
+        return remove;
     }
 
     /* Damage control */

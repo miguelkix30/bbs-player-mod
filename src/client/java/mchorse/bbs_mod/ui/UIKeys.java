@@ -230,6 +230,7 @@ public class UIKeys
     public static final IKey FILM_GROUPS_ONLY_POSITION = L10n.lang("bbs.ui.film.groups.only_position");
     public static final IKey FILM_GROUPS_ONLY_POS_ROT = L10n.lang("bbs.ui.film.groups.pos_rot");
     public static final IKey FILM_GROUPS_ONLY_ROTATION = L10n.lang("bbs.ui.film.groups.only_rotation");
+    public static final IKey FILM_GROUPS_OUTSIDE = L10n.lang("bbs.ui.film.groups.outside");
     public static final IKey FILM_GROUPS_RIGHT_STICK = L10n.lang("bbs.ui.film.groups.right_stick");
     public static final IKey FILM_GROUPS_TRIGGERS = L10n.lang("bbs.ui.film.groups.triggers");
     public static final IKey FILM_HISTORY_TITLE = L10n.lang("bbs.ui.film.history-title");
@@ -483,6 +484,7 @@ public class UIKeys
     public static final IKey KEYFRAMES_CONTEXT_ROUND = L10n.lang("bbs.ui.keyframes.context.round");
     public static final IKey KEYFRAMES_CONTEXT_SELECT_ALL = L10n.lang("bbs.ui.keyframes.context.select_all");
     public static final IKey KEYFRAMES_CONTEXT_SIMPLIFY = L10n.lang("bbs.ui.keyframes.context.simplify");
+    public static final IKey KEYFRAMES_CONTEXT_SPREAD = L10n.lang("bbs.ui.keyframes.context.spread");
     public static final IKey KEYFRAMES_FORCED_DURATION = L10n.lang("bbs.ui.keyframes.forced_duration");
     public static final IKey KEYFRAMES_KEYS_CATEGORY = L10n.lang("bbs.ui.keyframes.keys.category");
     public static final IKey KEYFRAMES_KEYS_SCALE_TIME = L10n.lang("bbs.ui.keyframes.keys.scale_time");

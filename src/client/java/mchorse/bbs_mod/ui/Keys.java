@@ -85,6 +85,7 @@ public class Keys
     public static final KeyCombo KEYFRAMES_STACK_KEYFRAMES = new KeyCombo("stack_keyframes", UIKeys.KEYFRAMES_KEYS_STACK_KEYFRAMES, GLFW.GLFW_KEY_B).categoryKey("keyframes");
     public static final KeyCombo KEYFRAMES_SELECT_PREV = new KeyCombo("select_prev", UIKeys.KEYFRAMES_KEYS_SELECT_PREV, GLFW.GLFW_KEY_LEFT_BRACKET).repeatable().categoryKey("keyframes");
     public static final KeyCombo KEYFRAMES_SELECT_NEXT = new KeyCombo("select_next", UIKeys.KEYFRAMES_KEYS_SELECT_NEXT, GLFW.GLFW_KEY_RIGHT_BRACKET).repeatable().categoryKey("keyframes");
+    public static final KeyCombo KEYFRAMES_SPREAD = new KeyCombo("spread", UIKeys.KEYFRAMES_CONTEXT_SPREAD, GLFW.GLFW_KEY_B, GLFW.GLFW_KEY_LEFT_ALT).categoryKey("keyframes");
 
     /* World menu */
     public static final KeyCombo CYCLE_PANELS = new KeyCombo("cycle_panels", UIKeys.WORLD_KEYS_CYCLE_PANELS, GLFW.GLFW_KEY_TAB).categoryKey("world");
@@ -119,6 +120,7 @@ public class Keys
     public static final KeyCombo RECORDING_GROUP_ONLY_POSITION = new KeyCombo("only_position", UIKeys.FILM_GROUPS_ONLY_POSITION, GLFW.GLFW_KEY_7).categoryKey("recording_groups");
     public static final KeyCombo RECORDING_GROUP_ONLY_ROTATION = new KeyCombo("only_rotation", UIKeys.FILM_GROUPS_ONLY_ROTATION, GLFW.GLFW_KEY_8).categoryKey("recording_groups");
     public static final KeyCombo RECORDING_GROUP_POS_ROT = new KeyCombo("pos_rot", UIKeys.FILM_GROUPS_ONLY_POS_ROT, GLFW.GLFW_KEY_9).categoryKey("recording_groups");
+    public static final KeyCombo RECORDING_GROUP_OUTSIDE = new KeyCombo("outside", UIKeys.FILM_GROUPS_OUTSIDE, GLFW.GLFW_KEY_R).categoryKey("recording_groups");
 
     /* Model block editor */
     public static final KeyCombo MODEL_BLOCKS_MOVE_TO = new KeyCombo("move_to", UIKeys.MODEL_BLOCKS_KEYS_MOVE_TO, GLFW.GLFW_KEY_G, GLFW.GLFW_KEY_LEFT_CONTROL).categoryKey("model_blocks");

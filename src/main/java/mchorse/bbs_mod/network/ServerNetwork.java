@@ -4,6 +4,7 @@ import mchorse.bbs_mod.BBSMod;
 import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.actions.ActionManager;
 import mchorse.bbs_mod.actions.ActionPlayer;
+import mchorse.bbs_mod.actions.ActionRecorder;
 import mchorse.bbs_mod.actions.ActionState;
 import mchorse.bbs_mod.actions.types.FormTriggerActionClip;
 import mchorse.bbs_mod.blocks.entities.ModelBlockEntity;
@@ -24,7 +25,6 @@ import mchorse.bbs_mod.morphing.Morph;
 import mchorse.bbs_mod.resources.ISourcePack;
 import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.resources.packs.ExternalAssetsSourcePack;
-import mchorse.bbs_mod.utils.CollectionUtils;
 import mchorse.bbs_mod.utils.DataPath;
 import mchorse.bbs_mod.utils.EnumUtils;
 import mchorse.bbs_mod.utils.Pair;
@@ -251,6 +251,7 @@ public class ServerNetwork
         String filmId = buf.readString();
         int replayId = buf.readInt();
         int tick = buf.readInt();
+        int countdown = buf.readInt();
         boolean recording = buf.readBoolean();
 
         server.execute(() ->
@@ -261,25 +262,17 @@ public class ServerNetwork
 
                 if (film != null)
                 {
-                    BBSMod.getActions().startRecording(film, player, tick);
-                    BBSMod.getActions().play(player.getServerWorld(), film, tick, replayId);
+                    BBSMod.getActions().startRecording(film, player, tick, countdown);
+                    BBSMod.getActions().play(player.getServerWorld(), film, tick, countdown, replayId);
                 }
             }
             else
             {
-                Clips clips = BBSMod.getActions().stopRecording(player);
-
-                /* Save clips to the film */
-                Film film = BBSMod.getFilms().load(filmId);
-
-                if (clips != null && film != null && CollectionUtils.inRange(film.replays.getList(), replayId))
-                {
-                    film.replays.getList().get(replayId).actions.fromData(clips.toData());
-                    BBSMod.getFilms().save(filmId, film.toData().asMap());
-                }
+                ActionRecorder recorder = BBSMod.getActions().stopRecording(player);
+                Clips clips = recorder.composeClips();
 
                 /* Send recorded clips to the client */
-                sendRecordedActions(player, filmId, replayId, clips);
+                sendRecordedActions(player, filmId, replayId, recorder.getInitialTick(), clips);
             }
         });
     }
@@ -350,7 +343,6 @@ public class ServerNetwork
             else if (state == ActionState.RESTART)
             {
                 ActionPlayer actionPlayer = actions.getPlayer(filmId);
-                int originalTick = 0;
 
                 if (actionPlayer == null)
                 {
@@ -365,7 +357,6 @@ public class ServerNetwork
                 {
                     actions.stop(filmId);
 
-                    originalTick = actionPlayer.tick;
                     actionPlayer = actions.play(player.getServerWorld(), actionPlayer.film, tick);
                 }
 
@@ -376,7 +367,7 @@ public class ServerNetwork
 
                     if (tick != 0)
                     {
-                        actionPlayer.goTo(originalTick, tick);
+                        actionPlayer.goTo(0, tick);
                     }
                 }
 
@@ -644,12 +635,13 @@ public class ServerNetwork
         });
     }
 
-    public static void sendRecordedActions(ServerPlayerEntity player, String filmId, int replayId, Clips clips)
+    public static void sendRecordedActions(ServerPlayerEntity player, String filmId, int replayId, int tick, Clips clips)
     {
         crusher.send(player, CLIENT_RECORDED_ACTIONS, clips.toData(), (packetByteBuf) ->
         {
             packetByteBuf.writeString(filmId);
             packetByteBuf.writeInt(replayId);
+            packetByteBuf.writeInt(tick);
         });
     }
 
