@@ -1,18 +1,15 @@
 package mchorse.bbs_mod.bobj;
 
+import mchorse.bbs_mod.utils.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joml.Matrix4f;
 import org.joml.Vector2d;
 import org.joml.Vector3f;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -43,40 +40,12 @@ public class BOBJLoader
         }
     }
 
-
-    /**
-     * Read all lines from an {@link InputStream}
-     */
-    public static List<String> readAllLines(InputStream stream) throws Exception
-    {
-        List<String> list = new ArrayList<String>();
-
-        try
-        {
-            BufferedReader br = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
-            String line;
-
-            while ((line = br.readLine()) != null)
-            {
-                list.add(line);
-            }
-
-            br.close();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-
-        return list;
-    }
-
     /**
      * Read the data from OBJ file input stream
      */
     public static BOBJLoader.BOBJData readData(InputStream stream) throws Exception
     {
-        List<String> lines = readAllLines(stream);
+        List<String> lines = IOUtils.readLines(stream);
 
         List<Vertex> vertices = new ArrayList<Vertex>();
         List<Vector2d> textures = new ArrayList<Vector2d>();
@@ -156,10 +125,6 @@ public class BOBJLoader
                 armature = new BOBJArmature(tokens[1]);
                 armatures.put(armature.name, armature);
             }
-            else if (first.equals("arm_action"))
-            {
-                armature.action = tokens[1];
-            }
             else if (first.equals("arm_bone"))
             {
                 Vector3f tail = new Vector3f(Float.parseFloat(tokens[3]), Float.parseFloat(tokens[4]), Float.parseFloat(tokens[5]));
@@ -172,7 +137,8 @@ public class BOBJLoader
                 }
 
                 boneMat.set(mat);
-                bone = new BOBJBone(i++, tokens[1], tokens[2], tail, boneMat);
+                boneMat.transpose();
+                bone = new BOBJBone(i++, tokens[1], tokens[2], boneMat);
                 armature.addBone(bone);
             }
             else if (first.equals("an"))
@@ -194,7 +160,7 @@ public class BOBJLoader
             }
         }
 
-        /* Last ones needs this too */
+        /* Last ones need this too */
         if (vertex != null)
         {
             vertex.eliminateTinyWeights();
@@ -212,38 +178,43 @@ public class BOBJLoader
 
         for (BOBJMesh mesh : data.meshes)
         {
-            List<Integer> indices = new ArrayList<Integer>();
-            List<Face> facesList = mesh.faces;
-
-            /* Initiate arrays for mesh data */
-            int[] boneIndicesArr = new int[facesList.size() * 3 * 4];
-            float[] weightsArr = new float[facesList.size() * 3 * 4];
-            float[] posArr = new float[facesList.size() * 3 * 4];
-            double[] textCoordArr = new double[facesList.size() * 3 * 2];
-            float[] normArr = new float[facesList.size() * 3 * 3];
-
-            Arrays.fill(boneIndicesArr, -1);
-            Arrays.fill(weightsArr, -1);
-
-            int i = 0;
-
-            for (Face face : facesList)
-            {
-                for (IndexGroup indValue : face.idxGroups)
-                {
-                    processFaceVertex(i, indValue, mesh, data, indices, posArr, textCoordArr, normArr, weightsArr, boneIndicesArr);
-
-                    i++;
-                }
-            }
-
-            Integer[] integerArray = indices.toArray(new Integer[0]);
-            int[] indicesArr = ArrayUtils.toPrimitive(integerArray);
-
-            meshes.put(mesh.name, new CompiledData(posArr, textCoordArr, normArr, weightsArr, boneIndicesArr, indicesArr, mesh));
+            meshes.put(mesh.name, compileMesh(data, mesh));
         }
 
         return meshes;
+    }
+
+    public static CompiledData compileMesh(BOBJData data, BOBJMesh mesh)
+    {
+        List<Integer> indices = new ArrayList<Integer>();
+        List<Face> facesList = mesh.faces;
+
+        /* Initiate arrays for mesh data */
+        int[] boneIndicesArr = new int[facesList.size() * 3 * 4];
+        float[] weightsArr = new float[facesList.size() * 3 * 4];
+        float[] posArr = new float[facesList.size() * 3 * 3];
+        float[] textCoordArr = new float[facesList.size() * 3 * 2];
+        float[] normArr = new float[facesList.size() * 3 * 3];
+
+        Arrays.fill(boneIndicesArr, -1);
+        Arrays.fill(weightsArr, -1);
+
+        int i = 0;
+
+        for (Face face : facesList)
+        {
+            for (IndexGroup indValue : face.idxGroups)
+            {
+                processFaceVertex(i, indValue, mesh, data, indices, posArr, textCoordArr, normArr, weightsArr, boneIndicesArr);
+
+                i++;
+            }
+        }
+
+        Integer[] integerArray = indices.toArray(new Integer[0]);
+        int[] indicesArr = ArrayUtils.toPrimitive(integerArray);
+
+        return new CompiledData(posArr, textCoordArr, normArr, weightsArr, boneIndicesArr, indicesArr, mesh);
     }
 
     /**
@@ -260,8 +231,8 @@ public class BOBJLoader
         }
 
         /* Initiate arrays for mesh data */
-        float[] posArr = new float[facesList.size() * 3 * 4];
-        double[] textCoordArr = new double[facesList.size() * 3 * 2];
+        float[] posArr = new float[facesList.size() * 3 * 3];
+        float[] textCoordArr = new float[facesList.size() * 3 * 2];
         float[] normArr = new float[facesList.size() * 3 * 3];
 
         int i = 0;
@@ -282,7 +253,7 @@ public class BOBJLoader
         return new CompiledData(posArr, textCoordArr, normArr, null, null, indicesArr, null);
     }
 
-    private static void processFaceVertex(int index, IndexGroup indices, BOBJMesh mesh, BOBJData data, List<Integer> indicesList, float[] posArr, double[] texCoordArr, float[] normArr, float[] weightsArr, int[] boneIndicesArr)
+    private static void processFaceVertex(int index, IndexGroup indices, BOBJMesh mesh, BOBJData data, List<Integer> indicesList, float[] posArr, float[] texCoordArr, float[] normArr, float[] weightsArr, int[] boneIndicesArr)
     {
         indicesList.add(index);
 
@@ -290,10 +261,9 @@ public class BOBJLoader
         {
             Vertex vec = data.vertices.get(indices.idxPos);
 
-            posArr[index * 4] = vec.x;
-            posArr[index * 4 + 1] = vec.y;
-            posArr[index * 4 + 2] = vec.z;
-            posArr[index * 4 + 3] = 1;
+            posArr[index * 3] = vec.x;
+            posArr[index * 3 + 1] = vec.y;
+            posArr[index * 3 + 2] = vec.z;
 
             if (mesh != null)
             {
@@ -312,8 +282,8 @@ public class BOBJLoader
         {
             Vector2d textCoord = data.textures.get(indices.idxTextCoord);
 
-            texCoordArr[index * 2] = textCoord.x;
-            texCoordArr[index * 2 + 1] = 1 - textCoord.y;
+            texCoordArr[index * 2] = (float) textCoord.x;
+            texCoordArr[index * 2 + 1] = (float) (1 - textCoord.y);
         }
 
         if (indices.idxVecNormal >= 0)
@@ -458,30 +428,25 @@ public class BOBJLoader
 
         public void eliminateTinyWeights()
         {
-            Iterator<Weight> it = this.weights.iterator();
+            this.weights.removeIf(w -> w.factor < 0.01);
 
-            while (it.hasNext())
+            if (this.weights.isEmpty())
             {
-                Weight w = it.next();
-
-                if (w.factor < 0.05)
-                {
-                    it.remove();
-                }
+                return;
             }
 
-            if (this.weights.size() > 0)
-            {
-                float weight = 0;
+            float weight = 0;
 
+            for (Weight w : this.weights)
+            {
+                weight += w.factor;
+            }
+
+            if (weight != 1)
+            {
                 for (Weight w : this.weights)
                 {
-                    weight += w.factor;
-                }
-
-                if (weight < 1)
-                {
-                    this.weights.get(weights.size() - 1).factor += 1 - weight;
+                    w.factor /= weight;
                 }
             }
         }
@@ -554,14 +519,14 @@ public class BOBJLoader
     public static class CompiledData
     {
         public float[] posData;
-        public double[] texData;
+        public float[] texData;
         public float[] normData;
         public float[] weightData;
         public int[] boneIndexData;
         public int[] indexData;
         public BOBJMesh mesh;
 
-        public CompiledData(float[] posData, double[] texData, float[] normData, float[] weightData, int[] boneIndexData, int[] indexData, BOBJMesh mesh)
+        public CompiledData(float[] posData, float[] texData, float[] normData, float[] weightData, int[] boneIndexData, int[] indexData, BOBJMesh mesh)
         {
             this.posData = posData;
             this.texData = texData;

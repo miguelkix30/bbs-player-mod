@@ -1,13 +1,14 @@
-package mchorse.bbs_mod.cubic.model;
+package mchorse.bbs_mod.cubic.model.loaders;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import mchorse.bbs_mod.BBSMod;
-import mchorse.bbs_mod.cubic.CubicModel;
+import mchorse.bbs_mod.cubic.ModelInstance;
 import mchorse.bbs_mod.cubic.data.animation.Animations;
 import mchorse.bbs_mod.cubic.data.model.Model;
 import mchorse.bbs_mod.cubic.geo.GeoAnimationParser;
 import mchorse.bbs_mod.cubic.geo.GeoModelParser;
+import mchorse.bbs_mod.cubic.model.ModelManager;
 import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.utils.IOUtils;
@@ -19,7 +20,7 @@ import java.util.List;
 public class GeoCubicModelLoader implements IModelLoader
 {
     @Override
-    public CubicModel load(String id, ModelManager models, Link model, Collection<Link> links, MapType config)
+    public ModelInstance load(String id, ModelManager models, Link model, Collection<Link> links, MapType config)
     {
         Collection<Link> recursiveLinks = BBSMod.getProvider().getLinksFromPath(model, true);
         List<Link> modelGeo = IModelLoader.getLinks(links, ".geo.json");
@@ -57,9 +58,9 @@ public class GeoCubicModelLoader implements IModelLoader
             }
 
             Model modelModel = GeoModelParser.parse(modelJson, models.parser);
-            CubicModel newModel = new CubicModel(id, modelModel, modelAnimations, modelTexture);
+            ModelInstance newModel = new ModelInstance(id, modelModel, modelAnimations, modelTexture);
 
-            if (newModel.model == null || newModel.model.topGroups.isEmpty())
+            if (modelModel.topGroups.isEmpty())
             {
                 return null;
             }

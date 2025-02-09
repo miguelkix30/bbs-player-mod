@@ -20,22 +20,60 @@ public class CubicModelAnimator
     private static Vector3d s = new Vector3d();
     private static Vector3d r = new Vector3d();
 
-    public static void resetPose(Model model)
+    public static Vector3d interpolateList(Vector3d vector, AnimationChannel channel, float frame, MolangHelper.Component component)
     {
-        for (ModelGroup group : model.topGroups)
-        {
-            resetGroup(group);
-        }
+        return interpolate(vector, channel, frame, component);
     }
 
-    private static void resetGroup(ModelGroup group)
+    public static Vector3d interpolate(Vector3d output, AnimationChannel channel, float frame, MolangHelper.Component component)
     {
-        group.reset();
+        List<AnimationVector> keyframes = channel.keyframes;
 
-        for (ModelGroup childGroup : group.children)
+        if (keyframes.isEmpty())
         {
-            resetGroup(childGroup);
+            output.set(0, 0, 0);
+
+            return output;
         }
+
+        AnimationVector first = keyframes.get(0);
+
+        if (frame < first.time * 20)
+        {
+            output.x = MolangHelper.getValue(first.getStart(Axis.X), component, Axis.X);
+            output.y = MolangHelper.getValue(first.getStart(Axis.Y), component, Axis.Y);
+            output.z = MolangHelper.getValue(first.getStart(Axis.Z), component, Axis.Z);
+
+            return output;
+        }
+
+        double duration = first.time * 20;
+
+        for (AnimationVector vector : keyframes)
+        {
+            double length = vector.getLengthInTicks();
+
+            if (frame >= duration && frame < duration + length)
+            {
+                double factor = (frame - duration) / length;
+
+                output.x = AnimationInterpolation.interpolate(vector, component, Axis.X, factor);
+                output.y = AnimationInterpolation.interpolate(vector, component, Axis.Y, factor);
+                output.z = AnimationInterpolation.interpolate(vector, component, Axis.Z, factor);
+
+                return output;
+            }
+
+            duration += length;
+        }
+
+        AnimationVector last = keyframes.get(keyframes.size() - 1);
+
+        output.x = MolangHelper.getValue(last.getStart(Axis.X), component, Axis.X);
+        output.y = MolangHelper.getValue(last.getStart(Axis.Y), component, Axis.Y);
+        output.z = MolangHelper.getValue(last.getStart(Axis.Z), component, Axis.Z);
+
+        return output;
     }
 
     public static void animate(Model model, Animation animation, float frame, float blend, boolean skipInitial)
@@ -95,61 +133,5 @@ public class CubicModelAnimator
         current.rotate.x = Lerps.lerp(current.rotate.x, (float) rotation.x + initial.rotate.x, blend);
         current.rotate.y = Lerps.lerp(current.rotate.y, (float) rotation.y + initial.rotate.y, blend);
         current.rotate.z = Lerps.lerp(current.rotate.z, (float) rotation.z + initial.rotate.z, blend);
-    }
-
-    private static Vector3d interpolateList(Vector3d vector, AnimationChannel channel, float frame, MolangHelper.Component component)
-    {
-        return interpolate(vector, channel, frame, component);
-    }
-
-    private static Vector3d interpolate(Vector3d output, AnimationChannel channel, float frame, MolangHelper.Component component)
-    {
-        List<AnimationVector> keyframes = channel.keyframes;
-
-        if (keyframes.isEmpty())
-        {
-            output.set(0, 0, 0);
-
-            return output;
-        }
-
-        AnimationVector first = keyframes.get(0);
-
-        if (frame < first.time * 20)
-        {
-            output.x = MolangHelper.getValue(first.getStart(Axis.X), component, Axis.X);
-            output.y = MolangHelper.getValue(first.getStart(Axis.Y), component, Axis.Y);
-            output.z = MolangHelper.getValue(first.getStart(Axis.Z), component, Axis.Z);
-
-            return output;
-        }
-
-        double duration = first.time * 20;
-
-        for (AnimationVector vector : keyframes)
-        {
-            double length = vector.getLengthInTicks();
-
-            if (frame >= duration && frame < duration + length)
-            {
-                double factor = (frame - duration) / length;
-
-                output.x = AnimationInterpolation.interpolate(vector, component, Axis.X, factor);
-                output.y = AnimationInterpolation.interpolate(vector, component, Axis.Y, factor);
-                output.z = AnimationInterpolation.interpolate(vector, component, Axis.Z, factor);
-
-                return output;
-            }
-
-            duration += length;
-        }
-
-        AnimationVector last = keyframes.get(keyframes.size() - 1);
-
-        output.x = MolangHelper.getValue(last.getStart(Axis.X), component, Axis.X);
-        output.y = MolangHelper.getValue(last.getStart(Axis.Y), component, Axis.Y);
-        output.z = MolangHelper.getValue(last.getStart(Axis.Z), component, Axis.Z);
-
-        return output;
     }
 }

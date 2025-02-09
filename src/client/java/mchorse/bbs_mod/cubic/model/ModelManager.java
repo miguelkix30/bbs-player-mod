@@ -1,8 +1,13 @@
 package mchorse.bbs_mod.cubic.model;
 
 import mchorse.bbs_mod.BBSMod;
-import mchorse.bbs_mod.cubic.CubicModel;
+import mchorse.bbs_mod.cubic.ModelInstance;
 import mchorse.bbs_mod.cubic.MolangHelper;
+import mchorse.bbs_mod.cubic.model.loaders.BOBJModelLoader;
+import mchorse.bbs_mod.cubic.model.loaders.CubicModelLoader;
+import mchorse.bbs_mod.cubic.model.loaders.GeoCubicModelLoader;
+import mchorse.bbs_mod.cubic.model.loaders.IModelLoader;
+import mchorse.bbs_mod.cubic.model.loaders.VoxModelLoader;
 import mchorse.bbs_mod.data.DataToString;
 import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.math.molang.MolangParser;
@@ -29,7 +34,7 @@ public class ModelManager implements IWatchDogListener
 {
     public static final String MODELS_PREFIX = "models/";
 
-    public final Map<String, CubicModel> models = new HashMap<>();
+    public final Map<String, ModelInstance> models = new HashMap<>();
     public final List<IModelLoader> loaders = new ArrayList<>();
     public final AssetProvider provider;
     public final MolangParser parser;
@@ -43,6 +48,7 @@ public class ModelManager implements IWatchDogListener
 
         MolangHelper.registerVars(this.parser);
 
+        this.loaders.add(new BOBJModelLoader());
         this.loaders.add(new CubicModelLoader());
         this.loaders.add(new GeoCubicModelLoader());
         this.loaders.add(new VoxModelLoader());
@@ -79,7 +85,7 @@ public class ModelManager implements IWatchDogListener
         return new ArrayList<>(keys);
     }
 
-    public CubicModel getModel(String id)
+    public ModelInstance getModel(String id)
     {
         if (this.models.containsKey(id))
         {
@@ -92,9 +98,9 @@ public class ModelManager implements IWatchDogListener
         return null;
     }
 
-    public CubicModel loadModel(String id)
+    public ModelInstance loadModel(String id)
     {
-        CubicModel model = null;
+        ModelInstance model = null;
         Link modelLink = Link.assets(MODELS_PREFIX + id);
         Collection<Link> links = this.provider.getLinksFromPath(modelLink, true);
         MapType config = this.loadConfig(modelLink);
@@ -141,7 +147,7 @@ public class ModelManager implements IWatchDogListener
 
     public void reload()
     {
-        for (CubicModel model : this.models.values())
+        for (ModelInstance model : this.models.values())
         {
             if (model != null)
             {
@@ -168,6 +174,7 @@ public class ModelManager implements IWatchDogListener
 
         return link.path.endsWith(".bbs.json")
             || link.path.endsWith(".geo.json")
+            || link.path.endsWith(".bobj")
             || link.path.endsWith(".obj")
             || link.path.endsWith(".animation.json")
             || link.path.endsWith(".vox")
@@ -191,7 +198,7 @@ public class ModelManager implements IWatchDogListener
         if (this.isRelodable(link))
         {
             String key = StringUtils.parentPath(link.path.substring(MODELS_PREFIX.length()));
-            CubicModel model = this.models.remove(key);
+            ModelInstance model = this.models.remove(key);
 
             if (model != null)
             {
