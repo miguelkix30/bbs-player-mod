@@ -9,7 +9,6 @@ import mchorse.bbs_mod.bobj.BOBJLoader;
 import mchorse.bbs_mod.cubic.ModelInstance;
 import mchorse.bbs_mod.cubic.data.animation.Animation;
 import mchorse.bbs_mod.cubic.data.animation.AnimationPart;
-import mchorse.bbs_mod.cubic.data.animation.AnimationVector;
 import mchorse.bbs_mod.cubic.data.animation.Animations;
 import mchorse.bbs_mod.cubic.model.ModelManager;
 import mchorse.bbs_mod.cubic.model.bobj.BOBJModel;
@@ -18,19 +17,19 @@ import mchorse.bbs_mod.math.Constant;
 import mchorse.bbs_mod.math.molang.MolangParser;
 import mchorse.bbs_mod.math.molang.expressions.MolangExpression;
 import mchorse.bbs_mod.math.molang.expressions.MolangValue;
+import mchorse.bbs_mod.resources.AssetProvider;
 import mchorse.bbs_mod.resources.Link;
-import mchorse.bbs_mod.utils.interps.Interpolations;
+import mchorse.bbs_mod.utils.keyframes.Keyframe;
+import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
 
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class BOBJModelLoader implements IModelLoader
 {
+    private Animations defaultAnimations;
+
     @Override
     public ModelInstance load(String id, ModelManager models, Link model, Collection<Link> links, MapType config)
     {
@@ -70,6 +69,22 @@ public class BOBJModelLoader implements IModelLoader
 
                 ModelInstance instance = new ModelInstance(id, bobjModel, this.convertAnimations(bobjData, new Animations(models.parser)), modelTexture);
 
+                if (id.startsWith("emoticons/"))
+                {
+                    if (this.defaultAnimations == null)
+                    {
+                        this.loadDefaultAnimations(models.provider, models.parser);
+                    }
+
+                    if (this.defaultAnimations != null)
+                    {
+                        for (Animation value : this.defaultAnimations.animations.values())
+                        {
+                            instance.animations.add(value);
+                        }
+                    }
+                }
+
                 instance.applyConfig(config);
 
                 return instance;
@@ -83,6 +98,23 @@ public class BOBJModelLoader implements IModelLoader
         }
 
         return null;
+    }
+
+    private void loadDefaultAnimations(AssetProvider provider, MolangParser parser)
+    {
+        this.defaultAnimations = new Animations(parser);
+
+        try (InputStream stream = provider.getAsset(Link.assets("actions.bobj")))
+        {
+            BOBJLoader.BOBJData bobjData = BOBJLoader.readData(stream);
+
+            this.convertAnimations(bobjData, this.defaultAnimations);
+        }
+        catch (Exception e)
+        {
+            System.err.println("Failed to load Emoticons' actions.bobj!");
+            e.printStackTrace();
+        }
     }
 
     private Animations convertAnimations(BOBJLoader.BOBJData bobjData, Animations animations)
@@ -104,81 +136,29 @@ public class BOBJModelLoader implements IModelLoader
 
         for (Map.Entry<String, BOBJGroup> entry : value.groups.entrySet())
         {
-            Set<Float> time = new HashSet<>();
             AnimationPart part = new AnimationPart(parser);
 
             for (BOBJChannel channel : entry.getValue().channels)
             {
-                for (BOBJKeyframe keyframe : channel.keyframes)
+                if (channel.path.equals("location"))
                 {
-                    time.add(keyframe.frame);
+                    if (channel.index == 0) this.copyKeyframes(parser, part.x, channel);
+                    else if (channel.index == 1) this.copyKeyframes(parser, part.y, channel);
+                    else if (channel.index == 2) this.copyKeyframes(parser, part.z, channel);
+                }
+                else if (channel.path.equals("scale"))
+                {
+                    if (channel.index == 0) this.copyKeyframes(parser, part.sx, channel);
+                    else if (channel.index == 1) this.copyKeyframes(parser, part.sy, channel);
+                    else if (channel.index == 2) this.copyKeyframes(parser, part.sz, channel);
+                }
+                else
+                {
+                    if (channel.index == 0) this.copyKeyframes(parser, part.rx, channel);
+                    else if (channel.index == 1) this.copyKeyframes(parser, part.ry, channel);
+                    else if (channel.index == 2) this.copyKeyframes(parser, part.rz, channel);
                 }
             }
-
-            List<Float> orderedTime = new ArrayList<>(time);
-
-            orderedTime.sort(Float::compareTo);
-
-            for (Float t : orderedTime)
-            {
-                BOBJChannel x = null;
-                BOBJChannel y = null;
-                BOBJChannel z = null;
-
-                BOBJChannel sx = null;
-                BOBJChannel sy = null;
-                BOBJChannel sz = null;
-
-                BOBJChannel rx = null;
-                BOBJChannel ry = null;
-                BOBJChannel rz = null;
-
-                for (BOBJChannel channel : entry.getValue().channels)
-                {
-                    if (channel.path.equals("location"))
-                    {
-                        if (channel.index == 0) x = channel;
-                        else if (channel.index == 1) y = channel;
-                        else if (channel.index == 2) z = channel;
-                    }
-                    else if (channel.path.equals("scale"))
-                    {
-                        if (channel.index == 0) sx = channel;
-                        else if (channel.index == 1) sy = channel;
-                        else if (channel.index == 2) sz = channel;
-                    }
-                    else
-                    {
-                        if (channel.index == 0) rx = channel;
-                        else if (channel.index == 1) ry = channel;
-                        else if (channel.index == 2) rz = channel;
-                    }
-                }
-
-                AnimationVector xyz = new AnimationVector();
-                AnimationVector scale = new AnimationVector();
-                AnimationVector rotation = new AnimationVector();
-
-                xyz.time = scale.time = rotation.time = t / 20F;
-                xyz.interp = scale.interp = rotation.interp = Interpolations.HERMITE;
-                xyz.x = new MolangValue(parser, new Constant(x == null ? 0D : x.calculate(t)));
-                xyz.y = new MolangValue(parser, new Constant(y == null ? 0D : y.calculate(t)));
-                xyz.z = new MolangValue(parser, new Constant(z == null ? 0D : z.calculate(t)));
-                scale.x = new MolangValue(parser, new Constant(sx == null ? 1D : sx.calculate(t)));
-                scale.y = new MolangValue(parser, new Constant(sy == null ? 1D : sy.calculate(t)));
-                scale.z = new MolangValue(parser, new Constant(sz == null ? 1D : sz.calculate(t)));
-                rotation.x = new MolangValue(parser, new Constant(rx == null ? 0D : rx.calculate(t)));
-                rotation.y = new MolangValue(parser, new Constant(ry == null ? 0D : ry.calculate(t)));
-                rotation.z = new MolangValue(parser, new Constant(rz == null ? 0D : rz.calculate(t)));
-
-                part.position.keyframes.add(xyz);
-                part.scale.keyframes.add(scale);
-                part.rotation.keyframes.add(rotation);
-            }
-
-            part.position.sort();
-            part.scale.sort();
-            part.rotation.sort();
 
             animation.parts.put(entry.getKey(), part);
         }
@@ -194,7 +174,7 @@ public class BOBJModelLoader implements IModelLoader
 
             this.fillHeadVariables(parser, head);
         }
-        else if (head.rotation.keyframes.isEmpty())
+        else if (head.rx.isEmpty())
         {
             this.fillHeadVariables(parser, head);
         }
@@ -202,16 +182,38 @@ public class BOBJModelLoader implements IModelLoader
         animation.setLength(value.getDuration() / 20F);
     }
 
+    private void copyKeyframes(MolangParser parser, KeyframeChannel<MolangExpression> keyframeChannel, BOBJChannel channel)
+    {
+        for (int i = 0, c = channel.keyframes.size(); i < c; i++)
+        {
+            BOBJKeyframe a = channel.keyframes.get(i);
+            BOBJKeyframe b = a;
+
+            if (i - 1 >= 0)
+            {
+                b = channel.keyframes.get(i - 1);
+            }
+
+            MolangValue value = new MolangValue(parser, new Constant(a.value));
+            int index = keyframeChannel.insert(a.frame, value);
+
+            Keyframe<MolangExpression> keyframe = keyframeChannel.get(index);
+
+            /* Fill in interpolation and bezier handles */
+            keyframe.getInterpolation().setInterp(b.interpolation.interp);
+            keyframe.lx = a.frame - a.leftX;
+            keyframe.ly = a.leftY - a.value;
+            keyframe.rx = a.rightX - a.frame;
+            keyframe.ry = a.rightY - a.value;
+        }
+
+        keyframeChannel.sort();
+    }
+
     private void fillHeadVariables(MolangParser parser, AnimationPart head)
     {
-        AnimationVector vector = new AnimationVector();
-
-        vector.x = parseExpression(parser, "query.head_pitch / 180 * " + Math.PI);
-        vector.y = parseExpression(parser, "-query.head_yaw / 180 * " + Math.PI);
-        vector.z = MolangParser.ZERO;
-
-        head.rotation.keyframes.add(vector);
-        head.rotation.sort();
+        head.rx.insert(0F, parseExpression(parser, "query.head_pitch / 180 * " + Math.PI));
+        head.ry.insert(0F, parseExpression(parser, "-query.head_yaw / 180 * " + Math.PI));
     }
 
     private static MolangExpression parseExpression(MolangParser parser, String expression)

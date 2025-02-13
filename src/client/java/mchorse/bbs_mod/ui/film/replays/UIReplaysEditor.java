@@ -11,8 +11,6 @@ import mchorse.bbs_mod.camera.utils.TimeUtils;
 import mchorse.bbs_mod.cubic.ModelInstance;
 import mchorse.bbs_mod.cubic.data.animation.Animation;
 import mchorse.bbs_mod.cubic.data.animation.AnimationPart;
-import mchorse.bbs_mod.cubic.data.animation.AnimationVector;
-import mchorse.bbs_mod.cubic.data.model.ModelGroup;
 import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.film.replays.ReplayKeyframes;
@@ -25,6 +23,7 @@ import mchorse.bbs_mod.forms.renderers.ModelFormRenderer;
 import mchorse.bbs_mod.graphics.window.Window;
 import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.math.molang.MolangParser;
+import mchorse.bbs_mod.math.molang.expressions.MolangExpression;
 import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
 import mchorse.bbs_mod.ui.UIKeys;
@@ -67,6 +66,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3d;
 
 import java.util.ArrayList;
@@ -574,20 +574,9 @@ public class UIReplaysEditor extends UIElement
 
             if (onlyKeyframes)
             {
-                Set<Integer> integers = new HashSet<>();
+                List<Float> list = this.getTicks(animation);
 
-                for (AnimationPart value : animation.parts.values())
-                {
-                    for (AnimationVector keyframe : value.position.keyframes) integers.add(TimeUtils.toTick((float) keyframe.time));
-                    for (AnimationVector keyframe : value.rotation.keyframes) integers.add(TimeUtils.toTick((float) keyframe.time));
-                    for (AnimationVector keyframe : value.scale.keyframes) integers.add(TimeUtils.toTick((float) keyframe.time));
-                }
-
-                List<Integer> list = new ArrayList<>(integers);
-
-                Collections.sort(list);
-
-                for (int i : list)
+                for (float i : list)
                 {
                     this.fillAnimationPose(sheet, i, model, entity, animation, current);
                 }
@@ -604,7 +593,29 @@ public class UIReplaysEditor extends UIElement
         }
     }
 
-    private void fillAnimationPose(UIKeyframeSheet sheet, int i, ModelInstance model, IEntity entity, Animation animation, int current)
+    private List<Float> getTicks(Animation animation)
+    {
+        Set<Float> integers = new HashSet<>();
+
+        for (AnimationPart value : animation.parts.values())
+        {
+            for (KeyframeChannel<MolangExpression> channel : value.channels)
+            {
+                for (Keyframe<MolangExpression> keyframe : channel.getKeyframes())
+                {
+                    integers.add(keyframe.getTick());
+                }
+            }
+        }
+
+        ArrayList<Float> ticks = new ArrayList<>(integers);
+
+        Collections.sort(ticks);
+
+        return ticks;
+    }
+
+    private void fillAnimationPose(UIKeyframeSheet sheet, float i, ModelInstance model, IEntity entity, Animation animation, int current)
     {
         model.model.resetPose();
         model.model.apply(entity, animation, i, 1F, 0F, false);

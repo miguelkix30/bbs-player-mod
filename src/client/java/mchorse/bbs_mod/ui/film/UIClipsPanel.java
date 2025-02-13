@@ -8,6 +8,7 @@ import mchorse.bbs_mod.settings.values.ValueGroup;
 import mchorse.bbs_mod.settings.values.ValueInt;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
 import mchorse.bbs_mod.ui.film.clips.UIClip;
+import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
 import mchorse.bbs_mod.utils.DataPath;
 import mchorse.bbs_mod.utils.clips.Clip;
@@ -189,6 +190,13 @@ public class UIClipsPanel extends UIElement implements IUIClipsDelegate
     @Override
     public void embedView(UIElement element)
     {
+        UIContext context = this.getContext();
+
+        if (context != null)
+        {
+            context.closeContextMenu();
+        }
+
         this.clips.embedView(element);
     }
 
