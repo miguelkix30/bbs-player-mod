@@ -348,6 +348,10 @@ public class UIKeys
     public static final IKey FORMS_EDITORS_GENERAL_LIGHTING_TOOLTIP = L10n.lang("bbs.ui.forms.editors.general.lighting-tooltip");
     public static final IKey FORMS_EDITORS_GENERAL_UI_SCALE = L10n.lang("bbs.ui.forms.editors.general.ui_scale");
     public static final IKey FORMS_EDITORS_GENERAL_VISIBLE = L10n.lang("bbs.ui.forms.editors.general.visible");
+    public static final IKey FORMS_EDITORS_GENERAL_HP = L10n.lang("bbs.ui.forms.editors.general.hp");
+    public static final IKey FORMS_EDITORS_GENERAL_MOVEMENT_SPEED = L10n.lang("bbs.ui.forms.editors.general.movement_speed");
+    public static final IKey FORMS_EDITORS_GENERAL_MOVEMENT_SPEED_TOOLTIP = L10n.lang("bbs.ui.forms.editors.general.movement_speed-tooltip");
+    public static final IKey FORMS_EDITORS_GENERAL_STEP_HEIGHT = L10n.lang("bbs.ui.forms.editors.general.step_height");
     public static final IKey FORMS_EDITORS_ITEM_TITLE = L10n.lang("bbs.ui.forms.editors.item.title");
     public static final IKey FORMS_EDITORS_ITEM_TRANSFORMS = L10n.lang("bbs.ui.forms.editors.item.transforms");
     public static final IKey FORMS_EDITORS_LABEL_ANCHOR = L10n.lang("bbs.ui.forms.editors.label.anchor");
@@ -463,6 +467,12 @@ public class UIKeys
     public static final IKey GUN_PROJECTILE_USE_TARGET = L10n.lang("bbs.ui.gun.projectile.use_target");
     public static final IKey GUN_PROJECTILE_YAW = L10n.lang("bbs.ui.gun.projectile.yaw");
     public static final IKey GUN_PROJECTILE_YAW_TOOLTIP = L10n.lang("bbs.ui.gun.projectile.yaw-tooltip");
+    public static final IKey GUN_ZOOM_FORM = L10n.lang("bbs.ui.gun.zoom.form");
+    public static final IKey GUN_ZOOM_ON = L10n.lang("bbs.ui.gun.zoom.on");
+    public static final IKey GUN_ZOOM_OFF = L10n.lang("bbs.ui.gun.zoom.off");
+    public static final IKey GUN_ZOOM_FOV_DURATION = L10n.lang("bbs.ui.gun.zoom.fov_duration");
+    public static final IKey GUN_ZOOM_FOV_TARGET = L10n.lang("bbs.ui.gun.zoom.fov_target");
+    public static final IKey GUN_ZOOM_TITLE = L10n.lang("bbs.ui.gun.zoom.title");
     public static final IKey IMPORTER_AIFF = L10n.lang("bbs.ui.importer.aiff");
     public static final IKey IMPORTER_FFMPEG_NOTIFICATION = L10n.lang("bbs.ui.importer.ffmpeg-notification");
     public static final IKey IMPORTER_FLAC = L10n.lang("bbs.ui.importer.flac");
@@ -538,6 +548,7 @@ public class UIKeys
     public static final IKey PANELS_CONTEXT_OPEN = L10n.lang("bbs.ui.panels.context.open");
     public static final IKey PANELS_CONTEXT_PASTE = L10n.lang("bbs.ui.panels.context.paste");
     public static final IKey PANELS_KEYS_OPEN_DATA_MANAGER = L10n.lang("bbs.ui.panels.keys.open_data_list");
+    public static final IKey PANELS_KEYS_TOGGLE_CHALKBOARD = L10n.lang("bbs.ui.panels.keys.toggle_chalkboard");
     public static final IKey PANELS_MODALS_ADD = L10n.lang("bbs.ui.panels.modals.add");
     public static final IKey PANELS_MODALS_ADD_FOLDER = L10n.lang("bbs.ui.panels.modals.add_folder");
     public static final IKey PANELS_MODALS_ADD_FOLDER_TITLE = L10n.lang("bbs.ui.panels.modals.add_folder-title");
