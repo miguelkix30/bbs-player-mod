@@ -4,7 +4,7 @@ import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.camera.controller.ICameraController;
 import mchorse.bbs_mod.cubic.ModelInstance;
-import mchorse.bbs_mod.film.FilmController;
+import mchorse.bbs_mod.film.BaseFilmController;
 import mchorse.bbs_mod.forms.FormUtilsClient;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.forms.Form;
@@ -47,10 +47,6 @@ public class OrbitFilmCameraController implements ICameraController
     private boolean center;
 
     protected Vector3i velocityPosition = new Vector3i();
-
-    protected float low = 0.05F;
-    protected float normal = 0.25F;
-    protected float high = 1F;
 
     public OrbitFilmCameraController(UIFilmController controller)
     {
@@ -139,11 +135,10 @@ public class OrbitFilmCameraController implements ICameraController
         {
             int x = context.mouseX;
             int y = context.mouseY;
-            float v = 1F; /* 1F / this.getSpeed(); */
 
             this.rotation.add(
-                -(y - this.last.y) / (50F * v),
-                -(x - this.last.x) / (50F * v)
+                -(y - this.last.y) * this.controller.panel.dashboard.orbit.getAngleSpeed(),
+                -(x - this.last.x) * this.controller.panel.dashboard.orbit.getAngleSpeed()
             );
 
             this.last.set(x, y);
@@ -176,7 +171,7 @@ public class OrbitFilmCameraController implements ICameraController
 
     protected float getSpeed()
     {
-        return (Window.isCtrlPressed() ? this.high : (Window.isAltPressed() ? this.low : this.normal)) * (float) this.controller.panel.dashboard.orbit.speed.getValue();
+        return this.controller.panel.dashboard.orbit.getSpeed();
     }
 
     protected Vector3f rotateVector(float x, float y, float z, float yaw, float pitch)
@@ -249,8 +244,8 @@ public class OrbitFilmCameraController implements ICameraController
                 if (anchor != null)
                 {
                     AnchorProperty.Anchor v = form.anchor.get();
-                    Matrix4f defaultMatrix = FilmController.getMatrixForRenderWithRotation(entity, x, y, z, transition);
-                    Matrix4f matrix = FilmController.getEntityMatrix(this.controller.entities, x, y, z, v.actor, v.attachment, defaultMatrix, transition);
+                    Matrix4f defaultMatrix = BaseFilmController.getMatrixForRenderWithRotation(entity, x, y, z, transition);
+                    Matrix4f matrix = BaseFilmController.getEntityMatrix(this.controller.getEntities(), x, y, z, v.actor, v.attachment, defaultMatrix, transition);
 
                     matrix.mul(anchor);
 

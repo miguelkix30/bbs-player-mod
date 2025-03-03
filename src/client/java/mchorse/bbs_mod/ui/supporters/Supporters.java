@@ -598,7 +598,7 @@ public class Supporters
         this.add("Leo A.").withDate(9, 1);
         this.add("marlow").withDate(9, 14);
         this.add("Mr. Blaster").withDate(9, 15);
-        this.add("Paresh Solanki").withDate(9, 21);
+        this.add("ProBoiz95").withDate(9, 21);
         this.add("BALOO").withDate(9, 22);
         this.add("NurDeko").withDate(9, 22);
         this.add("Hakan_Sef").withDate(9, 23);
@@ -756,14 +756,15 @@ public class Supporters
         this.add("Filin").withDate(12, 24);
         this.add("Agleepi", "https://www.youtube.com/@agleepi", "...").withDate(2025, 1, 20);
         this.add("AGGRESSIVE-COOVIR-21!").withDate(2025, 2, 10); /* <3 */
-        this.add("osmiq", "https://twitter.com/osmiq0", "...").withDate(2025, 2, 19); /* <3 */
+        this.add("osmiq", "https://twitter.com/osmiq0", "textures/banners/osmiqtop1modeler.png").withDate(2025, 2, 19); /* <3 */
+        this.add("Never", "https://www.youtube.com/@SerialsNever", "...").withDate(2025, 2, 19); /* <3 */
 
         /* Custom */
         this.add("Hrymka", "...", "textures/banners/hrymka.png").withDate(3, 6);
         this.add("Rasty", "https://www.youtube.com/@RastyStudio").withDate(3, 6);
         this.add("Afegor (Alyokhin Dmitrii)", "https://www.youtube.com/@Afegor", "textures/banners/afegor.png").withDate(4, 8);
-        this.add("ZoGa", "...", "textures/banners/zogatop1animator.png").withDate(4, 22);
-        this.add("qualet", "https://www.youtube.com/@qualet", "textures/banners/QUALET_QUALET_QUALET_QUALET_QUALET_QUALET_QUALET_QUALET_QUALET_QUALET.png").withDate(2025, 2, 3);
+        this.add("ZoGa", "...", "textures/banners/zogatop1animator.png").withDate(4, 22); /* <3 */
+        this.add("qualet", "https://www.youtube.com/@qualet", "textures/banners/QUALET_QUALET_QUALET_QUALET_QUALET_QUALET_QUALET_QUALET_QUALET_QUALET.png").withDate(2025, 2, 3); /* <3 */
         this.add("McHorse", "https://www.youtube.com/channel/UCSLuDXxxql4EVK_Ktd6PNbw", "textures/banners/mchorse.png");
 
         int afdian = 5;
