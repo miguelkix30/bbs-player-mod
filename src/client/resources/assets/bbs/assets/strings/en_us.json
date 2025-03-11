@@ -1,6 +1,8 @@
 {
     "bbs.config.appearance.axes_scale": "Axes scale",
     "bbs.config.appearance.axes_scale-comment": "Determines the size of axes, if the axes are too big, you can adjust to your liking",
+    "bbs.config.appearance.click_sound": "Click sounds",
+    "bbs.config.appearance.click_sound-comment": "By enabling this option, button clicks will play BBS Studio's custom clicking sound effect",
     "bbs.config.appearance.force_qwerty": "Force QWERTY",
     "bbs.config.appearance.force_qwerty-comment": "For key codes display, force displaying of QWERTY layout instead of currently used layout (like AZERTY, QWERTZ or ЙЦУКЕ)",
     "bbs.config.appearance.fov": "FOV",
@@ -21,6 +23,8 @@
     "bbs.config.appearance.trackpad_increments-comment": "Enable < and > buttons on the trackpad field (which increment the trackpad value)",
     "bbs.config.appearance.ui_scale": "GUI scale",
     "bbs.config.appearance.ui_scale-comment": "This option scales the appearance of UI elements and HUD by given factor",
+    "bbs.config.appearance.uniform_scale": "Uniform scale",
+    "bbs.config.appearance.uniform_scale-comment": "This option forces uniform scaling for transformation fields when all scale coordinates are same",
     "bbs.config.audio.title": "Audio",
     "bbs.config.audio.tooltip": "Options for in-game audio sync feature",
     "bbs.config.audio.waveform_density": "Waveform density",

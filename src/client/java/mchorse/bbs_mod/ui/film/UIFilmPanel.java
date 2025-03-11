@@ -517,7 +517,16 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
     {
         super.open();
 
-        this.notifyServer(ActionState.RESTART);
+        Recorder recorder = BBSModClient.getFilms().stopRecording();
+
+        if (recorder == null || recorder.hasNotStarted())
+        {
+            this.notifyServer(ActionState.RESTART);
+
+            return;
+        }
+
+        this.applyRecordedKeyframes(recorder, this.data);
     }
 
     public void receiveActions(String filmId, int replayId, int tick, BaseType clips)
@@ -891,7 +900,7 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
             Position current = new Position(this.getCamera());
             boolean check = this.flightEditTime.check();
 
-            if (this.cameraEditor.getClip() != null && this.cameraEditor.isVisible())
+            if (this.cameraEditor.getClip() != null && this.cameraEditor.isVisible() && this.controller.getPovMode() != UIFilmController.CAMERA_MODE_FREE)
             {
                 if (!this.lastPosition.equals(current) && check)
                 {
