@@ -57,7 +57,7 @@ public class UITabContainer extends UIElement
         this.tabs.resize();
     }
 
-    public void replaceA(UITabContainer newContainer)
+    public void replaceA(UIElement newContainer)
     {
         float aw = this.a.getFlex().w.value;
         float ah = this.a.getFlex().h.value;
@@ -71,7 +71,7 @@ public class UITabContainer extends UIElement
         this.tabs.resize();
     }
 
-    public void replaceB(UITabContainer newContainer)
+    public void replaceB(UIElement newContainer)
     {
         this.b.removeFromParent();
         this.addAfter(this.a, newContainer);

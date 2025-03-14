@@ -21,8 +21,11 @@ public class UITabResizer extends UIElement
 
         this.context((menu) ->
         {
-            if (this.container.a instanceof UITab && this.container.b instanceof UITab)
-            {
+            if (
+                this.container.a instanceof UITab &&
+                this.container.b instanceof UITab &&
+                this.container.getParent() instanceof UITabContainer
+            ) {
                 menu.action(Icons.CONVERT, IKey.raw("Join tabs..."), () -> this.container.tabs.join(this));
             }
 
