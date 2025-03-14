@@ -28,6 +28,7 @@ import mchorse.bbs_mod.ui.framework.elements.overlay.UIOverlay;
 import mchorse.bbs_mod.ui.model_blocks.UIModelBlockPanel;
 import mchorse.bbs_mod.ui.morphing.UIMorphingPanel;
 import mchorse.bbs_mod.ui.particles.UIParticleSchemePanel;
+import mchorse.bbs_mod.ui.projects.UIProjectPanel;
 import mchorse.bbs_mod.ui.selectors.UISelectorsOverlayPanel;
 import mchorse.bbs_mod.ui.supporters.UISupportersPanel;
 import mchorse.bbs_mod.ui.utility.UIUtilityOverlayPanel;
@@ -247,6 +248,7 @@ public class UIDashboard extends UIBaseMenu
 
         if (FabricLoader.getInstance().isDevelopmentEnvironment())
         {
+            this.panels.registerPanel(new UIProjectPanel(this), IKey.raw("Projects"), Icons.FILM);
             this.panels.registerPanel(new UIDebugPanel(this), IKey.raw("Sandbox"), Icons.CODE);
         }
 
