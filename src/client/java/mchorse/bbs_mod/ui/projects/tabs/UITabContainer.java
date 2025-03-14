@@ -8,7 +8,7 @@ public class UITabContainer extends UIElement
     public final UITabs tabs;
     public UIElement a;
     public UIElement b;
-    public final ScrollDirection direction;
+    public ScrollDirection direction;
 
     public final UITabResizer tabResizer;
 
@@ -18,26 +18,67 @@ public class UITabContainer extends UIElement
         this.a = a;
         this.b = b;
         this.direction = direction;
-
         this.tabResizer = new UITabResizer(this);
 
+        this.refreshFlex(0.5F, 0.5F);
+        this.add(this.a, this.b, this.tabResizer);
+    }
+
+    public void refreshFlex()
+    {
+        this.refreshFlex(this.a.getFlex().w.value, this.a.getFlex().h.value);
+    }
+
+    public void refreshFlex(float aw, float ah)
+    {
         this.a.resetFlex().relative(this);
         this.b.resetFlex().relative(this.a.area);
-        this.tabResizer.relative(this.a.area);
+        this.tabResizer.resetFlex().relative(this.a.area);
 
-        if (direction == ScrollDirection.VERTICAL)
+        if (this.direction == ScrollDirection.VERTICAL)
         {
-            this.a.w(1F).h(0.5F);
+            this.a.w(1F).h(ah);
             this.b.y(1F).hTo(this.area, 1F).w(1F);
             this.tabResizer.y(1F, -2).w(1F).h(4);
         }
         else
         {
-            this.a.w(0.5F).h(1F);
+            this.a.w(aw).h(1F);
             this.b.x(1F).wTo(this.area, 1F).h(1F);
             this.tabResizer.x(1F, -2).w(4).h(1F);
         }
+    }
 
-        this.add(this.a, this.b, this.tabResizer);
+    public void flipOrientation()
+    {
+        this.direction = this.direction == ScrollDirection.VERTICAL ? ScrollDirection.HORIZONTAL : ScrollDirection.VERTICAL;
+
+        this.refreshFlex(this.a.getFlex().h.value, this.a.getFlex().w.value);
+        this.tabs.resize();
+    }
+
+    public void replaceA(UITabContainer newContainer)
+    {
+        float aw = this.a.getFlex().w.value;
+        float ah = this.a.getFlex().h.value;
+
+        this.a.removeFromParent();
+        this.prepend(newContainer);
+
+        this.a = newContainer;
+
+        this.refreshFlex(aw, ah);
+        this.tabs.resize();
+    }
+
+    public void replaceB(UITabContainer newContainer)
+    {
+        this.b.removeFromParent();
+        this.addAfter(this.a, newContainer);
+
+        this.b = newContainer;
+
+        this.refreshFlex();
+        this.tabs.resize();
     }
 }

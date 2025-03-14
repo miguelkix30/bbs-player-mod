@@ -26,8 +26,9 @@ public class UITab extends UIElement
         Area area = new Area();
 
         area.copy(this.area);
-        area.w = area.h = 20;
-        area.x += this.area.w - 20;
+        area.w = area.h = 16;
+        area.x += this.area.w - 16;
+        area.y += this.area.h - 16;
 
         if (area.isInside(context))
         {
@@ -54,21 +55,24 @@ public class UITab extends UIElement
     {
         if (this.dragging)
         {
-            float dx = context.mouseX - this.lastX;
-            float dy = context.mouseY - this.lastY;
+            float dx = Math.abs(context.mouseX - this.lastX);
+            float dy = Math.abs(context.mouseY - this.lastY);
             float abs = (float) Math.sqrt(dx * dx + dy * dy);
 
             if (abs > 10)
             {
                 this.dragging = false;
 
-                this.tabs.split(this, dx > dy ? ScrollDirection.HORIZONTAL : ScrollDirection.VERTICAL);
+                context.render.postRunnable(() ->
+                {
+                    this.tabs.split(this, context.mouseX, context.mouseY, dx > dy ? ScrollDirection.HORIZONTAL : ScrollDirection.VERTICAL);
+                });
             }
         }
 
         context.batcher.clip(this.area, context);
         this.area.render(context.batcher, this.hashCode() & Colors.RGB | Colors.A50);
-        context.batcher.icon(Icons.DRAG_CORNER, this.area.ex() - 16, this.area.y);
+        context.batcher.icon(Icons.DRAG_CORNER, this.area.ex() - 16, this.area.ey() - 16);
 
         super.render(context);
 

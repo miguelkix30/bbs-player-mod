@@ -20,8 +20,25 @@ public class UITabs extends UIElement
         System.out.println("Join: " + resizer);
     }
 
-    public void split(UITab tab, ScrollDirection direction)
+    public void split(UITab tab, int mouseX, int mouseY, ScrollDirection direction)
     {
-        System.out.println("Split: " + resizer);
+        if (tab.getParent() instanceof UITabContainer container)
+        {
+            UITabContainer newContainer = new UITabContainer(this, new UITab(this), new UITab(this), direction);
+
+            newContainer.tabResizer.enableDragging();
+
+            if (container.a == tab)
+            {
+                container.replaceA(newContainer);
+            }
+            else
+            {
+                container.replaceB(newContainer);
+            }
+
+            newContainer.tabResizer.applyDragging(mouseX, mouseY);
+            this.resize();
+        }
     }
 }

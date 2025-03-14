@@ -25,7 +25,37 @@ public class UITabResizer extends UIElement
             {
                 menu.action(Icons.CONVERT, IKey.raw("Join tabs..."), () -> this.container.tabs.join(this));
             }
+
+            menu.action(Icons.REFRESH, IKey.raw("Flip orientation"), this.container::flipOrientation);
         });
+    }
+
+    public void enableDragging()
+    {
+        this.dragging = true;
+    }
+
+    public void applyDragging(int mouseX, int mouseY)
+    {
+        Area a = this.container.a.area;
+        Area parent = this.parent.area;
+
+        if (this.container.direction == ScrollDirection.HORIZONTAL)
+        {
+            float ratio = (mouseX - a.x) / (float) parent.w;
+            float min = 10 / (float) parent.w;
+            float max = (parent.w - 10) / (float) parent.w;
+
+            this.container.a.w(MathUtils.clamp(ratio, min, max));
+        }
+        else
+        {
+            float ratio = (mouseY - a.y) / (float) parent.h;
+            float min = 10 / (float) parent.h;
+            float max = (parent.h - 10) / (float) parent.h;
+
+            this.container.a.h(MathUtils.clamp(ratio, min, max));
+        }
     }
 
     @Override
@@ -33,7 +63,7 @@ public class UITabResizer extends UIElement
     {
         if (this.area.isInside(context) && context.mouseButton == 0)
         {
-            this.dragging = true;
+            this.enableDragging();
 
             return true;
         }
@@ -53,36 +83,19 @@ public class UITabResizer extends UIElement
     public void render(UIContext context)
     {
         Area a = this.container.a.area;
-        Area parent = this.parent.area;
 
         if (this.container.direction == ScrollDirection.HORIZONTAL)
         {
-            context.batcher.box(a.ex() - 1, a.y, a.ex(), a.ey(), this.area.isInside(context) ? 0xff111111 : Colors.A100);
+            context.batcher.box(a.ex(), a.y, a.ex() + 1, a.ey(), this.area.isInside(context) ? Colors.WHITE : Colors.A100);
         }
         else
         {
-            context.batcher.box(a.x, a.ey() - 1, a.ex(), a.ey(), this.area.isInside(context) ? 0xff111111 : Colors.A100);
+            context.batcher.box(a.x, a.ey(), a.ex(), a.ey() + 1, this.area.isInside(context) ? Colors.WHITE : Colors.A100);
         }
 
         if (this.dragging)
         {
-            if (this.container.direction == ScrollDirection.HORIZONTAL)
-            {
-                float ratio = (context.mouseX - a.x) / (float) parent.w;
-                float min = 10 / (float) parent.w;
-                float max = (parent.w - 10) / (float) parent.w;
-
-                this.container.a.w(MathUtils.clamp(ratio, min, max));
-            }
-            else
-            {
-                float ratio = (context.mouseY - a.y) / (float) parent.h;
-                float min = 10 / (float) parent.h;
-                float max = (parent.h - 10) / (float) parent.h;
-
-                this.container.a.h(MathUtils.clamp(ratio, min, max));
-            }
-
+            this.applyDragging(context.mouseX, context.mouseY);
             this.container.tabs.resize();
         }
 
