@@ -53,6 +53,7 @@ import mchorse.bbs_mod.utils.CollectionUtils;
 import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.MatrixStackUtils;
 import mchorse.bbs_mod.utils.Pair;
+import mchorse.bbs_mod.utils.PlayerUtils;
 import mchorse.bbs_mod.utils.RayTracing;
 import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.joml.Matrices;
@@ -360,6 +361,7 @@ public class UIFilmController extends UIElement
                 this.previousEntity = this.controlled;
 
                 player.copy(this.controlled);
+                PlayerUtils.teleport(this.controlled.getX(), this.controlled.getY(), this.controlled.getZ(), this.controlled.getHeadYaw(), this.controlled.getPitch());
                 entities.set(entities.indexOf(this.controlled), player);
 
                 this.controlled = player;
@@ -817,7 +819,7 @@ public class UIFilmController extends UIElement
             else if (this.mouseMode == 2) chosenGroups = Collections.singletonList(ReplayKeyframes.GROUP_RIGHT_STICK);
             else if (this.mouseMode == 3) chosenGroups = Collections.singletonList(ReplayKeyframes.GROUP_TRIGGERS);
             else if (this.mouseMode == 4) chosenGroups = Collections.singletonList(ReplayKeyframes.GROUP_EXTRA1);
-            else if (this.mouseMode == 5) chosenGroups = Collections.singletonList(ReplayKeyframes.GROUP_EXTRA1);
+            else if (this.mouseMode == 5) chosenGroups = Collections.singletonList(ReplayKeyframes.GROUP_EXTRA2);
 
             final List<String> groups = chosenGroups;
 
@@ -1060,8 +1062,6 @@ public class UIFilmController extends UIElement
 
     public void renderFrame(WorldRenderContext context)
     {
-        boolean isPlaying = this.isPlaying();
-
         this.worldRenderContext = context;
 
         RenderSystem.enableDepthTest();
@@ -1242,7 +1242,7 @@ public class UIFilmController extends UIElement
 
         IEntity entity = this.getCurrentEntity();
 
-        if (entity == null)
+        if (entity == null || (this.pov == CAMERA_MODE_FIRST_PERSON && entity == this.getCurrentEntity()))
         {
             return;
         }
