@@ -9,15 +9,27 @@ public class UITabs extends UIElement
 {
     public UIElement root;
 
+    private IUITabFactory tabFactory;
     private boolean joining;
     private UITabContainer container;
 
-    public UITabs()
+    public UITabs(IUITabFactory tabFactory)
     {
-        this.root = new UITabContainer(this, new UITab(this), new UITab(this), ScrollDirection.VERTICAL);
+        this.tabFactory = tabFactory;
+        this.root = new UITabContainer(this, this.createTab(), this.createTab(), ScrollDirection.VERTICAL);
 
         this.root.full(this);
         this.add(this.root);
+    }
+
+    public UITab createTab()
+    {
+        if (this.tabFactory != null)
+        {
+            return this.tabFactory.createTab(this);
+        }
+
+        return new UITab(this);
     }
 
     public void join(UITabResizer resizer)
@@ -30,7 +42,7 @@ public class UITabs extends UIElement
     {
         if (tab.getParent() instanceof UITabContainer container)
         {
-            UITabContainer newContainer = new UITabContainer(this, new UITab(this), new UITab(this), direction);
+            UITabContainer newContainer = new UITabContainer(this, this.createTab(), this.createTab(), direction);
 
             newContainer.tabResizer.enableDragging();
 

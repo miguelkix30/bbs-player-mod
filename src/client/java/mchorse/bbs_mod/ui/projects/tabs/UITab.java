@@ -5,7 +5,6 @@ import mchorse.bbs_mod.ui.framework.elements.UIElement;
 import mchorse.bbs_mod.ui.utils.Area;
 import mchorse.bbs_mod.ui.utils.ScrollDirection;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
-import mchorse.bbs_mod.utils.colors.Colors;
 
 public class UITab extends UIElement
 {
@@ -71,11 +70,14 @@ public class UITab extends UIElement
         }
 
         context.batcher.clip(this.area, context);
-        this.area.render(context.batcher, this.hashCode() & Colors.RGB | Colors.A50);
+        this.renderBackground(context);
         context.batcher.icon(Icons.DRAG_CORNER, this.area.ex() - 16, this.area.ey() - 16);
 
         super.render(context);
 
         context.batcher.unclip(context);
     }
+
+    protected void renderBackground(UIContext context)
+    {}
 }

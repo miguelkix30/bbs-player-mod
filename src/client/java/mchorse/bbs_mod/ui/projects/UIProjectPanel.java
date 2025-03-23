@@ -12,7 +12,7 @@ public class UIProjectPanel extends UIDashboardPanel
     {
         super(dashboard);
 
-        this.tabs = new UITabs();
+        this.tabs = new UITabs(null);
 
         this.tabs.full(this);
         this.add(this.tabs);

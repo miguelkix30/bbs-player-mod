@@ -11,6 +11,8 @@ import mchorse.bbs_mod.utils.colors.Colors;
 
 public class UITabResizer extends UIElement
 {
+    public static final int MINIMUM_SIZE = 20;
+
     public final UITabContainer container;
 
     private boolean dragging;
@@ -46,16 +48,16 @@ public class UITabResizer extends UIElement
         if (this.container.direction == ScrollDirection.HORIZONTAL)
         {
             float ratio = (mouseX - a.x) / (float) parent.w;
-            float min = 10 / (float) parent.w;
-            float max = (parent.w - 10) / (float) parent.w;
+            float min = MINIMUM_SIZE / (float) parent.w;
+            float max = (parent.w - MINIMUM_SIZE) / (float) parent.w;
 
             this.container.a.w(MathUtils.clamp(ratio, min, max));
         }
         else
         {
             float ratio = (mouseY - a.y) / (float) parent.h;
-            float min = 10 / (float) parent.h;
-            float max = (parent.h - 10) / (float) parent.h;
+            float min = MINIMUM_SIZE / (float) parent.h;
+            float max = (parent.h - MINIMUM_SIZE) / (float) parent.h;
 
             this.container.a.h(MathUtils.clamp(ratio, min, max));
         }
