@@ -449,30 +449,31 @@ public class ClientNetwork
         {});
     }
 
-    public static void sendManagerDataLoad(String id, Consumer<BaseType> consumer)
+    public static void sendManagerDataLoad(String type, String id, Consumer<BaseType> consumer)
     {
         MapType mapType = new MapType();
 
         mapType.putString("id", id);
-        ClientNetwork.sendManagerData(RepositoryOperation.LOAD, mapType, consumer);
+        sendManagerData(type, RepositoryOperation.LOAD, mapType, consumer);
     }
 
-    public static void sendManagerData(RepositoryOperation op, BaseType data, Consumer<BaseType> consumer)
+    public static void sendManagerData(String type, RepositoryOperation op, BaseType data, Consumer<BaseType> consumer)
     {
         int id = ids;
 
         callbacks.put(id, consumer);
-        sendManagerData(id, op, data);
+        sendManagerData(type, id, op, data);
 
         ids += 1;
     }
 
-    public static void sendManagerData(int callbackId, RepositoryOperation op, BaseType data)
+    public static void sendManagerData(String type, int callbackId, RepositoryOperation op, BaseType data)
     {
         crusher.send(MinecraftClient.getInstance().player, ServerNetwork.SERVER_MANAGER_DATA_PACKET, data, (packetByteBuf) ->
         {
             packetByteBuf.writeInt(callbackId);
             packetByteBuf.writeInt(op.ordinal());
+            packetByteBuf.writeString(type);
         });
     }
 

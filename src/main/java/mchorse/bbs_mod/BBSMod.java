@@ -62,6 +62,7 @@ import mchorse.bbs_mod.forms.forms.VanillaParticleForm;
 import mchorse.bbs_mod.items.GunItem;
 import mchorse.bbs_mod.morphing.Morph;
 import mchorse.bbs_mod.network.ServerNetwork;
+import mchorse.bbs_mod.projects.ProjectManager;
 import mchorse.bbs_mod.resources.AssetProvider;
 import mchorse.bbs_mod.resources.ISourcePack;
 import mchorse.bbs_mod.resources.Link;
@@ -137,6 +138,7 @@ public class BBSMod implements ModInitializer
 
     /* Data */
     private static FilmManager films;
+    private static ProjectManager projects;
 
     private static List<Runnable> runnables = new ArrayList<>();
 
@@ -351,6 +353,11 @@ public class BBSMod implements ModInitializer
         return films;
     }
 
+    public static ProjectManager getProjects()
+    {
+        return projects;
+    }
+
     public static MapFactory<Clip, ClipFactoryData> getFactoryCameraClips()
     {
         return factoryCameraClips;
@@ -405,6 +412,7 @@ public class BBSMod implements ModInitializer
             .register(Link.bbs("trail"), TrailForm.class, null);
 
         films = new FilmManager(() -> new File(worldFolder, "bbs/films"));
+        projects = new ProjectManager(() -> new File(worldFolder, "bbs/projects"));
 
         /* Register camera clips */
         factoryCameraClips = new MapFactory<Clip, ClipFactoryData>()

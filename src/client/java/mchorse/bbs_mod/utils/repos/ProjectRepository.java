@@ -3,20 +3,21 @@ package mchorse.bbs_mod.utils.repos;
 import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.network.ClientNetwork;
+import mchorse.bbs_mod.projects.Project;
 
 import java.util.function.Consumer;
 
-public class FilmRepository extends NetworkRepository<Film>
+public class ProjectRepository extends NetworkRepository<Project>
 {
-    public FilmRepository(String type)
+    public ProjectRepository(String type)
     {
         super(type);
     }
 
     @Override
-    public Film create(String id, MapType data)
+    public Project create(String id, MapType data)
     {
-        Film film = new Film();
+        Project film = new Project();
 
         film.setId(id);
 
@@ -29,7 +30,7 @@ public class FilmRepository extends NetworkRepository<Film>
     }
 
     @Override
-    public void load(String id, Consumer<Film> callback)
+    public void load(String id, Consumer<Project> callback)
     {
         ClientNetwork.sendManagerDataLoad(this.type, id, (data) ->
         {

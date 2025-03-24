@@ -9,6 +9,7 @@ import mchorse.bbs_mod.actions.ActionState;
 import mchorse.bbs_mod.actions.types.FormTriggerActionClip;
 import mchorse.bbs_mod.blocks.entities.ModelBlockEntity;
 import mchorse.bbs_mod.data.DataStorageUtils;
+import mchorse.bbs_mod.data.IDataSerializable;
 import mchorse.bbs_mod.data.types.BaseType;
 import mchorse.bbs_mod.data.types.ByteType;
 import mchorse.bbs_mod.data.types.ListType;
@@ -17,7 +18,6 @@ import mchorse.bbs_mod.entity.ActorEntity;
 import mchorse.bbs_mod.entity.GunProjectileEntity;
 import mchorse.bbs_mod.entity.IEntityFormProvider;
 import mchorse.bbs_mod.film.Film;
-import mchorse.bbs_mod.film.FilmManager;
 import mchorse.bbs_mod.forms.FormUtils;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.items.GunProperties;
@@ -30,6 +30,7 @@ import mchorse.bbs_mod.utils.EnumUtils;
 import mchorse.bbs_mod.utils.Pair;
 import mchorse.bbs_mod.utils.StringUtils;
 import mchorse.bbs_mod.utils.clips.Clips;
+import mchorse.bbs_mod.utils.manager.FolderManager;
 import mchorse.bbs_mod.utils.repos.RepositoryOperation;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
@@ -206,44 +207,45 @@ public class ServerNetwork
             MapType data = (MapType) DataStorageUtils.readFromBytes(bytes);
             int callbackId = packetByteBuf.readInt();
             RepositoryOperation op = RepositoryOperation.values()[packetByteBuf.readInt()];
-            FilmManager films = BBSMod.getFilms();
+            String type = packetByteBuf.readString();
+            FolderManager manager = type.equals("films") ? BBSMod.getFilms() : BBSMod.getProjects();
 
             if (op == RepositoryOperation.LOAD)
             {
                 String id = data.getString("id");
-                Film film = films.load(id);
+                IDataSerializable dataSerializable = manager.load(id);
 
-                sendManagerData(player, callbackId, op, film.toData());
+                sendManagerData(player, callbackId, op, dataSerializable.toData());
             }
             else if (op == RepositoryOperation.SAVE)
             {
-                films.save(data.getString("id"), data.getMap("data"));
+                manager.save(data.getString("id"), data.getMap("data"));
             }
             else if (op == RepositoryOperation.RENAME)
             {
-                films.rename(data.getString("from"), data.getString("to"));
+                manager.rename(data.getString("from"), data.getString("to"));
             }
             else if (op == RepositoryOperation.DELETE)
             {
-                films.delete(data.getString("id"));
+                manager.delete(data.getString("id"));
             }
             else if (op == RepositoryOperation.KEYS)
             {
-                ListType list = DataStorageUtils.stringListToData(films.getKeys());
+                ListType list = DataStorageUtils.stringListToData(manager.getKeys());
 
                 sendManagerData(player, callbackId, op, list);
             }
             else if (op == RepositoryOperation.ADD_FOLDER)
             {
-                sendManagerData(player, callbackId, op, new ByteType(films.addFolder(data.getString("folder"))));
+                sendManagerData(player, callbackId, op, new ByteType(manager.addFolder(data.getString("folder"))));
             }
             else if (op == RepositoryOperation.RENAME_FOLDER)
             {
-                sendManagerData(player, callbackId, op, new ByteType(films.renameFolder(data.getString("from"), data.getString("to"))));
+                sendManagerData(player, callbackId, op, new ByteType(manager.renameFolder(data.getString("from"), data.getString("to"))));
             }
             else if (op == RepositoryOperation.DELETE_FOLDER)
             {
-                sendManagerData(player, callbackId, op, new ByteType(films.deleteFolder(data.getString("folder"))));
+                sendManagerData(player, callbackId, op, new ByteType(manager.deleteFolder(data.getString("folder"))));
             }
         });
     }
