@@ -116,8 +116,8 @@ public class UITabs extends UIElement
 
         if (this.joining)
         {
-            this.container.a.area.render(context.batcher, this.container.a.area.isInside(context) ? Colors.A50 : Colors.A75);
-            this.container.b.area.render(context.batcher, this.container.b.area.isInside(context) ? Colors.A50 : Colors.A75);
+            this.container.a.area.render(context.batcher, this.container.a.area.isInside(context) ? Colors.A25 : Colors.A75);
+            this.container.b.area.render(context.batcher, this.container.b.area.isInside(context) ? Colors.A25 : Colors.A75);
         }
     }
 }

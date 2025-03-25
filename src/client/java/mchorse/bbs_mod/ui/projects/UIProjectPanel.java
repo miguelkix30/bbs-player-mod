@@ -5,6 +5,7 @@ import mchorse.bbs_mod.projects.Project;
 import mchorse.bbs_mod.ui.ContentType;
 import mchorse.bbs_mod.ui.dashboard.UIDashboard;
 import mchorse.bbs_mod.ui.dashboard.panels.UIDataDashboardPanel;
+import mchorse.bbs_mod.ui.projects.panels.UITabPanel;
 import mchorse.bbs_mod.ui.projects.tabs.UITabs;
 
 public class UIProjectPanel extends UIDataDashboardPanel<Project>
@@ -15,7 +16,7 @@ public class UIProjectPanel extends UIDataDashboardPanel<Project>
     {
         super(dashboard);
 
-        this.tabs = new UITabs(null);
+        this.tabs = new UITabs(UITabPanel::new);
 
         this.tabs.full(this.editor);
         this.editor.add(this.tabs);
