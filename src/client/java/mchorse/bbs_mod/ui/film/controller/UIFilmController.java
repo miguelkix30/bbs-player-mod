@@ -361,7 +361,7 @@ public class UIFilmController extends UIElement
                 this.previousEntity = this.controlled;
 
                 player.copy(this.controlled);
-                PlayerUtils.teleport(this.controlled.getX(), this.controlled.getY(), this.controlled.getZ(), this.controlled.getHeadYaw(), this.controlled.getPitch());
+                PlayerUtils.teleport(this.controlled.getX(), this.controlled.getY(), this.controlled.getZ(), this.controlled.getHeadYaw(), this.controlled.getBodyYaw(), this.controlled.getPitch());
                 entities.set(entities.indexOf(this.controlled), player);
 
                 this.controlled = player;
@@ -504,12 +504,9 @@ public class UIFilmController extends UIElement
 
         if (replay != null && this.recordingOld != null)
         {
-            for (BaseValue value : replay.keyframes.getAll())
+            for (KeyframeChannel<?> channel : replay.keyframes.getChannels())
             {
-                if (value instanceof KeyframeChannel channel)
-                {
-                    channel.simplify();
-                }
+                channel.simplify();
             }
 
             BaseType newData = replay.keyframes.toData();

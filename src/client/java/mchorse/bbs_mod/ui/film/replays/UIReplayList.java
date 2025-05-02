@@ -3,12 +3,17 @@ package mchorse.bbs_mod.ui.film.replays;
 import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.camera.clips.CameraClipContext;
 import mchorse.bbs_mod.camera.data.Position;
+import mchorse.bbs_mod.data.types.BaseType;
+import mchorse.bbs_mod.data.types.ListType;
 import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.film.replays.Replay;
+import mchorse.bbs_mod.forms.FormUtils;
 import mchorse.bbs_mod.forms.FormUtilsClient;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.graphics.window.Window;
+import mchorse.bbs_mod.math.IExpression;
+import mchorse.bbs_mod.math.MathBuilder;
 import mchorse.bbs_mod.settings.values.ValueForm;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
 import mchorse.bbs_mod.ui.UIKeys;
@@ -17,12 +22,18 @@ import mchorse.bbs_mod.ui.forms.UIFormPalette;
 import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
 import mchorse.bbs_mod.ui.framework.elements.input.list.UIList;
-import mchorse.bbs_mod.ui.utils.UIDataUtils;
+import mchorse.bbs_mod.ui.framework.elements.input.list.UIStringList;
+import mchorse.bbs_mod.ui.framework.elements.input.text.UITextbox;
+import mchorse.bbs_mod.ui.framework.elements.overlay.UIConfirmOverlayPanel;
+import mchorse.bbs_mod.ui.framework.elements.overlay.UIOverlay;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.RayTracing;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.clips.Clips;
+import mchorse.bbs_mod.utils.keyframes.Keyframe;
+import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
+import mchorse.bbs_mod.utils.keyframes.factories.KeyframeFactories;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -30,6 +41,8 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.joml.Vector3d;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -39,6 +52,10 @@ import java.util.function.Consumer;
  */
 public class UIReplayList extends UIList<Replay>
 {
+    private static String LAST_PROCESS = "v";
+    private static String LAST_OFFSET = "0";
+    private static List<String> LAST_PROCESS_PROPERTIES = Arrays.asList("x");
+
     public UIFilmPanel panel;
     public UIReplaysOverlayPanel overlay;
 
@@ -49,6 +66,7 @@ public class UIReplayList extends UIList<Replay>
         this.overlay = overlay;
         this.panel = panel;
 
+        this.multi();
         this.context((menu) ->
         {
             menu.action(Icons.ADD, UIKeys.SCENE_REPLAYS_CONTEXT_ADD, this::addReplay);
@@ -74,29 +92,192 @@ public class UIReplayList extends UIList<Replay>
 
             if (this.isSelected())
             {
+                menu.action(Icons.ALL_DIRECTIONS, UIKeys.SCENE_REPLAYS_CONTEXT_PROCESS, this::processReplays);
+                menu.action(Icons.TIME, UIKeys.SCENE_REPLAYS_CONTEXT_OFFSET_TIME, this::offsetTimeReplays);
                 menu.action(Icons.DUPE, UIKeys.SCENE_REPLAYS_CONTEXT_DUPE, this::dupeReplay);
                 menu.action(Icons.REMOVE, UIKeys.SCENE_REPLAYS_CONTEXT_REMOVE, this::removeReplay);
             }
         });
     }
 
+    private void processReplays()
+    {
+        UITextbox expression = new UITextbox((t) -> LAST_PROCESS = t);
+        UIStringList properties = new UIStringList(null);
+        UIConfirmOverlayPanel panel = new UIConfirmOverlayPanel(UIKeys.SCENE_REPLAYS_CONTEXT_PROCESS_TITLE, UIKeys.SCENE_REPLAYS_CONTEXT_PROCESS_DESCRIPTION, (b) ->
+        {
+            if (b)
+            {
+                MathBuilder builder = new MathBuilder();
+                int min = Integer.MAX_VALUE;
+
+                builder.register("i");
+                builder.register("o");
+                builder.register("v");
+                builder.register("ki");
+
+                IExpression parse;
+
+                try
+                {
+                    parse = builder.parse(expression.getText());
+                }
+                catch (Exception e)
+                {
+                    return;
+                }
+
+                LAST_PROCESS_PROPERTIES = new ArrayList<>(properties.getCurrent());
+
+                for (int index : this.current)
+                {
+                    min = Math.min(min, index);
+                }
+
+                for (int index : this.current)
+                {
+                    Replay replay = this.list.get(index);
+
+                    builder.variables.get("i").set(index);
+                    builder.variables.get("o").set(index - min);
+
+                    for (String s : properties.getCurrent())
+                    {
+                        KeyframeChannel channel = (KeyframeChannel) replay.keyframes.get(s);
+                        List keyframes = channel.getKeyframes();
+
+                        for (int i = 0; i < keyframes.size(); i++)
+                        {
+                            Keyframe kf = (Keyframe) keyframes.get(i);
+
+                            builder.variables.get("v").set(kf.getFactory().getY(kf.getValue()));
+                            builder.variables.get("ki").set(i);
+
+                            kf.setValue(kf.getFactory().yToValue(parse.doubleValue()), true);
+                        }
+                    }
+                }
+            }
+        });
+
+        for (KeyframeChannel<?> channel : this.getCurrentFirst().keyframes.getChannels())
+        {
+            if (KeyframeFactories.isNumeric(channel.getFactory()))
+            {
+                properties.add(channel.getId());
+            }
+        }
+
+        properties.background().multi().sort();
+        properties.relative(expression).y(-5).w(1F).h(16 * 9).anchor(0F, 1F);
+
+        if (!LAST_PROCESS_PROPERTIES.isEmpty())
+        {
+            properties.setCurrentScroll(LAST_PROCESS_PROPERTIES.get(0));
+        }
+
+        for (String property : LAST_PROCESS_PROPERTIES)
+        {
+            properties.addIndex(properties.getList().indexOf(property));
+        }
+
+        expression.setText(LAST_PROCESS);
+        expression.tooltip(UIKeys.SCENE_REPLAYS_CONTEXT_PROCESS_EXPRESSION_TOOLTIP);
+        expression.relative(panel.confirm).y(-1F, -5).w(1F).h(20);
+
+        panel.confirm.w(1F, -10);
+        panel.content.add(expression, properties);
+
+        UIOverlay.addOverlay(this.getContext(), panel, 240, 300);
+    }
+
+    private void offsetTimeReplays()
+    {
+        UITextbox tick = new UITextbox((t) -> LAST_OFFSET = t);
+        UIConfirmOverlayPanel panel = new UIConfirmOverlayPanel(UIKeys.SCENE_REPLAYS_CONTEXT_OFFSET_TIME_TITLE, UIKeys.SCENE_REPLAYS_CONTEXT_OFFSET_TIME_DESCRIPTION, (b) ->
+        {
+            if (b)
+            {
+                MathBuilder builder = new MathBuilder();
+                int min = Integer.MAX_VALUE;
+
+                builder.register("i");
+                builder.register("o");
+
+                IExpression parse = null;
+
+                try
+                {
+                    parse = builder.parse(tick.getText());
+                }
+                catch (Exception e)
+                {}
+
+                for (int index : this.current)
+                {
+                    min = Math.min(min, index);
+                }
+
+                for (int index : this.current)
+                {
+                    Replay replay = this.list.get(index);
+
+                    builder.variables.get("i").set(index);
+                    builder.variables.get("o").set(index - min);
+
+                    float tickv = parse == null ? 0F : (float) parse.doubleValue();
+
+                    BaseValue.edit(replay, (r) -> r.shift(tickv));
+                }
+            }
+        });
+
+        tick.setText(LAST_OFFSET);
+        tick.tooltip(UIKeys.SCENE_REPLAYS_CONTEXT_OFFSET_TIME_EXPRESSION_TOOLTIP);
+        tick.relative(panel.confirm).y(-1F, -5).w(1F).h(20);
+
+        panel.confirm.w(1F, -10);
+        panel.content.add(tick);
+
+        UIOverlay.addOverlay(this.getContext(), panel);
+    }
+
     private void copyReplay()
     {
-        Replay replay = this.panel.replayEditor.getReplay();
+        MapType replays = new MapType();
+        ListType replayList = new ListType();
 
-        Window.setClipboard((MapType) replay.toData(), "_CopyReplay");
+        replays.put("replays", replayList);
+
+        for (Replay replay : this.getCurrent())
+        {
+            replayList.add(replay.toData());
+        }
+
+        Window.setClipboard(replays, "_CopyReplay");
     }
 
     private void pasteReplay(MapType data)
     {
         Film film = this.panel.getData();
-        Replay replay = film.replays.addReplay();
+        ListType replays = data.getList("replays");
+        Replay last = null;
 
-        BaseValue.edit(replay, (r) -> r.fromData(data));
+        for (BaseType replayType : replays)
+        {
+            Replay replay = film.replays.addReplay();
 
-        this.update();
-        this.panel.replayEditor.setReplay(replay);
-        this.updateFilmEditor();
+            BaseValue.edit(replay, (r) -> r.fromData(replayType));
+
+            last = replay;
+        }
+
+        if (last != null)
+        {
+            this.update();
+            this.panel.replayEditor.setReplay(last);
+            this.updateFilmEditor();
+        }
     }
 
     public void openFormEditor(ValueForm form, boolean editing, Consumer<Form> consumer)
@@ -110,7 +291,11 @@ public class UIReplayList extends UIList<Replay>
 
         UIFormPalette palette = UIFormPalette.open(target, editing, form.get(), (f) ->
         {
-            form.set(f);
+            for (Replay replay : this.getCurrent())
+            {
+                replay.form.set(FormUtils.copy(f));
+            }
+
             this.updateFilmEditor();
 
             if (consumer != null)
@@ -218,15 +403,24 @@ public class UIReplayList extends UIList<Replay>
             return;
         }
 
-        Replay currentFirst = this.getCurrentFirst();
-        Film film = this.panel.getData();
-        Replay replay = film.replays.addReplay();
+        Replay last = null;
 
-        replay.copy(currentFirst);
+        for (Replay replay : this.getCurrent())
+        {
+            Film film = this.panel.getData();
+            Replay newReplay = film.replays.addReplay();
 
-        this.update();
-        this.panel.replayEditor.setReplay(replay);
-        this.updateFilmEditor();
+            newReplay.copy(replay);
+
+            last = newReplay;
+        }
+
+        if (last != null)
+        {
+            this.update();
+            this.panel.replayEditor.setReplay(last);
+            this.updateFilmEditor();
+        }
     }
 
     private void removeReplay()
@@ -239,7 +433,10 @@ public class UIReplayList extends UIList<Replay>
         Film film = this.panel.getData();
         int index = this.getIndex();
 
-        film.replays.remove(this.getCurrentFirst());
+        for (Replay replay : this.getCurrent())
+        {
+            film.replays.remove(replay);
+        }
 
         int size = this.list.size();
         index = MathUtils.clamp(index, 0, size - 1);

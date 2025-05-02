@@ -274,7 +274,7 @@ public class ServerNetwork
                 Clips clips = recorder.composeClips();
 
                 /* Send recorded clips to the client */
-                sendRecordedActions(player, filmId, replayId, recorder.getInitialTick(), clips);
+                sendRecordedActions(player, filmId, replayId, 0, clips);
             }
         });
     }
@@ -409,6 +409,7 @@ public class ServerNetwork
         double y = buf.readDouble();
         double z = buf.readDouble();
         float yaw = buf.readFloat();
+        float bodyYaw = buf.readFloat();
         float pitch = buf.readFloat();
 
         server.execute(() ->
@@ -417,7 +418,7 @@ public class ServerNetwork
 
             player.setYaw(yaw);
             player.setHeadYaw(yaw);
-            player.setBodyYaw(yaw);
+            player.setBodyYaw(bodyYaw);
             player.setPitch(pitch);
         });
     }

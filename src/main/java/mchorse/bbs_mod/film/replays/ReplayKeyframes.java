@@ -5,6 +5,7 @@ import mchorse.bbs_mod.settings.values.ValueGroup;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
 import mchorse.bbs_mod.utils.interps.IInterp;
 import mchorse.bbs_mod.utils.interps.Interpolations;
+import mchorse.bbs_mod.utils.keyframes.Keyframe;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
 import mchorse.bbs_mod.utils.keyframes.KeyframeSegment;
 import mchorse.bbs_mod.utils.keyframes.factories.KeyframeFactories;
@@ -12,6 +13,7 @@ import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 import org.joml.Vector2d;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -104,18 +106,41 @@ public class ReplayKeyframes extends ValueGroup
         this.add(this.armorFeet);
     }
 
-    public void copyOver(ReplayKeyframes keyframes, int tick)
+    public List<KeyframeChannel<?>> getChannels()
     {
+        ArrayList<KeyframeChannel<?>> channels = new ArrayList<>();
+
         for (BaseValue baseValue : this.getAll())
         {
             if (baseValue instanceof KeyframeChannel<?> channel)
             {
-                BaseValue keyframe = keyframes.get(baseValue.getId());
+                channels.add(channel);
+            }
+        }
 
-                if (keyframe instanceof KeyframeChannel<?> keyframeChannel)
-                {
-                    channel.copyOver(keyframeChannel, tick);
-                }
+        return channels;
+    }
+
+    public void shift(float tick)
+    {
+        for (KeyframeChannel<?> channel : this.getChannels())
+        {
+            for (Keyframe<?> keyframe : channel.getKeyframes())
+            {
+                keyframe.setTick(keyframe.getTick() + tick);
+            }
+        }
+    }
+
+    public void copyOver(ReplayKeyframes keyframes, int tick)
+    {
+        for (KeyframeChannel<?> channel : this.getChannels())
+        {
+            BaseValue keyframe = keyframes.get(channel.getId());
+
+            if (keyframe instanceof KeyframeChannel<?> keyframeChannel)
+            {
+                channel.copyOver(keyframeChannel, tick);
             }
         }
     }

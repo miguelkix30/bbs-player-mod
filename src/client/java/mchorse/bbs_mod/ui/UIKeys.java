@@ -236,6 +236,8 @@ public class UIKeys
     public static final IKey FILM_GROUPS_RIGHT_STICK = L10n.lang("bbs.ui.film.groups.right_stick");
     public static final IKey FILM_GROUPS_TRIGGERS = L10n.lang("bbs.ui.film.groups.triggers");
     public static final IKey FILM_HISTORY_TITLE = L10n.lang("bbs.ui.film.history-title");
+    public static final IKey FILM_INSERT_SPACE_TITLE = L10n.lang("bbs.ui.film.insert_space-title");
+    public static final IKey FILM_INSERT_SPACE_DESCRIPTION = L10n.lang("bbs.ui.film.insert_space-description");
     public static final IKey FILM_MOVE_TITLE = L10n.lang("bbs.ui.film.move-title");
     public static final IKey FILM_MOVE_DESCRIPTION = L10n.lang("bbs.ui.film.move-description");
     public static final IKey FILM_NO_CAMERA_DESCRIPTION = L10n.lang("bbs.ui.film.no_camera-description");
@@ -246,6 +248,7 @@ public class UIKeys
     public static final IKey FILM_OPEN_REPLAY_EDITOR = L10n.lang("bbs.ui.film.open_replay_editor");
     public static final IKey FILM_OPEN_VOICE_LINE_EDITOR = L10n.lang("bbs.ui.film.open_voice_line_editor");
     public static final IKey FILM_RECORDING = L10n.lang("bbs.ui.film.recording");
+    public static final IKey FILM_VIDEO_RECORDING = L10n.lang("bbs.ui.film.video_recording");
     public static final IKey FILM_RENDER_AUDIO = L10n.lang("bbs.ui.film.render_audio");
     public static final IKey FILM_RENDER_AUDIO_ERROR = L10n.lang("bbs.ui.film.render_audio.error");
     public static final IKey FILM_RENDER_AUDIO_SUCCESS = L10n.lang("bbs.ui.film.render_audio.success");
@@ -590,8 +593,16 @@ public class UIKeys
     public static final IKey SCENE_REPLAYS_CONTEXT_DUPE = L10n.lang("bbs.ui.scene.replays.context.dupe");
     public static final IKey SCENE_REPLAYS_CONTEXT_EDIT_FORM = L10n.lang("bbs.ui.scene.replays.context.edit_form");
     public static final IKey SCENE_REPLAYS_CONTEXT_FROM_CAMERA = L10n.lang("bbs.ui.scene.replays.context.from_camera");
+    public static final IKey SCENE_REPLAYS_CONTEXT_OFFSET_TIME = L10n.lang("bbs.ui.scene.replays.context.offset_time");
+    public static final IKey SCENE_REPLAYS_CONTEXT_OFFSET_TIME_EXPRESSION_TOOLTIP = L10n.lang("bbs.ui.scene.replays.context.offset_time.expression-tooltip");
+    public static final IKey SCENE_REPLAYS_CONTEXT_OFFSET_TIME_DESCRIPTION = L10n.lang("bbs.ui.scene.replays.context.offset_time-description");
+    public static final IKey SCENE_REPLAYS_CONTEXT_OFFSET_TIME_TITLE = L10n.lang("bbs.ui.scene.replays.context.offset_time-title");
     public static final IKey SCENE_REPLAYS_CONTEXT_PASTE = L10n.lang("bbs.ui.scene.replays.context.paste");
     public static final IKey SCENE_REPLAYS_CONTEXT_PICK_FORM = L10n.lang("bbs.ui.scene.replays.context.pick_form");
+    public static final IKey SCENE_REPLAYS_CONTEXT_PROCESS = L10n.lang("bbs.ui.scene.replays.context.process");
+    public static final IKey SCENE_REPLAYS_CONTEXT_PROCESS_DESCRIPTION = L10n.lang("bbs.ui.scene.replays.context.process-description");
+    public static final IKey SCENE_REPLAYS_CONTEXT_PROCESS_EXPRESSION_TOOLTIP = L10n.lang("bbs.ui.scene.replays.context.process.expression-tooltip");
+    public static final IKey SCENE_REPLAYS_CONTEXT_PROCESS_TITLE = L10n.lang("bbs.ui.scene.replays.context.process-title");
     public static final IKey SCENE_REPLAYS_CONTEXT_REMOVE = L10n.lang("bbs.ui.scene.replays.context.remove");
     public static final IKey SELECTORS_CONTEXT_ADD = L10n.lang("bbs.ui.selectors.context.add");
     public static final IKey SELECTORS_CONTEXT_REMOVE = L10n.lang("bbs.ui.selectors.context.remove");

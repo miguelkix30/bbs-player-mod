@@ -16,12 +16,12 @@ import mchorse.bbs_mod.forms.properties.IFormProperty;
 import mchorse.bbs_mod.forms.triggers.StateTrigger;
 import mchorse.bbs_mod.morphing.Morph;
 import mchorse.bbs_mod.network.ClientNetwork;
-import mchorse.bbs_mod.settings.values.base.BaseValue;
 import mchorse.bbs_mod.ui.ContentType;
 import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.ui.framework.elements.utils.Batcher2D;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.utils.CollectionUtils;
+import mchorse.bbs_mod.utils.VideoRecorder;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
@@ -158,12 +158,9 @@ public class Films
 
         if (recorder != null)
         {
-            for (BaseValue value : recorder.keyframes.getAll())
+            for (KeyframeChannel<?> channel : recorder.keyframes.getChannels())
             {
-                if (value instanceof KeyframeChannel channel)
-                {
-                    channel.simplify();
-                }
+                channel.simplify();
             }
 
             if (ClientNetwork.isIsBBSModOnServer())
@@ -270,9 +267,8 @@ public class Films
         RenderSystem.disableDepthTest();
     }
 
-    public void renderHud(DrawContext drawContext, float tickDelta)
+    public void renderHud(Batcher2D batcher2D, float tickDelta)
     {
-        Batcher2D batcher2D = new Batcher2D(drawContext);
         Recorder recorder = BBSModClient.getFilms().getRecorder();
 
         if (recorder != null && BBSSettings.recordingOverlays.get())
