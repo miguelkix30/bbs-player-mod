@@ -1,8 +1,11 @@
 package mchorse.bbs_mod.ui.film.replays;
 
+import mchorse.bbs_mod.blocks.entities.ModelBlockEntity;
+import mchorse.bbs_mod.blocks.entities.ModelProperties;
 import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.camera.clips.CameraClipContext;
 import mchorse.bbs_mod.camera.data.Position;
+import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.data.types.BaseType;
 import mchorse.bbs_mod.data.types.ListType;
 import mchorse.bbs_mod.data.types.MapType;
@@ -10,8 +13,11 @@ import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.FormUtils;
 import mchorse.bbs_mod.forms.FormUtilsClient;
+import mchorse.bbs_mod.forms.forms.AnchorForm;
+import mchorse.bbs_mod.forms.forms.BodyPart;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.graphics.window.Window;
+import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.math.IExpression;
 import mchorse.bbs_mod.math.MathBuilder;
 import mchorse.bbs_mod.settings.values.ValueForm;
@@ -25,6 +31,7 @@ import mchorse.bbs_mod.ui.framework.elements.input.list.UIList;
 import mchorse.bbs_mod.ui.framework.elements.input.list.UIStringList;
 import mchorse.bbs_mod.ui.framework.elements.input.text.UITextbox;
 import mchorse.bbs_mod.ui.framework.elements.overlay.UIConfirmOverlayPanel;
+import mchorse.bbs_mod.ui.framework.elements.overlay.UINumberOverlayPanel;
 import mchorse.bbs_mod.ui.framework.elements.overlay.UIOverlay;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.utils.MathUtils;
@@ -34,9 +41,11 @@ import mchorse.bbs_mod.utils.clips.Clips;
 import mchorse.bbs_mod.utils.keyframes.Keyframe;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
 import mchorse.bbs_mod.utils.keyframes.factories.KeyframeFactories;
+import mchorse.bbs_mod.utils.pose.Transform;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.joml.Vector3d;
@@ -90,11 +99,36 @@ public class UIReplayList extends UIList<Replay>
                 menu.action(Icons.PLAY, UIKeys.SCENE_REPLAYS_CONTEXT_FROM_CAMERA, () -> this.fromCamera(duration));
             }
 
+            menu.action(Icons.BLOCK, UIKeys.SCENE_REPLAYS_CONTEXT_FROM_MODEL_BLOCK, this::fromModelBlock);
+
             if (this.isSelected())
             {
+                boolean shift = Window.isShiftPressed();
+
                 menu.action(Icons.ALL_DIRECTIONS, UIKeys.SCENE_REPLAYS_CONTEXT_PROCESS, this::processReplays);
                 menu.action(Icons.TIME, UIKeys.SCENE_REPLAYS_CONTEXT_OFFSET_TIME, this::offsetTimeReplays);
-                menu.action(Icons.DUPE, UIKeys.SCENE_REPLAYS_CONTEXT_DUPE, this::dupeReplay);
+                menu.action(Icons.DUPE, UIKeys.SCENE_REPLAYS_CONTEXT_DUPE, () ->
+                {
+                    if (Window.isShiftPressed() || shift)
+                    {
+                        this.dupeReplay();
+                    }
+                    else
+                    {
+                        UINumberOverlayPanel numberPanel = new UINumberOverlayPanel(UIKeys.SCENE_REPLAYS_CONTEXT_DUPE, UIKeys.SCENE_REPLAYS_CONTEXT_DUPE_DESCRIPTION, (n) ->
+                        {
+                            for (int i = 0; i < n; i++)
+                            {
+                                this.dupeReplay();
+                            }
+                        });
+
+                        numberPanel.value.limit(1).integer();
+                        numberPanel.value.setValue(1D);
+
+                        UIOverlay.addOverlay(this.getContext(), numberPanel);
+                    }
+                });
                 menu.action(Icons.REMOVE, UIKeys.SCENE_REPLAYS_CONTEXT_REMOVE, this::removeReplay);
             }
         });
@@ -367,6 +401,67 @@ public class UIReplayList extends UIList<Replay>
         this.updateFilmEditor();
 
         this.openFormEditor(replay.form, false, null);
+    }
+
+    private void fromModelBlock()
+    {
+        this.getContext().replaceContextMenu((menu) ->
+        {
+            for (ModelBlockEntity modelBlock : BBSRendering.capturedModelBlocks)
+            {
+                menu.action(Icons.BLOCK, IKey.constant(modelBlock.getName()), () -> this.fromModelBlock(modelBlock));
+            }
+        });
+    }
+
+    private void fromModelBlock(ModelBlockEntity modelBlock)
+    {
+        Film film = this.panel.getData();
+        Replay replay = film.replays.addReplay();
+        BlockPos blockPos = modelBlock.getPos();
+        ModelProperties properties = modelBlock.getProperties();
+        Transform transform = properties.getTransform().copy();
+        double x = blockPos.getX() + transform.translate.x + 0.5D;
+        double y = blockPos.getY() + transform.translate.y;
+        double z = blockPos.getZ() + transform.translate.z + 0.5D;
+
+        transform.translate.set(0, 0, 0);
+
+        replay.shadow.set(properties.isShadow());
+        replay.form.set(FormUtils.copy(properties.getForm()));
+        replay.keyframes.x.insert(0, x);
+        replay.keyframes.y.insert(0, y);
+        replay.keyframes.z.insert(0, z);
+
+        if (!transform.isDefault())
+        {
+            if (
+                transform.rotate.x == 0 && transform.rotate.z == 0 &&
+                transform.rotate2.x == 0 && transform.rotate2.y == 0 && transform.rotate2.z == 0 &&
+                transform.scale.x == 1 && transform.scale.y == 1 && transform.scale.z == 1
+            ) {
+                double yaw = -Math.toDegrees(transform.rotate.y);
+
+                replay.keyframes.yaw.insert(0, yaw);
+                replay.keyframes.headYaw.insert(0, yaw);
+                replay.keyframes.bodyYaw.insert(0, yaw);
+            }
+            else
+            {
+                AnchorForm form = new AnchorForm();
+                BodyPart part = new BodyPart();
+
+                part.setForm(replay.form.get());
+                form.transform.set(transform);
+                form.parts.addBodyPart(part);
+
+                replay.form.set(form);
+            }
+        }
+
+        this.update();
+        this.panel.replayEditor.setReplay(replay);
+        this.updateFilmEditor();
     }
 
     public void addReplay(Vector3d position, float pitch, float yaw)
