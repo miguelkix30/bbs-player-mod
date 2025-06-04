@@ -11,6 +11,8 @@ import mchorse.bbs_mod.camera.utils.TimeUtils;
 import mchorse.bbs_mod.cubic.ModelInstance;
 import mchorse.bbs_mod.cubic.data.animation.Animation;
 import mchorse.bbs_mod.cubic.data.animation.AnimationPart;
+import mchorse.bbs_mod.data.DataStorageUtils;
+import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.film.replays.ReplayKeyframes;
@@ -31,7 +33,6 @@ import mchorse.bbs_mod.ui.film.UIClipsPanel;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
 import mchorse.bbs_mod.ui.film.clips.renderer.IUIClipRenderer;
 import mchorse.bbs_mod.ui.film.utils.keyframes.UIFilmKeyframes;
-import mchorse.bbs_mod.ui.film.utils.undo.ValueChangeUndo;
 import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.UIKeyframeEditor;
@@ -122,6 +123,7 @@ public class UIReplaysEditor extends UIElement
 
         COLORS.put("visible", Colors.WHITE & 0xFFFFFF);
         COLORS.put("pose", Colors.RED);
+        COLORS.put("pose_overlay", Colors.ORANGE);
         COLORS.put("transform", Colors.GREEN);
         COLORS.put("color", Colors.INACTIVE);
         COLORS.put("lighting", Colors.YELLOW);
@@ -297,14 +299,6 @@ public class UIReplaysEditor extends UIElement
         this.markContainer();
     }
 
-    public void handleUndo(ValueChangeUndo change, boolean redo)
-    {
-        if (this.keyframeEditor != null)
-        {
-            this.keyframeEditor.view.applyState(change.getPropertiesSelection(redo));
-        }
-    }
-
     public void setFilm(Film film)
     {
         this.film = film;
@@ -444,6 +438,7 @@ public class UIReplaysEditor extends UIElement
         {
             this.keyframeEditor = new UIKeyframeEditor((consumer) -> new UIFilmKeyframes(this.filmPanel.cameraEditor, consumer).absolute()).target(this.filmPanel.editArea);
             this.keyframeEditor.full(this);
+            this.keyframeEditor.setUndoId("replay_keyframe_editor");
 
             /* Reset */
             if (lastEditor != null)
@@ -637,7 +632,15 @@ public class UIReplaysEditor extends UIElement
             return;
         }
 
-        this.pickProperty(bone, StringUtils.combinePaths(path, "pose"), false);
+        Keyframe selected = this.keyframeEditor.view.getGraph().getSelected();
+        String type = "pose";
+
+        if (selected != null && selected.getParent().getId().endsWith("pose_overlay"))
+        {
+            type = "pose_overlay";
+        }
+
+        this.pickProperty(bone, StringUtils.combinePaths(path, type), false);
     }
 
     public void pickFormProperty(Form form, String bone)
@@ -825,5 +828,31 @@ public class UIReplaysEditor extends UIElement
             player.setBodyYaw(entity.getBodyYaw());
             player.setPitch(entity.getPitch());
         }
+    }
+
+    @Override
+    public void applyUndoData(MapType data)
+    {
+        super.applyUndoData(data);
+
+        List<Integer> selection = DataStorageUtils.intListFromData(data.getList("selection"));
+        List<Integer> currentIndices = this.replays.replays.getCurrentIndices();
+
+        this.setReplay(CollectionUtils.getSafe(this.film.replays.getList(), data.getInt("replay")), true, false);
+
+        currentIndices.clear();
+        currentIndices.addAll(selection);
+        this.replays.replays.update();
+    }
+
+    @Override
+    public void collectUndoData(MapType data)
+    {
+        super.collectUndoData(data);
+
+        int index = this.film.replays.getList().indexOf(this.getReplay());
+
+        data.putInt("replay", index);
+        data.put("selection", DataStorageUtils.intListToData(this.replays.replays.getCurrentIndices()));
     }
 }

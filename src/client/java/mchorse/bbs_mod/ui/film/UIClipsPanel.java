@@ -3,8 +3,9 @@ package mchorse.bbs_mod.ui.film;
 import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.camera.clips.ClipFactoryData;
 import mchorse.bbs_mod.camera.data.Position;
+import mchorse.bbs_mod.data.DataStorageUtils;
+import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.film.Film;
-import mchorse.bbs_mod.settings.values.ValueGroup;
 import mchorse.bbs_mod.settings.values.ValueInt;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
 import mchorse.bbs_mod.ui.film.clips.UIClip;
@@ -14,9 +15,9 @@ import mchorse.bbs_mod.utils.DataPath;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.clips.Clips;
 import mchorse.bbs_mod.utils.factory.IFactory;
-import mchorse.bbs_mod.utils.undo.IUndo;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class UIClipsPanel extends UIElement implements IUIClipsDelegate
@@ -49,19 +50,44 @@ public class UIClipsPanel extends UIElement implements IUIClipsDelegate
         this.clips.setVisible(clips != null);
     }
 
-    public void handleUndo(IUndo<ValueGroup> undo, boolean redo)
-    {
-        if (this.panel != null)
-        {
-            this.panel.handleUndo(undo, redo);
-        }
-    }
-
     public void editClip(Position position)
     {
         if (this.panel != null)
         {
-            this.panel.editClip(position);
+            Map<Clip, Position> snapshots = this.filmPanel.getRunner().getContext().getSnapshots();
+            Position newPosition = new Position();
+            Position snapshot = snapshots.get(this.panel.clip);
+
+            newPosition.copy(position);
+
+            if (snapshot != null)
+            {
+                Clip top = this.panel.clip;
+
+                for (Clip clip : snapshots.keySet())
+                {
+                    if (clip.layer.get() > top.layer.get())
+                    {
+                        top = clip;
+                    }
+                }
+
+                Position topPosition = snapshots.get(top);
+
+                if (topPosition != null)
+                {
+                    newPosition.point.x -= topPosition.point.x - snapshot.point.x;
+                    newPosition.point.y -= topPosition.point.y - snapshot.point.y;
+                    newPosition.point.z -= topPosition.point.z - snapshot.point.z;
+
+                    newPosition.angle.yaw -= topPosition.angle.yaw - snapshot.angle.yaw;
+                    newPosition.angle.pitch-= topPosition.angle.pitch - snapshot.angle.pitch;
+                    newPosition.angle.roll -= topPosition.angle.roll - snapshot.angle.roll;
+                    newPosition.angle.fov -= topPosition.angle.fov - snapshot.angle.fov;
+                }
+            }
+
+            this.panel.editClip(newPosition);
         }
     }
 
@@ -118,6 +144,7 @@ public class UIClipsPanel extends UIElement implements IUIClipsDelegate
             this.clips.embedView(null);
 
             this.panel = UIClip.createPanel(clip, this);
+            this.panel.setUndoId("clip_panel");
 
             if (this.target == null)
             {
@@ -257,5 +284,31 @@ public class UIClipsPanel extends UIElement implements IUIClipsDelegate
 
             clipValue.set(clipValue.get() + difference);
         }
+    }
+
+    @Override
+    public void applyUndoData(MapType data)
+    {
+        super.applyUndoData(data);
+
+        List<Integer> selection = DataStorageUtils.intListFromData(data.getList("selection"));
+
+        this.clips.scale.view(data.getDouble("x_min"), data.getDouble("x_max"));
+        this.clips.vertical.setScroll(data.getDouble("scroll"));
+        this.clips.vertical.updateTarget();
+
+        this.clips.setSelection(selection);
+        this.pickClip(selection.isEmpty() ? null : this.clips.getClips().get(selection.get(selection.size() - 1)));
+    }
+
+    @Override
+    public void collectUndoData(MapType data)
+    {
+        super.collectUndoData(data);
+
+        data.put("selection", DataStorageUtils.intListToData(this.clips.getSelection()));
+        data.putDouble("x_min", this.clips.scale.getMinValue());
+        data.putDouble("x_max", this.clips.scale.getMaxValue());
+        data.putDouble("scroll", this.clips.vertical.getScroll());
     }
 }

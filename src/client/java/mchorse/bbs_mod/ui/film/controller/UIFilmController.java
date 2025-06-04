@@ -2,6 +2,8 @@ package mchorse.bbs_mod.ui.film.controller;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.systems.VertexSorter;
+import io.netty.util.collection.IntObjectHashMap;
+import io.netty.util.collection.IntObjectMap;
 import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.actions.ActionState;
@@ -18,7 +20,6 @@ import mchorse.bbs_mod.film.replays.ReplayKeyframes;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.entities.MCEntity;
 import mchorse.bbs_mod.forms.forms.Form;
-import mchorse.bbs_mod.graphics.Draw;
 import mchorse.bbs_mod.graphics.texture.Texture;
 import mchorse.bbs_mod.graphics.window.Window;
 import mchorse.bbs_mod.l10n.keys.IKey;
@@ -48,7 +49,6 @@ import mchorse.bbs_mod.ui.utils.UIUtils;
 import mchorse.bbs_mod.ui.utils.icons.Icon;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.ui.utils.keys.KeyAction;
-import mchorse.bbs_mod.utils.AABB;
 import mchorse.bbs_mod.utils.CollectionUtils;
 import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.MatrixStackUtils;
@@ -57,7 +57,6 @@ import mchorse.bbs_mod.utils.PlayerUtils;
 import mchorse.bbs_mod.utils.RayTracing;
 import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.joml.Matrices;
-import mchorse.bbs_mod.utils.keyframes.Keyframe;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
@@ -79,7 +78,6 @@ import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -116,7 +114,7 @@ public class UIFilmController extends UIElement
     private BaseType recordingOld;
 
     /* Replay and group picking */
-    private List<IEntity> hoveredEntities = new ArrayList<>();
+    private IEntity hoveredEntity;
     private StencilFormFramebuffer stencil = new StencilFormFramebuffer();
     private StencilMap stencilMap = new StencilMap();
 
@@ -243,7 +241,7 @@ public class UIFilmController extends UIElement
 
     public IEntity getCurrentEntity()
     {
-        return CollectionUtils.getSafe(this.getEntities(), this.panel.replayEditor.replays.replays.getIndex());
+        return this.getEntities().get(this.panel.replayEditor.replays.replays.getIndex());
     }
 
     public int getPovMode()
@@ -304,15 +302,15 @@ public class UIFilmController extends UIElement
         this.editorController = new FilmEditorController(this.panel.getData(), this);
         this.editorController.createEntities();
 
-        List<IEntity> entities = this.panel.getRunner().getContext().entities;
+        IntObjectMap<IEntity> entities = this.panel.getRunner().getContext().entities;
 
         entities.clear();
-        entities.addAll(this.editorController.getEntities());
+        entities.putAll(this.editorController.getEntities());
     }
 
-    public List<IEntity> getEntities()
+    public IntObjectMap<IEntity> getEntities()
     {
-        return this.editorController == null ? Collections.emptyList() : this.editorController.getEntities();
+        return this.editorController == null ? new IntObjectHashMap<>() : this.editorController.getEntities();
     }
 
     public Map<String, Integer> getActors()
@@ -342,7 +340,7 @@ public class UIFilmController extends UIElement
         this.getContext().unfocus();
 
         boolean replacePlayer = ClientNetwork.isIsBBSModOnServer();
-        List<IEntity> entities = this.getEntities();
+        IntObjectMap<IEntity> entities = this.getEntities();
 
         if (this.controlled != null)
         {
@@ -350,7 +348,7 @@ public class UIFilmController extends UIElement
             {
                 this.controlled.setForm(this.playerForm);
 
-                entities.set(entities.indexOf(this.controlled), this.previousEntity);
+                entities.put(CollectionUtils.getKey(entities, this.controlled), this.previousEntity);
                 this.previousEntity = null;
             }
 
@@ -369,7 +367,7 @@ public class UIFilmController extends UIElement
 
                 player.copy(this.controlled);
                 PlayerUtils.teleport(this.controlled.getX(), this.controlled.getY(), this.controlled.getZ(), this.controlled.getHeadYaw(), this.controlled.getBodyYaw(), this.controlled.getPitch());
-                entities.set(entities.indexOf(this.controlled), player);
+                entities.put(CollectionUtils.getKey(entities, this.controlled), player);
 
                 this.controlled = player;
             }
@@ -542,25 +540,9 @@ public class UIFilmController extends UIElement
         if (context.mouseButton == 0)
         {
             /* Alt pick the replay */
-            if (this.hoveredEntities.size() == 1 || (!this.hoveredEntities.isEmpty() && Window.isCtrlPressed()))
+            if (this.hoveredEntity != null)
             {
-                this.pickEntity(this.hoveredEntities.get(0));
-
-                return true;
-            }
-            else if (!this.hoveredEntities.isEmpty())
-            {
-                this.getContext().replaceContextMenu((menu) ->
-                {
-                    menu.autoKeys();
-
-                    for (IEntity entity : this.hoveredEntities)
-                    {
-                        int index = this.getEntities().indexOf(entity);
-
-                        menu.action(Icons.POSE, IKey.constant(this.panel.getData().replays.getList().get(index).getName()), () -> this.pickEntity(entity));
-                    }
-                });
+                this.pickEntity(this.hoveredEntity);
 
                 return true;
             }
@@ -571,7 +553,7 @@ public class UIFilmController extends UIElement
 
     private void pickEntity(IEntity entity)
     {
-        int index = this.getEntities().indexOf(entity);
+        int index = CollectionUtils.getKey(this.getEntities(), entity);
 
         this.panel.replayEditor.setReplay(this.panel.getData().replays.getList().get(index));
 
@@ -998,6 +980,8 @@ public class UIFilmController extends UIElement
             return;
         }
 
+        boolean altPressed = Window.isAltPressed();
+
         RenderSystem.depthFunc(GL11.GL_LESS);
 
         /* Cache the global stuff */
@@ -1012,7 +996,7 @@ public class UIFilmController extends UIElement
         worldStack.push();
         worldStack.loadIdentity();
         MatrixStackUtils.multiply(worldStack, this.panel.lastView);
-        this.renderStencil(this.worldRenderContext, this.getContext());
+        this.renderStencil(this.worldRenderContext, this.getContext(), altPressed);
         worldStack.pop();
 
         /* Return back to orthographic projection */
@@ -1035,6 +1019,8 @@ public class UIFilmController extends UIElement
 
             return;
         }
+
+        this.hoveredEntity = null;
 
         if (!this.stencil.hasPicked())
         {
@@ -1059,7 +1045,20 @@ public class UIFilmController extends UIElement
         RenderSystem.enableBlend();
         context.batcher.texturedBox(getPickerPreviewProgram, texture.id, Colors.WHITE, area.x, area.y, area.w, area.h, 0, h, w, 0, w, h);
 
-        if (pair != null)
+        if (altPressed)
+        {
+            int stencilIndex = this.stencil.getIndex() - 1;
+
+            this.hoveredEntity = this.getEntities().get(stencilIndex);
+
+            if (this.hoveredEntity != null)
+            {
+                String label = this.panel.getData().replays.getList().get(stencilIndex).getName();
+
+                context.batcher.textCard(label, context.mouseX + 12, context.mouseY + 8);
+            }
+        }
+        else if (pair != null)
         {
             String label = pair.a.getIdOrName();
 
@@ -1090,8 +1089,6 @@ public class UIFilmController extends UIElement
         {
             this.editorController.render(context);
         }
-
-        this.rayTraceEntity(context);
 
         Mouse mouse = MinecraftClient.getInstance().mouse;
         int x = (int) mouse.getX();
@@ -1165,103 +1162,7 @@ public class UIFilmController extends UIElement
         return null;
     }
 
-    private void renderOnion(Replay replay, int index, int direction, KeyframeChannel<?> pose, int color, int frames, WorldRenderContext context, boolean isPlaying, IEntity entity)
-    {
-        List<? extends Keyframe<?>> keyframes = pose.getKeyframes();
-        float alpha = Colors.getA(color);
-
-        for (; CollectionUtils.inRange(keyframes, index) && frames > 0; index += direction)
-        {
-            Keyframe<?> keyframe = keyframes.get(index);
-
-            if (keyframe.getTick() == this.getTick())
-            {
-                continue;
-            }
-
-            replay.applyFrame((int) keyframe.getTick(), entity);
-            replay.applyProperties((int) keyframe.getTick(), entity.getForm());
-
-            BaseFilmController.renderEntity(FilmControllerContext.instance
-                .setup(this.getEntities(), entity, context)
-                .color(Colors.setA(color, alpha))
-                .transition(0F));
-
-            frames -= 1;
-            alpha *= alpha;
-        }
-    }
-
-    private void rayTraceEntity(WorldRenderContext context)
-    {
-        this.hoveredEntities.clear();
-
-        UIContext c = this.getContext();
-        Area area = this.panel.preview.getViewport();
-        Camera camera = this.panel.getCamera();
-        Vector3f mouseDirection = camera.getMouseDirection(c.mouseX, c.mouseY, area.x, area.y, area.w, area.h);
-
-        if (Window.isAltPressed())
-        {
-            this.blockHitResult = RayTracing.rayTrace(worldRenderContext.world(),
-                new Vec3d(camera.position.x, camera.position.y, camera.position.z),
-                new Vec3d(mouseDirection.x, mouseDirection.y, mouseDirection.z), 64F
-            );
-        }
-        else
-        {
-            this.blockHitResult = null;
-        }
-
-        if (!Window.isAltPressed() || this.panel.recorder.isRecording() || this.panel.isFlying())
-        {
-            return;
-        }
-
-        if (!area.isInside(c))
-        {
-            return;
-        }
-
-        List<IEntity> entities = new ArrayList<>();
-
-        for (IEntity entity : this.getEntities())
-        {
-            AABB aabb = entity.getPickingHitbox();
-
-            if (aabb.intersectsRay(camera.position, mouseDirection))
-            {
-                entities.add(entity);
-            }
-        }
-
-        if (!entities.isEmpty())
-        {
-            entities.sort((a, b) ->
-            {
-                double distanceA = new Vector3d(a.getX(), a.getY(), a.getZ()).distance(camera.position);
-                double distanceB = new Vector3d(b.getX(), b.getY(), b.getZ()).distance(camera.position);
-
-                return (int) (distanceA - distanceB);
-            });
-
-            this.hoveredEntities.addAll(entities);
-        }
-
-        for (IEntity entity : this.hoveredEntities)
-        {
-            AABB aabb = entity.getPickingHitbox();
-
-            context.matrixStack().push();
-            context.matrixStack().translate(aabb.x - camera.position.x, aabb.y - camera.position.y, aabb.z - camera.position.z);
-
-            Draw.renderBox(context.matrixStack(), 0D, 0D, 0D, aabb.w, aabb.h, aabb.d, 0F, 0.5F, 1F);
-
-            context.matrixStack().pop();
-        }
-    }
-
-    private void renderStencil(WorldRenderContext renderContext, UIContext context)
+    private void renderStencil(WorldRenderContext renderContext, UIContext context, boolean altPressed)
     {
         Area viewport = this.panel.preview.getViewport();
 
@@ -1285,11 +1186,28 @@ public class UIFilmController extends UIElement
         Texture mainTexture = this.stencil.getFramebuffer().getMainTexture();
 
         this.stencilMap.setup();
+        this.stencilMap.setIncrement(!altPressed);
         this.stencil.apply();
-        BaseFilmController.renderEntity(FilmControllerContext.instance
-            .setup(this.getEntities(), entity, renderContext)
-            .transition(isPlaying ? renderContext.tickDelta() : 0)
-            .stencil(this.stencilMap));
+
+        if (altPressed)
+        {
+            for (Map.Entry<Integer, IEntity> entry : this.getEntities().entrySet())
+            {
+                this.stencilMap.objectIndex = entry.getKey() + 1;
+
+                BaseFilmController.renderEntity(FilmControllerContext.instance
+                    .setup(this.getEntities(), entry.getValue(), renderContext)
+                    .transition(isPlaying ? renderContext.tickDelta() : 0)
+                    .stencil(this.stencilMap));
+            }
+        }
+        else
+        {
+            BaseFilmController.renderEntity(FilmControllerContext.instance
+                .setup(this.getEntities(), entity, renderContext)
+                .transition(isPlaying ? renderContext.tickDelta() : 0)
+                .stencil(this.stencilMap));
+        }
 
         int x = (int) ((context.mouseX - viewport.x) / (float) viewport.w * mainTexture.width);
         int y = (int) ((1F - (context.mouseY - viewport.y) / (float) viewport.h) * mainTexture.height);

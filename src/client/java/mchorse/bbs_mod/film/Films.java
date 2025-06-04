@@ -21,13 +21,11 @@ import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.ui.framework.elements.utils.Batcher2D;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.utils.CollectionUtils;
-import mchorse.bbs_mod.utils.VideoRecorder;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -68,17 +66,17 @@ public class Films
 
     public static void playFilm(Film film, boolean withCamera)
     {
-        WorldFilmController baseFilmController = new WorldFilmController(film);
+        FirstPersonFilmController filmController = new FirstPersonFilmController(film);
 
-        if (withCamera)
+        if (withCamera && !film.hasFirstPerson())
         {
             PlayCameraController controller = new PlayCameraController(film.camera);
 
-            controller.getContext().entities.addAll(baseFilmController.getEntities());
+            controller.getContext().entities.putAll(filmController.getEntities());
             BBSModClient.getCameraController().add(controller);
         }
 
-        BBSModClient.getFilms().add(baseFilmController);
+        BBSModClient.getFilms().add(filmController);
     }
 
     public static void stopFilm(String filmId)
@@ -247,6 +245,14 @@ public class Films
         if (this.recorder != null)
         {
             this.recorder.update();
+        }
+    }
+
+    public void updateEndWorld()
+    {
+        for (BaseFilmController controller : this.controllers)
+        {
+            controller.updateEndWorld();
         }
     }
 

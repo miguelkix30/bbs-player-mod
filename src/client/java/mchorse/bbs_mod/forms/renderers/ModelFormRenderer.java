@@ -27,12 +27,14 @@ import mchorse.bbs_mod.forms.properties.IFormProperty;
 import mchorse.bbs_mod.forms.triggers.StateTrigger;
 import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.ui.framework.UIContext;
+import mchorse.bbs_mod.ui.framework.elements.utils.StencilMap;
 import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.MatrixStackUtils;
 import mchorse.bbs_mod.utils.StringUtils;
 import mchorse.bbs_mod.utils.colors.Color;
 import mchorse.bbs_mod.utils.joml.Vectors;
 import mchorse.bbs_mod.utils.pose.Pose;
+import mchorse.bbs_mod.utils.pose.PoseTransform;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.render.GameRenderer;
@@ -159,9 +161,33 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
         return getModel(this.form);
     }
 
-    public Pose getPose(float transition)
+    public Pose getPose()
     {
-        return this.form.pose.get();
+        Pose pose = this.form.pose.get().copy();
+        Pose overlay = this.form.poseOverlay.get().copy();
+
+        for (Map.Entry<String, PoseTransform> entry : overlay.transforms.entrySet())
+        {
+            PoseTransform poseTransform = pose.get(entry.getKey());
+            PoseTransform value = entry.getValue();
+
+            if (value.fix != 0)
+            {
+                poseTransform.translate.lerp(value.translate, value.fix);
+                poseTransform.scale.lerp(value.scale, value.fix);
+                poseTransform.rotate.lerp(value.rotate, value.fix);
+                poseTransform.rotate2.lerp(value.rotate2, value.fix);
+            }
+            else
+            {
+                poseTransform.translate.add(value.translate);
+                poseTransform.scale.add(value.scale).sub(1, 1, 1);
+                poseTransform.rotate.add(value.rotate);
+                poseTransform.rotate2.add(value.rotate2);
+            }
+        }
+
+        return pose;
     }
 
     public void resetAnimator()
@@ -232,7 +258,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
             model.model.resetPose();
 
             this.animator.applyActions(null, model, context.getTransition());
-            model.model.applyPose(this.getPose(context.getTransition()));
+            model.model.applyPose(this.getPose());
 
             MatrixStackUtils.multiply(stack, uiMatrix);
             stack.scale(scale, scale, scale);
@@ -244,7 +270,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
                 ? GameRenderer::getRenderTypeEntityTranslucentCullProgram
                 : BBSShaders::getModel;
 
-            this.renderModel(this.entity, mainShader, stack, model, LightmapTextureManager.pack(15, 15), OverlayTexture.DEFAULT_UV, color, true, false, context.getTransition());
+            this.renderModel(this.entity, mainShader, stack, model, LightmapTextureManager.pack(15, 15), OverlayTexture.DEFAULT_UV, color, true, null, context.getTransition());
 
             /* Render body parts */
             stack.push();
@@ -262,7 +288,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
         }
     }
 
-    private void renderModel(IEntity target, Supplier<ShaderProgram> program, MatrixStack stack, ModelInstance model, int light, int overlay, Color color, boolean ui, boolean picking, float transition)
+    private void renderModel(IEntity target, Supplier<ShaderProgram> program, MatrixStack stack, ModelInstance model, int light, int overlay, Color color, boolean ui, StencilMap stencilMap, float transition)
     {
         if (!model.culling)
         {
@@ -287,7 +313,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
             newStack.peek().getNormalMatrix().scale(1F / Vectors.EMPTY_3F.x, -1F / Vectors.EMPTY_3F.y, 1F / Vectors.EMPTY_3F.z);
         }
 
-        model.render(newStack, program, color, light, overlay, picking, this.form.shapeKeys.get());
+        model.render(newStack, program, color, light, overlay, stencilMap, this.form.shapeKeys.get());
 
         gameRenderer.getLightmapTextureManager().disable();
         gameRenderer.getOverlayTexture().teardownOverlayColor();
@@ -301,7 +327,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
         /* Render items */
         this.captureMatrices(model, null);
 
-        if (!picking)
+        if (stencilMap == null)
         {
             this.renderItems(target, model, stack, EquipmentSlot.MAINHAND, ModelTransformationMode.THIRD_PERSON_RIGHT_HAND, model.itemsMain, color, overlay, light);
             this.renderItems(target, model, stack, EquipmentSlot.OFFHAND, ModelTransformationMode.THIRD_PERSON_LEFT_HAND, model.itemsOff, color, overlay, light);
@@ -410,7 +436,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
             model.model.resetPose();
 
             this.animator.applyActions(context.entity, model, context.getTransition());
-            model.model.applyPose(this.getPose(context.getTransition()));
+            model.model.applyPose(this.getPose());
 
             context.stack.multiply(RotationAxis.POSITIVE_Y.rotation(MathUtils.PI));
 
@@ -421,7 +447,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
                 : BBSShaders::getModel;
             Supplier<ShaderProgram> shader = this.getShader(context, mainShader, BBSShaders::getPickerModelsProgram);
 
-            this.renderModel(context.entity, shader, context.stack, model, context.light, context.overlay, color, false, context.isPicking(), context.getTransition());
+            this.renderModel(context.entity, shader, context.stack, model, context.light, context.overlay, color, false, context.stencilMap, context.getTransition());
         }
     }
 
@@ -501,7 +527,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
             }
 
             this.animator.applyActions(entity, model, transition);
-            model.model.applyPose(this.getPose(transition));
+            model.model.applyPose(this.getPose());
 
             stack.multiply(RotationAxis.POSITIVE_Y.rotation(MathUtils.PI));
             this.captureMatrices(model, localTarget);

@@ -1,6 +1,8 @@
 package mchorse.bbs_mod.film;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import io.netty.util.collection.IntObjectHashMap;
+import io.netty.util.collection.IntObjectMap;
 import mchorse.bbs_mod.client.renderer.ModelBlockEntityRenderer;
 import mchorse.bbs_mod.entity.ActorEntity;
 import mchorse.bbs_mod.film.replays.Replay;
@@ -14,6 +16,7 @@ import mchorse.bbs_mod.forms.properties.AnchorProperty;
 import mchorse.bbs_mod.forms.renderers.FormRenderType;
 import mchorse.bbs_mod.forms.renderers.FormRenderingContext;
 import mchorse.bbs_mod.graphics.Draw;
+import mchorse.bbs_mod.mixin.client.ClientPlayerEntityAccessor;
 import mchorse.bbs_mod.ui.framework.UIBaseMenu;
 import mchorse.bbs_mod.utils.CollectionUtils;
 import mchorse.bbs_mod.utils.MathUtils;
@@ -25,21 +28,24 @@ import mchorse.bbs_mod.utils.joml.Vectors;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.MovementType;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +55,7 @@ public abstract class BaseFilmController
 {
     public final Film film;
 
-    protected List<IEntity> entities = new ArrayList<>();
+    protected IntObjectMap<IEntity> entities = new IntObjectHashMap<>();
 
     public int exception = -1;
 
@@ -57,7 +63,7 @@ public abstract class BaseFilmController
 
     public static void renderEntity(FilmControllerContext context)
     {
-        List<IEntity> entities = context.entities;
+        IntObjectMap<IEntity> entities = context.entities;
         IEntity entity = context.entity;
         Camera camera = context.camera;
         MatrixStack stack = context.stack;
@@ -222,9 +228,9 @@ public abstract class BaseFilmController
         matrices.pop();
     }
 
-    public static Matrix4f getEntityMatrix(List<IEntity> entities, double cameraX, double cameraY, double cameraZ, int actor, String attachment, Matrix4f defaultMatrix, float transition)
+    public static Matrix4f getEntityMatrix(IntObjectMap<IEntity> entities, double cameraX, double cameraY, double cameraZ, int actor, String attachment, Matrix4f defaultMatrix, float transition)
     {
-        IEntity entity = CollectionUtils.getSafe(entities, actor);
+        IEntity entity = entities.get(actor);
 
         if (entity != null)
         {
@@ -276,7 +282,7 @@ public abstract class BaseFilmController
         this.film = film;
     }
 
-    public List<IEntity> getEntities()
+    public IntObjectMap<IEntity> getEntities()
     {
         return this.entities;
     }
@@ -290,23 +296,30 @@ public abstract class BaseFilmController
             return;
         }
 
+        int i = 0;
+
         for (Replay replay : this.film.replays.getList())
         {
-            World world = MinecraftClient.getInstance().world;
-            IEntity entity = new StubEntity(world);
+            if (replay.enabled.get())
+            {
+                World world = MinecraftClient.getInstance().world;
+                IEntity entity = new StubEntity(world);
 
-            entity.setForm(FormUtils.copy(replay.form.get()));
-            replay.applyFrame(0, entity);
-            entity.setPrevX(entity.getX());
-            entity.setPrevY(entity.getY());
-            entity.setPrevZ(entity.getZ());
+                entity.setForm(FormUtils.copy(replay.form.get()));
+                replay.applyFrame(0, entity);
+                entity.setPrevX(entity.getX());
+                entity.setPrevY(entity.getY());
+                entity.setPrevZ(entity.getZ());
 
-            entity.setPrevYaw(entity.getYaw());
-            entity.setPrevHeadYaw(entity.getHeadYaw());
-            entity.setPrevPitch(entity.getPitch());
-            entity.setPrevBodyYaw(entity.getBodyYaw());
+                entity.setPrevYaw(entity.getYaw());
+                entity.setPrevHeadYaw(entity.getHeadYaw());
+                entity.setPrevPitch(entity.getPitch());
+                entity.setPrevBodyYaw(entity.getBodyYaw());
 
-            this.entities.add(entity);
+                this.entities.put(i, entity);
+            }
+
+            i += 1;
         }
     }
 
@@ -326,9 +339,10 @@ public abstract class BaseFilmController
 
     protected void updateEntities(int ticks)
     {
-        for (int i = 0; i < this.entities.size(); i++)
+        for (Map.Entry<Integer, IEntity> entry : this.entities.entrySet())
         {
-            IEntity entity = this.entities.get(i);
+            int i = entry.getKey();
+            IEntity entity = entry.getValue();
             List<Replay> replays = this.film.replays.getList();
             Replay replay = CollectionUtils.getSafe(replays, i);
 
@@ -363,6 +377,80 @@ public abstract class BaseFilmController
                             actor.setPitch(replay.keyframes.pitch.interpolate(ticks).floatValue());
                             replay.applyClientActions(ticks, new MCEntity(anEntity), this.film);
                         }
+                        else if (anEntity instanceof PlayerEntity player)
+                        {
+                            double x = replay.keyframes.x.interpolate(ticks);
+                            double y = replay.keyframes.y.interpolate(ticks);
+                            double z = replay.keyframes.z.interpolate(ticks);
+                            double prevX = replay.keyframes.x.interpolate(ticks - 1);
+                            double prevY = replay.keyframes.y.interpolate(ticks - 1);
+                            double prevZ = replay.keyframes.z.interpolate(ticks - 1);
+
+                            player.setVelocity(x - prevX, y - prevY, z - prevZ);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void updateEndWorld()
+    {
+        int ticks = this.getTick();
+
+        for (Map.Entry<Integer, IEntity> entry : this.entities.entrySet())
+        {
+            int i = entry.getKey();
+            IEntity entity = entry.getValue();
+            List<Replay> replays = this.film.replays.getList();
+            Replay replay = CollectionUtils.getSafe(replays, i);
+
+            if (!this.canUpdate(i, replay, entity))
+            {
+                continue;
+            }
+
+            if (replay != null)
+            {
+                ticks = replay.getTick(ticks);
+
+                Map<String, Integer> actors = this.getActors();
+
+                if (actors != null)
+                {
+                    Integer entityId = actors.get(replay.getId());
+
+                    if (entityId != null)
+                    {
+                        Entity anEntity = MinecraftClient.getInstance().world.getEntityById(entityId);
+
+                        if (anEntity instanceof PlayerEntity player)
+                        {
+                            double x = replay.keyframes.x.interpolate(ticks);
+                            double y = replay.keyframes.y.interpolate(ticks);
+                            double z = replay.keyframes.z.interpolate(ticks);
+                            boolean sneaking = replay.keyframes.sneaking.interpolate(ticks) > 0;
+
+                            Vec3d pos = player.getPos();
+
+                            player.move(MovementType.SELF, new Vec3d(x - pos.x, y - pos.y, z - pos.z));
+                            player.setPosition(x, y, z);
+
+                            player.setSneaking(sneaking);
+                            player.setOnGround(replay.keyframes.grounded.interpolate(ticks) > 0);
+
+                            if (player instanceof ClientPlayerEntityAccessor accessor)
+                            {
+                                accessor.bbs$setIsSneakingPose(sneaking);
+                            }
+
+                            if (player instanceof ClientPlayerEntity playerEntity)
+                            {
+                                playerEntity.input.sneaking = sneaking;
+                            }
+
+                            player.fallDistance = replay.keyframes.fall.interpolate(ticks).floatValue();
+                        }
                     }
                 }
             }
@@ -387,20 +475,22 @@ public abstract class BaseFilmController
 
     public void startRenderFrame(float transition)
     {
-        for (int i = 0; i < this.entities.size(); i++)
+        for (Map.Entry<Integer, IEntity> entry : this.entities.entrySet())
         {
+            int i = entry.getKey();
+            IEntity entity = entry.getValue();
             Replay replay = this.film.replays.getList().get(i);
-            IEntity entity = this.entities.get(i);
 
             if (!this.canUpdate(i, replay, entity))
             {
                 continue;
             }
 
+            float delta = this.getTransition(entity, transition);
             int tick = replay.getTick(this.getTick());
 
             /* Apply property */
-            replay.applyProperties(tick + transition, entity.getForm());
+            replay.applyProperties(tick + delta, entity.getForm());
 
             Map<String, Integer> actors = this.getActors();
 
@@ -414,11 +504,31 @@ public abstract class BaseFilmController
 
                     if (anEntity instanceof ActorEntity actor)
                     {
-                        replay.applyProperties(tick + transition, actor.getForm());
+                        replay.applyProperties(tick + delta, actor.getForm());
+                    }
+                    else if (anEntity instanceof PlayerEntity player)
+                    {
+                        float yawHead = replay.keyframes.headYaw.interpolate(tick + transition).floatValue();
+                        float yawBody = replay.keyframes.bodyYaw.interpolate(tick + transition).floatValue();
+                        float pitch = replay.keyframes.pitch.interpolate(tick + transition).floatValue();
+
+                        player.setYaw(yawHead);
+                        player.setHeadYaw(yawHead);
+                        player.setPitch(pitch);
+                        player.setBodyYaw(yawBody);
+                        player.prevYaw = yawHead;
+                        player.prevHeadYaw = yawHead;
+                        player.prevPitch = pitch;
+                        player.prevBodyYaw = yawBody;
                     }
                 }
             }
         }
+    }
+
+    protected float getTransition(IEntity entity, float transition)
+    {
+        return transition;
     }
 
     protected boolean canUpdate(int i, Replay replay, IEntity entity)
@@ -430,10 +540,11 @@ public abstract class BaseFilmController
     {
         RenderSystem.enableDepthTest();
 
-        for (int i = 0; i < this.entities.size(); i++)
+        for (Map.Entry<Integer, IEntity> entry : this.entities.entrySet())
         {
+            int i = entry.getKey();
+            IEntity entity = entry.getValue();
             Replay replay = this.film.replays.getList().get(i);
-            IEntity entity = this.entities.get(i);
 
             if (!this.canUpdate(i, replay, entity))
             {

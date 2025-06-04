@@ -1,10 +1,6 @@
 package mchorse.bbs_mod.settings.ui;
 
 import mchorse.bbs_mod.BBSModClient;
-import mchorse.bbs_mod.film.tts.UIVoiceColorsOverlayPanel;
-import mchorse.bbs_mod.film.tts.UIVoiceModelOverlayPanel;
-import mchorse.bbs_mod.film.tts.ValueVoiceColors;
-import mchorse.bbs_mod.film.tts.ValueVoiceModel;
 import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.settings.value.ValueKeyCombo;
 import mchorse.bbs_mod.settings.values.ValueBoolean;
@@ -157,32 +153,12 @@ public class UIValueMap
         register(ValueKeyCombo.class, (value, ui) ->
         {
             UILabel label = UI.label(value.get().label, 0).labelAnchor(0, 0.5F);
-            UIKeybind keybind = new UIKeybind(value::set);
+            UIKeybind keybind = new UIKeybind(value::set).mouse();
 
             keybind.setKeyCombo(value.get());
             keybind.w(100);
 
             return Arrays.asList(UI.row(label, keybind).tooltip(value.get().label));
-        });
-
-        register(ValueVoiceColors.class, (value, ui) ->
-        {
-            UIButton button = new UIButton(UIKeys.VOICE_COLORS_OPEN, (b) ->
-            {
-                UIOverlay.addOverlay(ui.getContext(), new UIVoiceColorsOverlayPanel(value));
-            });
-
-            return Arrays.asList(button);
-        });
-
-        register(ValueVoiceModel.class, (value, ui) ->
-        {
-            UIButton button = new UIButton(UIKeys.VOICE_MODEL_OPEN, (b) ->
-            {
-                UIOverlay.addOverlay(ui.getContext(), new UIVoiceModelOverlayPanel(value), 200, 0.5F);
-            });
-
-            return Arrays.asList(button);
         });
 
         register(ValueVideoSettings.class, (value, ui) ->
