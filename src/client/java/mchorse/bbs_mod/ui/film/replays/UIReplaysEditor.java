@@ -121,10 +121,11 @@ public class UIReplaysEditor extends UIElement
         COLORS.put("extra2_x", Colors.RED);
         COLORS.put("extra2_y", Colors.GREEN);
 
-        COLORS.put("visible", Colors.WHITE & 0xFFFFFF);
+        COLORS.put("visible", Colors.WHITE & Colors.RGB);
         COLORS.put("pose", Colors.RED);
         COLORS.put("pose_overlay", Colors.ORANGE);
         COLORS.put("transform", Colors.GREEN);
+        COLORS.put("transform_overlay", 0xaaff00);
         COLORS.put("color", Colors.INACTIVE);
         COLORS.put("lighting", Colors.YELLOW);
         COLORS.put("shape_keys", Colors.PINK);
@@ -817,16 +818,21 @@ public class UIReplaysEditor extends UIElement
 
         if (replay != null)
         {
-            int index = this.film.replays.getList().indexOf(replay);
-            IEntity entity = this.filmPanel.getController().getEntities().get(index);
+            int tick = this.filmPanel.getCursor();
+            double x = replay.keyframes.x.interpolate(tick);
+            double y = replay.keyframes.y.interpolate(tick);
+            double z = replay.keyframes.z.interpolate(tick);
+            float yaw = replay.keyframes.yaw.interpolate(tick).floatValue();
+            float headYaw = replay.keyframes.headYaw.interpolate(tick).floatValue();
+            float bodyYaw = replay.keyframes.bodyYaw.interpolate(tick).floatValue();
+            float pitch = replay.keyframes.pitch.interpolate(tick).floatValue();
             ClientPlayerEntity player = MinecraftClient.getInstance().player;
 
-            PlayerUtils.teleport(entity.getX(), entity.getY(), entity.getZ(), entity.getHeadYaw(), entity.getPitch());
-
-            player.setYaw(entity.getYaw());
-            player.setHeadYaw(entity.getHeadYaw());
-            player.setBodyYaw(entity.getBodyYaw());
-            player.setPitch(entity.getPitch());
+            PlayerUtils.teleport(x, y, z, headYaw, pitch);
+            player.setYaw(yaw);
+            player.setHeadYaw(headYaw);
+            player.setBodyYaw(bodyYaw);
+            player.setPitch(pitch);
         }
     }
 

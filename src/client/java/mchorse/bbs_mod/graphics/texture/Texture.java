@@ -26,6 +26,7 @@ public class Texture
     private boolean clearable;
 
     private TextureFormat format = TextureFormat.RGBA_U8;
+    private int filter;
 
     public static Pixels pixelsFromTexture(Texture texture)
     {
@@ -82,6 +83,11 @@ public class Texture
         return this.mipmap;
     }
 
+    public boolean isReallyMipmap()
+    {
+        return this.mipmap && this.getParameter(GL30.GL_TEXTURE_MAX_LEVEL) > 0;
+    }
+
     public boolean isValid()
     {
         return this.id >= 0;
@@ -116,7 +122,12 @@ public class Texture
 
     public int getFilter()
     {
-        return this.getParameter(GL11.GL_TEXTURE_MIN_FILTER);
+        return this.filter;
+    }
+
+    public boolean isLinear()
+    {
+        return this.filter == GL30.GL_LINEAR || this.filter == GL30.GL_LINEAR_MIPMAP_NEAREST;
     }
 
     public int getParameter(int parameter)
@@ -124,8 +135,24 @@ public class Texture
         return GL11.glGetTexParameteri(this.target, parameter);
     }
 
+    public void setFilterMipmap(boolean linear, boolean mipmap)
+    {
+        int filter = linear ? GL11.GL_LINEAR : GL11.GL_NEAREST;
+
+        this.setFilter(filter);
+
+        if (!this.isMipmap())
+        {
+            this.generateMipmap();
+        }
+
+        this.setParameter(GL30.GL_TEXTURE_MAX_LEVEL, mipmap ? 4 : 0);
+    }
+
     public void setFilter(int filter)
     {
+        this.filter = filter;
+
         this.setParameter(GL11.GL_TEXTURE_MAG_FILTER, filter);
         this.setParameter(GL11.GL_TEXTURE_MIN_FILTER, filter);
     }

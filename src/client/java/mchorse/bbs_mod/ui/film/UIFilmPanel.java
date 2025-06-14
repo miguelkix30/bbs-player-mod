@@ -341,6 +341,27 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         this.cameraEditor.setUndoId("camera_editor");
         this.replayEditor.setUndoId("replay_editor");
         this.actionEditor.setUndoId("action_editor");
+
+        UIElement element = new UIElement()
+        {
+            @Override
+            protected boolean subMouseScrolled(UIContext context)
+            {
+                if (Window.isCtrlPressed())
+                {
+                    int magnitude = Window.isShiftPressed() ? BBSSettings.editorJump.get() : 1;
+                    int newCursor = UIFilmPanel.this.getCursor() + (int) Math.copySign(magnitude, context.mouseWheel);
+
+                    UIFilmPanel.this.setCursor(newCursor);
+
+                    return true;
+                }
+
+                return super.subMouseScrolled(context);
+            }
+        };
+
+        this.add(element);
     }
 
     private void setupEditorFlex(boolean resize)
@@ -673,6 +694,18 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
     public IKey getTitle()
     {
         return UIKeys.FILM_TITLE;
+    }
+
+    @Override
+    public void fillDefaultData(Film data)
+    {
+        super.fillDefaultData(data);
+
+        IdleClip clip = new IdleClip();
+
+        clip.duration.set(BBSSettings.getDefaultDuration());
+        clip.fromCamera(this.getWorldCamera());
+        data.camera.addClip(clip);
     }
 
     @Override

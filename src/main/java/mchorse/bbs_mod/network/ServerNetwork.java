@@ -27,6 +27,7 @@ import mchorse.bbs_mod.resources.packs.ExternalAssetsSourcePack;
 import mchorse.bbs_mod.utils.DataPath;
 import mchorse.bbs_mod.utils.EnumUtils;
 import mchorse.bbs_mod.utils.Pair;
+import mchorse.bbs_mod.utils.PermissionUtils;
 import mchorse.bbs_mod.utils.StringUtils;
 import mchorse.bbs_mod.utils.clips.Clips;
 import mchorse.bbs_mod.utils.repos.RepositoryOperation;
@@ -80,6 +81,7 @@ public class ServerNetwork
     public static final Identifier CLIENT_ENTITY_FORM = new Identifier(BBSMod.MOD_ID, "c13");
     public static final Identifier CLIENT_ACTORS = new Identifier(BBSMod.MOD_ID, "c14");
     public static final Identifier CLIENT_GUN_PROPERTIES = new Identifier(BBSMod.MOD_ID, "c15");
+    public static final Identifier CLIENT_PAUSE_FILM = new Identifier(BBSMod.MOD_ID, "c16");
 
     public static final Identifier SERVER_MODEL_BLOCK_FORM_PACKET = new Identifier(BBSMod.MOD_ID, "s1");
     public static final Identifier SERVER_MODEL_BLOCK_TRANSFORMS_PACKET = new Identifier(BBSMod.MOD_ID, "s2");
@@ -95,6 +97,7 @@ public class ServerNetwork
     public static final Identifier SERVER_ASSET = new Identifier(BBSMod.MOD_ID, "s12");
     public static final Identifier SERVER_SHARED_FORM = new Identifier(BBSMod.MOD_ID, "s13");
     public static final Identifier SERVER_ZOOM = new Identifier(BBSMod.MOD_ID, "s14");
+    public static final Identifier SERVER_PAUSE_FILM = new Identifier(BBSMod.MOD_ID, "s15");
 
     private static ServerPacketCrusher crusher = new ServerPacketCrusher();
 
@@ -119,12 +122,18 @@ public class ServerNetwork
         ServerPlayNetworking.registerGlobalReceiver(SERVER_ASSET, (server, player, handler, buf, responder) -> handleAssetPacket(server, player, buf));
         ServerPlayNetworking.registerGlobalReceiver(SERVER_SHARED_FORM, (server, player, handler, buf, responder) -> handleSharedFormPacket(server, player, buf));
         ServerPlayNetworking.registerGlobalReceiver(SERVER_ZOOM, (server, player, handler, buf, responder) -> handleZoomPacket(server, player, buf));
+        ServerPlayNetworking.registerGlobalReceiver(SERVER_PAUSE_FILM, (server, player, handler, buf, responder) -> handlePauseFilmPacket(server, player, buf));
     }
 
     /* Handlers */
 
     private static void handleModelBlockFormPacket(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
     {
+        if (!PermissionUtils.arePanelsAllowed(server, player))
+        {
+            return;
+        }
+
         crusher.receive(buf, (bytes, packetByteBuf) ->
         {
             BlockPos pos = buf.readBlockPos();
@@ -151,6 +160,11 @@ public class ServerNetwork
 
     private static void handleModelBlockTransformsPacket(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
     {
+        if (!PermissionUtils.arePanelsAllowed(server, player))
+        {
+            return;
+        }
+
         crusher.receive(buf, (bytes, packetByteBuf) ->
         {
             try
@@ -174,6 +188,11 @@ public class ServerNetwork
 
     private static void handlePlayerFormPacket(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
     {
+        if (!PermissionUtils.arePanelsAllowed(server, player))
+        {
+            return;
+        }
+
         crusher.receive(buf, (bytes, packetByteBuf) ->
         {
             Form form = null;
@@ -201,6 +220,11 @@ public class ServerNetwork
 
     private static void handleManagerDataPacket(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
     {
+        if (!PermissionUtils.arePanelsAllowed(server, player))
+        {
+            return;
+        }
+
         crusher.receive(buf, (bytes, packetByteBuf) ->
         {
             MapType data = (MapType) DataStorageUtils.readFromBytes(bytes);
@@ -250,6 +274,11 @@ public class ServerNetwork
 
     private static void handleActionRecording(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
     {
+        if (!PermissionUtils.arePanelsAllowed(server, player))
+        {
+            return;
+        }
+
         String filmId = buf.readString();
         int replayId = buf.readInt();
         int tick = buf.readInt();
@@ -281,6 +310,11 @@ public class ServerNetwork
 
     private static void handleToggleFilm(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
     {
+        if (!PermissionUtils.arePanelsAllowed(server, player))
+        {
+            return;
+        }
+
         String filmId = buf.readString();
         boolean withCamera = buf.readBoolean();
 
@@ -306,6 +340,11 @@ public class ServerNetwork
 
     private static void handleActionControl(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
     {
+        if (!PermissionUtils.arePanelsAllowed(server, player))
+        {
+            return;
+        }
+
         ActionManager actions = BBSMod.getActions();
         String filmId = buf.readString();
         ActionState state = EnumUtils.getValue(buf.readByte(), ActionState.values(), ActionState.STOP);
@@ -384,6 +423,11 @@ public class ServerNetwork
 
     private static void handleSyncData(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
     {
+        if (!PermissionUtils.arePanelsAllowed(server, player))
+        {
+            return;
+        }
+
         crusher.receive(buf, (bytes, packetByteBuf) ->
         {
             String filmId = packetByteBuf.readString();
@@ -405,6 +449,11 @@ public class ServerNetwork
 
     private static void handleTeleportPlayer(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
     {
+        if (!PermissionUtils.arePanelsAllowed(server, player))
+        {
+            return;
+        }
+
         double x = buf.readDouble();
         double y = buf.readDouble();
         double z = buf.readDouble();
@@ -557,6 +606,23 @@ public class ServerNetwork
             {
                 server.getCommandManager().executeWithPrefix(player.getCommandSource(), command);
             }
+        }
+    }
+
+    private static void handlePauseFilmPacket(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
+    {
+        String filmId = buf.readString();
+
+        ActionPlayer actionPlayer = BBSMod.getActions().getPlayer(filmId);
+
+        if (actionPlayer != null)
+        {
+            actionPlayer.toggle();
+        }
+
+        for (ServerPlayerEntity playerEntity : server.getPlayerManager().getPlayerList())
+        {
+            sendPauseFilm(playerEntity, filmId);
         }
     }
 
@@ -816,5 +882,14 @@ public class ServerNetwork
         properties.toNetwork(buf);
 
         ServerPlayNetworking.send(player, CLIENT_GUN_PROPERTIES, buf);
+    }
+
+    public static void sendPauseFilm(ServerPlayerEntity player, String filmId)
+    {
+        PacketByteBuf buf = PacketByteBufs.create();
+
+        buf.writeString(filmId);
+
+        ServerPlayNetworking.send(player, CLIENT_PAUSE_FILM, buf);
     }
 }
