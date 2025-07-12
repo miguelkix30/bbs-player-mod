@@ -5,7 +5,9 @@ import mchorse.bbs_mod.BBSMod;
 import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.actions.ActionState;
+import mchorse.bbs_mod.audio.wav.WaveWriter;
 import mchorse.bbs_mod.camera.Camera;
+import mchorse.bbs_mod.camera.clips.misc.AudioClientClip;
 import mchorse.bbs_mod.camera.clips.modifiers.TranslateClip;
 import mchorse.bbs_mod.camera.clips.overwrite.IdleClip;
 import mchorse.bbs_mod.camera.controller.CameraController;
@@ -24,6 +26,7 @@ import mchorse.bbs_mod.graphics.texture.Texture;
 import mchorse.bbs_mod.graphics.window.Window;
 import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.network.ClientNetwork;
+import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.settings.values.IValueListener;
 import mchorse.bbs_mod.settings.values.ValueEditorLayout;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
@@ -36,6 +39,8 @@ import mchorse.bbs_mod.ui.dashboard.panels.UIDashboardPanels;
 import mchorse.bbs_mod.ui.dashboard.panels.UIDataDashboardPanel;
 import mchorse.bbs_mod.ui.dashboard.panels.overlay.UICRUDOverlayPanel;
 import mchorse.bbs_mod.ui.dashboard.utils.IUIOrbitKeysHandler;
+import mchorse.bbs_mod.ui.film.audio.OpenALRecorder;
+import mchorse.bbs_mod.ui.film.audio.UIAudioRecorder;
 import mchorse.bbs_mod.ui.film.controller.UIFilmController;
 import mchorse.bbs_mod.ui.film.replays.UIReplaysEditor;
 import mchorse.bbs_mod.ui.film.utils.UIFilmUndoHandler;
@@ -56,6 +61,7 @@ import mchorse.bbs_mod.utils.CollectionUtils;
 import mchorse.bbs_mod.utils.Direction;
 import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.PlayerUtils;
+import mchorse.bbs_mod.utils.StringUtils;
 import mchorse.bbs_mod.utils.Timer;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.clips.Clips;
@@ -72,6 +78,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector2i;
 import org.joml.Vector3d;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -119,6 +126,8 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
 
     private List<UIElement> panels = new ArrayList<>();
     private UIElement secretPlay;
+
+    private boolean newFilm;
 
     /**
      * Initialize the camera editor with a camera profile.
@@ -194,6 +203,58 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         /* Editors */
         this.cameraEditor = new UIClipsPanel(this, BBSMod.getFactoryCameraClips()).target(this.editArea);
         this.cameraEditor.full(this.main);
+
+        this.cameraEditor.clips.context((menu) ->
+        {
+            UIContext context = this.getContext();
+
+            menu.action(Icons.SOUND, UIKeys.CAMERA_TIMELINE_CONTEXT_RECORD_MICROPHONE, () ->
+            {
+                UIPromptOverlayPanel panel = new UIPromptOverlayPanel(
+                    UIKeys.CAMERA_TIMELINE_CONTEXT_RECORD_MICROPHONE_TITLE,
+                    UIKeys.CAMERA_TIMELINE_CONTEXT_RECORD_MICROPHONE_DESCRIPTION,
+                    (t) ->
+                    {
+                        UIElement overlay = context.menu.overlay;
+                        OpenALRecorder recorder = new OpenALRecorder((wave) ->
+                        {
+                            try
+                            {
+                                File file = new File(BBSMod.getAudioFolder(), t + ".wav");
+                                AudioClientClip clip = new AudioClientClip();
+                                Clips clips = this.cameraEditor.clips.getClips();
+
+                                file.getParentFile().mkdirs();
+                                WaveWriter.write(file, wave);
+                                clip.audio.set(Link.assets("audio/" + file.getName()));
+                                clip.duration.set((int) (wave.getDuration() * 20));
+                                clip.layer.set(clips.getTopLayer() + 1);
+
+                                clips.addClip(clip);
+                                this.cameraEditor.clips.clearSelection();
+                                this.cameraEditor.clips.pickClip(clip);
+                            }
+                            catch (Exception e)
+                            {}
+                        });
+                        UIAudioRecorder audioRecorder = new UIAudioRecorder(recorder);
+
+                        audioRecorder.full(overlay);
+                        audioRecorder.resize();
+                        overlay.add(audioRecorder);
+
+                        Thread thread = new Thread(recorder, "Супер классный, я записываю твой микрофон хихихи :3");
+
+                        thread.start();
+                    }
+                );
+
+                panel.text.setText(StringUtils.createTimestampFilename());
+
+                UIOverlay.addOverlay(context, panel);
+            });
+        });
+
         this.replayEditor = new UIReplaysEditor(this);
         this.replayEditor.full(this.main).setVisible(false);
         this.actionEditor = new UIClipsPanel(this, BBSMod.getFactoryActionClips()).target(this.editArea);
@@ -702,10 +763,17 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         super.fillDefaultData(data);
 
         IdleClip clip = new IdleClip();
+        Camera camera = new Camera();
+        MinecraftClient mc = MinecraftClient.getInstance();
 
+        camera.set(mc.player, MathUtils.toRad(mc.options.getFov().getValue()));
+
+        clip.layer.set(8);
         clip.duration.set(BBSSettings.getDefaultDuration());
-        clip.fromCamera(this.getWorldCamera());
+        clip.fromCamera(camera);
         data.camera.addClip(clip);
+
+        this.newFilm = true;
     }
 
     @Override
@@ -752,7 +820,16 @@ public class UIFilmPanel extends UIDataDashboardPanel<Film> implements IFlightSu
         this.fillData();
         this.controller.createEntities();
 
+        if (this.newFilm)
+        {
+            Clip main = this.data.camera.get(0);
+
+            this.cameraEditor.clips.setSelected(main);
+            this.cameraEditor.pickClip(main);
+        }
+
         this.entered = data != null;
+        this.newFilm = false;
     }
 
     public void undo()

@@ -42,6 +42,7 @@ public class UIContext implements IViewportStack
     public double mouseWheel;
     public double mouseWheelHorizontal;
     public long lastScroll;
+    private boolean lastScrollUpdate;
 
     /* Keyboard states */
     private int keyCode;
@@ -125,7 +126,6 @@ public class UIContext implements IViewportStack
     public void reset()
     {
         this.viewportStack.reset();
-
         this.resetTooltip();
     }
 
@@ -139,14 +139,25 @@ public class UIContext implements IViewportStack
         }
     }
 
+    public void markUpdateScroll()
+    {
+        this.lastScrollUpdate = true;
+    }
+
     public void updateScroll()
     {
-        this.lastScroll = System.currentTimeMillis();
+        if (this.lastScrollUpdate)
+        {
+            this.lastScroll = System.currentTimeMillis();
+            this.lastScrollUpdate = false;
+        }
     }
 
     public boolean hasNotScrolledForMore(long millis)
     {
-        return System.currentTimeMillis() - this.lastScroll > millis;
+        long l = System.currentTimeMillis() - this.lastScroll;
+
+        return l > millis;
     }
 
     /* Keys */
@@ -250,6 +261,8 @@ public class UIContext implements IViewportStack
 
     public void postRender()
     {
+        this.updateScroll();
+
         this.tooltip.render(this);
         this.notifications.render(this);
     }
