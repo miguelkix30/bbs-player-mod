@@ -77,6 +77,7 @@ public class UIKeys
     public static final IKey CAMERA_PANELS_AT_BLOCK = L10n.lang("bbs.ui.camera.panels.at_block");
     public static final IKey CAMERA_PANELS_AUDIO_OFFSET = L10n.lang("bbs.ui.camera.panels.audio.offset");
     public static final IKey CAMERA_PANELS_AUDIO_PICK_AUDIO = L10n.lang("bbs.ui.camera.panels.audio.pick_audio");
+    public static final IKey CAMERA_PANELS_AUDIO_EXTEND_DURATION = L10n.lang("bbs.ui.camera.panels.audio.extend_duration");
     public static final IKey CAMERA_PANELS_BLOCK = L10n.lang("bbs.ui.camera.panels.block");
     public static final IKey CAMERA_PANELS_CIRCLE = L10n.lang("bbs.ui.camera.panels.circle");
     public static final IKey CAMERA_PANELS_CIRCLES = L10n.lang("bbs.ui.camera.panels.circles");
@@ -302,6 +303,7 @@ public class UIKeys
     public static final IKey FORMS_CATEGORIES_CONTEXT_PASTE_FORM = L10n.lang("bbs.ui.forms.categories.context.paste_form");
     public static final IKey FORMS_CATEGORIES_CONTEXT_REMOVE_CATEGORY = L10n.lang("bbs.ui.forms.categories.context.remove_category");
     public static final IKey FORMS_CATEGORIES_CONTEXT_REMOVE_FORM = L10n.lang("bbs.ui.forms.categories.context.remove_form");
+    public static final IKey FORMS_CATEGORIES_CONTEXT_REMOVE_ALL_FORM = L10n.lang("bbs.ui.forms.categories.context.remove_all_form");
     public static final IKey FORMS_CATEGORIES_CONTEXT_RENAME_CATEGORY = L10n.lang("bbs.ui.forms.categories.context.rename_category");
     public static final IKey FORMS_CATEGORIES_CONTEXT_SHARE_FORM = L10n.lang("bbs.ui.forms.categories.context.share_form");
     public static final IKey FORMS_CATEGORIES_EXTRA = L10n.lang("bbs.ui.forms.categories.extra");
@@ -723,6 +725,7 @@ public class UIKeys
     public static final IKey SNOWSTORM_RATE_SPAWN_RATE = L10n.lang("bbs.ui.snowstorm.rate.spawn_rate");
     public static final IKey SNOWSTORM_RATE_STEADY = L10n.lang("bbs.ui.snowstorm.rate.steady");
     public static final IKey SNOWSTORM_RATE_TITLE = L10n.lang("bbs.ui.snowstorm.rate.title");
+    public static final IKey SNOWSTORM_RESTART_EMITTER = L10n.lang("bbs.ui.snowstorm.restart_emitter");
     public static final IKey SNOWSTORM_SHAPE_AABB = L10n.lang("bbs.ui.snowstorm.shape.aabb");
     public static final IKey SNOWSTORM_SHAPE_BOX = L10n.lang("bbs.ui.snowstorm.shape.box");
     public static final IKey SNOWSTORM_SHAPE_BOX_SIZE = L10n.lang("bbs.ui.snowstorm.shape.box_size");
