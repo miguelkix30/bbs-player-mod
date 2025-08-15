@@ -27,7 +27,12 @@
         "iris.EntityVertexMixin",
         "KeyboardInputMixin",
         "EntityRendererMixin",
-        "ClientPlayerEntityAccessor"
+        "ClientPlayerEntityAccessor",
+        "iris.IrisRenderingPipelineAccessor",
+        "iris.CustomUniformsBuilderMixin",
+        "iris.CustomUniformsAccessor",
+        "iris.JcppProcessorMixin",
+        "iris.IrisMixin"
     ],
     "injectors": {
         "defaultRequire": 1

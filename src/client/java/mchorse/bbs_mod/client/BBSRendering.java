@@ -25,10 +25,12 @@ import mchorse.bbs_mod.utils.VideoRecorder;
 import mchorse.bbs_mod.utils.colors.Color;
 import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.iris.IrisUtils;
+import mchorse.bbs_mod.utils.iris.ShaderCurves;
 import mchorse.bbs_mod.utils.sodium.SodiumUtils;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.impl.client.rendering.WorldRenderContextImpl;
 import net.fabricmc.loader.api.FabricLoader;
+import net.irisshaders.iris.uniforms.custom.cached.CachedUniform;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gl.WindowFramebuffer;
@@ -40,6 +42,8 @@ import org.lwjgl.opengl.GL11;
 
 import java.io.File;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -469,6 +473,16 @@ public class BBSRendering
         }
 
         return IrisUtils.calculateTangents(v, n, u);
+    }
+
+    public static void addUniforms(List<CachedUniform> list, Map<String, ShaderCurves.ShaderVariable> variableMap)
+    {
+        if (!iris)
+        {
+            return;
+        }
+
+        IrisUtils.addUniforms(list, variableMap);
     }
 
     /* Time of day */
