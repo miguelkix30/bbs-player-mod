@@ -348,35 +348,14 @@ public class UIClips extends UIElement
 
         context.replaceContextMenu((add) ->
         {
-            IKey addCategory = UIKeys.CAMERA_TIMELINE_KEYS_CLIPS;
-            int i = 0;
+            add.autoKeys(UIKeys.CAMERA_TIMELINE_KEYS_CLIPS);
 
             for (Link type : this.factory.getKeys())
             {
                 IKey typeKey = UIKeys.CAMERA_TIMELINE_CONTEXT_ADD_CLIP_TYPE.format(UIKeys.C_CLIP.get(type));
                 ClipFactoryData data = this.factory.getData(type);
-                ContextAction action = add.action(data.icon, typeKey, data.color, () -> this.addClip(type, preview.x, preview.y, preview.z));
 
-                if (i < 30)
-                {
-                    int mod = i % 10;
-                    int key = i == 9 ? GLFW.GLFW_KEY_0 : GLFW.GLFW_KEY_1 + mod;
-
-                    if (i >= 20)
-                    {
-                        action.key(addCategory, key, GLFW.GLFW_KEY_LEFT_CONTROL);
-                    }
-                    else if (i >= 10)
-                    {
-                        action.key(addCategory, key, GLFW.GLFW_KEY_LEFT_SHIFT);
-                    }
-                    else
-                    {
-                        action.key(addCategory, key);
-                    }
-                }
-
-                i += 1;
+                add.action(data.icon, typeKey, data.color, () -> this.addClip(type, preview.x, preview.y, preview.z));
             }
 
             add.onClose((m) -> this.addPreview = null);
@@ -537,19 +516,52 @@ public class UIClips extends UIElement
      */
     private void convertTo(Link type)
     {
-        Clip original = this.delegate.getClip();
-        ClipFactoryData data = this.factory.getData(original);
-        IClipConverter converter = data.converters.get(type);
-        Clip converted = converter.convert(original);
+        List<Clip> clipsFromSelection = this.getClipsFromSelection();
 
-        if (converted == null)
+        if (clipsFromSelection.isEmpty())
         {
             return;
         }
 
-        this.clips.remove(original);
-        this.clips.addClip(converted);
-        this.pickClip(converted);
+        for (Clip clip : clipsFromSelection)
+        {
+            if (clip.getClass() != clipsFromSelection.get(0).getClass())
+            {
+                return;
+            }
+        }
+
+        ClipFactoryData data = this.factory.getData(clipsFromSelection.get(clipsFromSelection.size() - 1));
+        IClipConverter converter = data.converters.get(type);
+        List<Clip> newClips = new ArrayList<>();
+
+        for (Clip clip : clipsFromSelection)
+        {
+            Clip converted = converter.convert(clip);
+
+            if (converted == null)
+            {
+                continue;
+            }
+
+            this.clips.remove(clip);
+            this.clips.addClip(converted);
+            newClips.add(converted);
+        }
+
+        if (newClips.isEmpty())
+        {
+            return;
+        }
+
+        this.clearSelection();
+
+        for (Clip newClip : newClips)
+        {
+            this.addSelected(newClip);
+        }
+
+        this.pickLastSelectedClip();
     }
 
     private void fromReplay(int mouseX, int mouseY)
@@ -1214,6 +1226,20 @@ public class UIClips extends UIElement
         this.grabbedData.clear();
 
         return super.subMouseReleased(context);
+    }
+
+    @Override
+    protected boolean subKeyPressed(UIContext context)
+    {
+        if (this.embedded != null && context.isPressed(GLFW.GLFW_KEY_ESCAPE))
+        {
+            this.embedView(null);
+            UIUtils.playClick();
+
+            return true;
+        }
+
+        return super.subKeyPressed(context);
     }
 
     @Override
