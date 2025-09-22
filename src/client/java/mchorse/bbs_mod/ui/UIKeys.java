@@ -149,6 +149,7 @@ public class UIKeys
     public static final IKey CAMERA_PANELS_SUBTITLE_OPAQUE = L10n.lang("bbs.ui.camera.panels.subtitle.opaque");
     public static final IKey CAMERA_PANELS_SUBTITLE_SHADOW = L10n.lang("bbs.ui.camera.panels.subtitle.shadow");
     public static final IKey CAMERA_PANELS_SUBTITLE_SIZE = L10n.lang("bbs.ui.camera.panels.subtitle.size");
+    public static final IKey CAMERA_PANELS_SUBTITLE_TEXT_SHADOW = L10n.lang("bbs.ui.camera.panels.subtitle.text_shadow");
     public static final IKey CAMERA_PANELS_SUBTITLE_TRANSFORM = L10n.lang("bbs.ui.camera.panels.subtitle.transform");
     public static final IKey CAMERA_PANELS_SUBTITLE_WINDOW = L10n.lang("bbs.ui.camera.panels.subtitle.window");
     public static final IKey CAMERA_PANELS_TARGET = L10n.lang("bbs.ui.camera.panels.target");
@@ -414,6 +415,8 @@ public class UIKeys
     public static final IKey FORMS_LIST_SEARCH = L10n.lang("bbs.ui.forms.list.search");
     public static final IKey FORMS_SHARED_NOTIFICATION = L10n.lang("bbs.ui.forms.categories.shared-notification");
     public static final IKey GENERAL_ADD = L10n.lang("bbs.ui.add");
+    public static final IKey GENERAL_CLOSE = L10n.lang("bbs.ui.close");
+    public static final IKey GENERAL_CONFIRM = L10n.lang("bbs.ui.confirm");
     public static final IKey GENERAL_COPY = L10n.lang("bbs.ui.copy");
     public static final IKey GENERAL_DUPE = L10n.lang("bbs.ui.dupe");
     public static final IKey GENERAL_EDIT = L10n.lang("bbs.ui.edit");
@@ -505,6 +508,7 @@ public class UIKeys
     public static final IKey INTERPOLATIONS_CONTEXT_COPY = L10n.lang("interpolations.ui.context.copy");
     public static final IKey INTERPOLATIONS_CONTEXT_PASTE = L10n.lang("interpolations.ui.context.paste");
     public static final IKey INTERPOLATIONS_KEY_CATEGORY = L10n.lang("interpolations.key_category");
+    public static final IKey ITEM_STACK_CONTEXT_HOTBAR = L10n.lang("bbs.ui.item_stack.context.hotbar");
     public static final IKey ITEM_STACK_CONTEXT_PASTE = L10n.lang("bbs.ui.item_stack.context.paste");
     public static final IKey ITEM_STACK_CONTEXT_RESET = L10n.lang("bbs.ui.item_stack.context.reset");
     public static final IKey KEYFRAMES_CONTEXT_ADJUST_VALUES = L10n.lang("bbs.ui.keyframes.context.adjust_values");
