@@ -49,21 +49,29 @@ import java.util.function.Predicate;
 
 public class BBSCommands
 {
+    // ========== BBS PLAYER MOD - PERMISSIONS CONFIGURATION ==========
+    // All commands now require operator permissions (level 2)
+    // This is a player/playback-only mod, editing features are disabled
+    // ================================================================
+    
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, CommandManager.RegistrationEnvironment environment)
     {
         Predicate<ServerCommandSource> hasPermissions = (source) -> source.hasPermissionLevel(2);
-        LiteralArgumentBuilder<ServerCommandSource> bbs = CommandManager.literal("bbs").requires((source) -> true);
+        LiteralArgumentBuilder<ServerCommandSource> bbs = CommandManager.literal("bbs").requires(hasPermissions);
 
-        registerMorphCommand(bbs, environment, hasPermissions);
-        registerMorphEntityCommand(bbs, environment, hasPermissions);
+        // ========== BBS PLAYER MOD - DISABLED EDITING COMMANDS ==========
+        // Only film playback commands are registered
+        // registerMorphCommand(bbs, environment, hasPermissions);
+        // registerMorphEntityCommand(bbs, environment, hasPermissions);
         registerFilmsCommand(bbs, environment, hasPermissions);
-        registerDCCommand(bbs, environment, hasPermissions);
-        registerOnHeadCommand(bbs, environment, hasPermissions);
-        registerConfigCommand(bbs, environment, hasPermissions);
-        registerServerCommand(bbs, environment, hasPermissions);
-        registerCheatsCommand(bbs, environment);
-        registerBoomCommand(bbs, environment, hasPermissions);
-        registerStructureSaveCommand(bbs, environment, hasPermissions);
+        // registerDCCommand(bbs, environment, hasPermissions);
+        // registerOnHeadCommand(bbs, environment, hasPermissions);
+        // registerConfigCommand(bbs, environment, hasPermissions);
+        // registerServerCommand(bbs, environment, hasPermissions);
+        // registerCheatsCommand(bbs, environment);
+        // registerBoomCommand(bbs, environment, hasPermissions);
+        // registerStructureSaveCommand(bbs, environment, hasPermissions);
+        // ================================================================
 
         dispatcher.register(bbs);
     }
@@ -122,6 +130,11 @@ public class BBSCommands
 
     private static void registerFilmsCommand(LiteralArgumentBuilder<ServerCommandSource> bbs, CommandManager.RegistrationEnvironment environment, Predicate<ServerCommandSource> hasPermissions)
     {
+        // ========== BBS PLAYER MOD - FILMS PLAYBACK COMMAND ==========
+        // This command now requires operator permissions (level 2)
+        // Only playback functionality is enabled
+        // ================================================================
+        
         LiteralArgumentBuilder<ServerCommandSource> scene = CommandManager.literal("films");
         LiteralArgumentBuilder<ServerCommandSource> play = CommandManager.literal("play");
         LiteralArgumentBuilder<ServerCommandSource> stop = CommandManager.literal("stop");
@@ -166,6 +179,7 @@ public class BBSCommands
             )
         );
 
+        // Films command now requires operator permissions
         bbs.then(scene.requires(hasPermissions));
     }
 

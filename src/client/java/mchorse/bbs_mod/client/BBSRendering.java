@@ -388,22 +388,25 @@ public class BBSRendering
 
         BBSModClient.getFilms().renderHud(batcher2D, tickDelta);
 
-        if (videoRecorder.isRecording() && BBSSettings.recordingOverlays.get())
-        {
-            int count = videoRecorder.getCounter();
-            String label = UIKeys.FILM_VIDEO_RECORDING.format(
-                count,
-                BBSModClient.getKeyRecordVideo().getBoundKeyLocalizedText().getString()
-            ).get();
-
-            int x = 5;
-            int y = 5;
-            int w = batcher2D.getFont().getWidth(label);
-
-            batcher2D.box(x, y, x + 18 + w + 3, y + 16, Colors.A50);
-            batcher2D.icon(Icons.SPHERE, Colors.RED | Colors.A100, x, y);
-            batcher2D.textShadow(label, x + 18, y + 4);
-        }
+        // ========== BBS PLAYER MOD - DISABLED VIDEO RECORDING OVERLAY ==========
+        // Video recording overlay disabled since recording feature is removed
+        // if (videoRecorder.isRecording() && BBSSettings.recordingOverlays.get())
+        // {
+        //     int count = videoRecorder.getCounter();
+        //     String label = UIKeys.FILM_VIDEO_RECORDING.format(
+        //         count,
+        //         BBSModClient.getKeyRecordVideo().getBoundKeyLocalizedText().getString()
+        //     ).get();
+        //
+        //     int x = 5;
+        //     int y = 5;
+        //     int w = batcher2D.getFont().getWidth(label);
+        //
+        //     batcher2D.box(x, y, x + 18 + w + 3, y + 16, Colors.A50);
+        //     batcher2D.icon(Icons.SPHERE, Colors.RED | Colors.A100, x, y);
+        //     batcher2D.textShadow(label, x + 18, y + 4);
+        // }
+        // ================================================================
     }
 
     public static void renderCoolStuff(WorldRenderContext worldRenderContext)
