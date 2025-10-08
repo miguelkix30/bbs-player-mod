@@ -92,17 +92,20 @@ public class BBSModClient implements ClientModInitializer
 
     private static ParticleManager particles;
 
-    private static KeyBinding keyDashboard;
-    private static KeyBinding keyItemEditor;
-    private static KeyBinding keyPlayFilm;
-    private static KeyBinding keyPauseFilm;
-    private static KeyBinding keyRecordReplay;
-    private static KeyBinding keyRecordVideo;
-    private static KeyBinding keyOpenReplays;
-    private static KeyBinding keyOpenMorphing;
-    private static KeyBinding keyDemorph;
-    private static KeyBinding keyTeleport;
-    private static KeyBinding keyZoom;
+    // ========== BBS PLAYER MOD - ALL KEYBINDS DISABLED ==========
+    // All keybinds disabled - films can only be controlled via server commands
+    // private static KeyBinding keyDashboard;
+    // private static KeyBinding keyItemEditor;
+    // private static KeyBinding keyPlayFilm;
+    // private static KeyBinding keyPauseFilm;
+    // private static KeyBinding keyRecordReplay;
+    // private static KeyBinding keyRecordVideo;
+    // private static KeyBinding keyOpenReplays;
+    // private static KeyBinding keyOpenMorphing;
+    // private static KeyBinding keyDemorph;
+    // private static KeyBinding keyTeleport;
+    // private static KeyBinding keyZoom;
+    // ================================================================
 
     private static UIDashboard dashboard;
 
@@ -179,15 +182,18 @@ public class BBSModClient implements ClientModInitializer
         return gunZoom;
     }
 
-    public static KeyBinding getKeyZoom()
-    {
-        return keyZoom;
-    }
-
-    public static KeyBinding getKeyRecordVideo()
-    {
-        return keyRecordVideo;
-    }
+    // ========== BBS PLAYER MOD - DISABLED EDITING METHODS ==========
+    // Disabled getters for editing-related keybinds
+    // public static KeyBinding getKeyZoom()
+    // {
+    //     return keyZoom;
+    // }
+    //
+    // public static KeyBinding getKeyRecordVideo()
+    // {
+    //     return keyRecordVideo;
+    // }
+    // ================================================================
 
     public static UIDashboard getDashboard()
     {
@@ -339,17 +345,20 @@ public class BBSModClient implements ClientModInitializer
             .register(Link.bbs("form_trigger"), FormTriggerClientActionClip.class, new ClipFactoryData(Icons.KEY_CAP, Colors.PINK));
 
         /* Keybinds */
-        keyDashboard = this.createKey("dashboard", GLFW.GLFW_KEY_0);
-        keyItemEditor = this.createKey("item_editor", GLFW.GLFW_KEY_HOME);
-        keyPlayFilm = this.createKey("play_film", GLFW.GLFW_KEY_RIGHT_CONTROL);
-        keyPauseFilm = this.createKey("pause_film", GLFW.GLFW_KEY_BACKSLASH);
-        keyRecordReplay = this.createKey("record_replay", GLFW.GLFW_KEY_RIGHT_ALT);
-        keyRecordVideo = this.createKey("record_video", GLFW.GLFW_KEY_F4);
-        keyOpenReplays = this.createKey("open_replays", GLFW.GLFW_KEY_RIGHT_SHIFT);
-        keyOpenMorphing = this.createKey("open_morphing", GLFW.GLFW_KEY_B);
-        keyDemorph = this.createKey("demorph", GLFW.GLFW_KEY_PERIOD);
-        keyTeleport = this.createKey("teleport", GLFW.GLFW_KEY_Y);
-        keyZoom = this.createKeyMouse("zoom", 2);
+        // ========== BBS PLAYER MOD - ALL KEYBINDS DISABLED ==========
+        // All keybinds disabled - films can only be controlled via server commands
+        // keyDashboard = this.createKey("dashboard", GLFW.GLFW_KEY_0);
+        // keyItemEditor = this.createKey("item_editor", GLFW.GLFW_KEY_HOME);
+        // keyPlayFilm = this.createKey("play_film", GLFW.GLFW_KEY_RIGHT_CONTROL);
+        // keyPauseFilm = this.createKey("pause_film", GLFW.GLFW_KEY_BACKSLASH);
+        // keyRecordReplay = this.createKey("record_replay", GLFW.GLFW_KEY_RIGHT_ALT);
+        // keyRecordVideo = this.createKey("record_video", GLFW.GLFW_KEY_F4);
+        // keyOpenReplays = this.createKey("open_replays", GLFW.GLFW_KEY_RIGHT_SHIFT);
+        // keyOpenMorphing = this.createKey("open_morphing", GLFW.GLFW_KEY_B);
+        // keyDemorph = this.createKey("demorph", GLFW.GLFW_KEY_PERIOD);
+        // keyTeleport = this.createKey("teleport", GLFW.GLFW_KEY_Y);
+        // keyZoom = this.createKeyMouse("zoom", 2);
+        // ================================================================
 
         WorldRenderEvents.AFTER_ENTITIES.register((context) ->
         {
@@ -416,46 +425,52 @@ public class BBSModClient implements ClientModInitializer
 
             BBSResources.update();
 
-            while (keyDashboard.wasPressed()) UIScreen.open(getDashboard());
-            while (keyItemEditor.wasPressed()) this.keyOpenModelBlockEditor(mc);
-            while (keyPlayFilm.wasPressed()) this.keyPlayFilm();
-            while (keyPauseFilm.wasPressed()) this.keyPauseFilm();
-            while (keyRecordReplay.wasPressed()) this.keyRecordReplay();
-            while (keyRecordVideo.wasPressed())
-            {
-                Window window = mc.getWindow();
-                int width = Math.max(window.getWidth(), 2);
-                int height = Math.max(window.getHeight(), 2);
-
-                if (width % 2 == 1) width -= width % 2;
-                if (height % 2 == 1) height -= height % 2;
-
-                videoRecorder.toggleRecording(BBSRendering.getTexture().id, width, height);
-                BBSRendering.setCustomSize(videoRecorder.isRecording(), width, height);
-            }
-            while (keyOpenReplays.wasPressed()) this.keyOpenReplays();
-            while (keyOpenMorphing.wasPressed())
-            {
-                UIDashboard dashboard = getDashboard();
-
-                UIScreen.open(dashboard);
-                dashboard.setPanel(dashboard.getPanel(UIMorphingPanel.class));
-            }
-            while (keyDemorph.wasPressed()) ClientNetwork.sendPlayerForm(null);
-            while (keyTeleport.wasPressed()) this.keyTeleport();
+            // ========== BBS PLAYER MOD - ALL KEYBINDS DISABLED ==========
+            // All keybinds disabled - films can only be controlled via server commands
+            // while (keyDashboard.wasPressed()) UIScreen.open(getDashboard());
+            // while (keyItemEditor.wasPressed()) this.keyOpenModelBlockEditor(mc);
+            // while (keyPlayFilm.wasPressed()) this.keyPlayFilm();
+            // while (keyPauseFilm.wasPressed()) this.keyPauseFilm();
+            // while (keyRecordReplay.wasPressed()) this.keyRecordReplay();
+            // while (keyRecordVideo.wasPressed())
+            // {
+            //     Window window = mc.getWindow();
+            //     int width = Math.max(window.getWidth(), 2);
+            //     int height = Math.max(window.getHeight(), 2);
+            //
+            //     if (width % 2 == 1) width -= width % 2;
+            //     if (height % 2 == 1) height -= height % 2;
+            //
+            //     videoRecorder.toggleRecording(BBSRendering.getTexture().id, width, height);
+            //     BBSRendering.setCustomSize(videoRecorder.isRecording(), width, height);
+            // }
+            // while (keyOpenReplays.wasPressed()) this.keyOpenReplays();
+            // while (keyOpenMorphing.wasPressed())
+            // {
+            //     UIDashboard dashboard = getDashboard();
+            //
+            //     UIScreen.open(dashboard);
+            //     dashboard.setPanel(dashboard.getPanel(UIMorphingPanel.class));
+            // }
+            // while (keyDemorph.wasPressed()) ClientNetwork.sendPlayerForm(null);
+            // while (keyTeleport.wasPressed()) this.keyTeleport();
+            // ================================================================
 
             if (mc.player != null)
             {
-                boolean zoom = keyZoom.isPressed();
-                ItemStack stack = mc.player.getMainHandStack();
-
-                if (gunZoom == null && zoom && stack.getItem() == BBSMod.GUN_ITEM)
-                {
-                    GunProperties properties = GunProperties.get(stack);
-
-                    ClientNetwork.sendZoom(true);
-                    gunZoom = new GunZoom(properties.fovTarget, properties.fovInterp, properties.fovDuration);
-                }
+                // ========== BBS PLAYER MOD - DISABLED GUN ZOOM ==========
+                // Gun zoom functionality disabled
+                // boolean zoom = keyZoom.isPressed();
+                // ItemStack stack = mc.player.getMainHandStack();
+                //
+                // if (gunZoom == null && zoom && stack.getItem() == BBSMod.GUN_ITEM)
+                // {
+                //     GunProperties properties = GunProperties.get(stack);
+                //
+                //     ClientNetwork.sendZoom(true);
+                //     gunZoom = new GunZoom(properties.fovTarget, properties.fovInterp, properties.fovDuration);
+                // }
+                // ========================================================
             }
         });
 
@@ -463,16 +478,19 @@ public class BBSModClient implements ClientModInitializer
         {
             BBSRendering.renderHud(drawContext, tickDelta);
 
-            if (gunZoom != null)
-            {
-                gunZoom.update(keyZoom.isPressed(), MinecraftClient.getInstance().getLastFrameDuration());
-
-                if (gunZoom.canBeRemoved())
-                {
-                    ClientNetwork.sendZoom(false);
-                    gunZoom = null;
-                }
-            }
+            // ========== BBS PLAYER MOD - DISABLED GUN ZOOM ==========
+            // Gun zoom rendering disabled
+            // if (gunZoom != null)
+            // {
+            //     gunZoom.update(keyZoom.isPressed(), MinecraftClient.getInstance().getLastFrameDuration());
+            //
+            //     if (gunZoom.canBeRemoved())
+            //     {
+            //         ClientNetwork.sendZoom(false);
+            //         gunZoom = null;
+            //     }
+            // }
+            // ========================================================
         });
 
         ClientLifecycleEvents.CLIENT_STOPPING.register((e) -> BBSResources.stopWatchdog());
@@ -553,101 +571,110 @@ public class BBSModClient implements ClientModInitializer
         ));
     }
 
-    private void keyOpenModelBlockEditor(MinecraftClient mc)
-    {
-        ItemStack stack = mc.player.getEquippedStack(EquipmentSlot.MAINHAND);
-        ModelBlockItemRenderer.Item item = modelBlockItemRenderer.get(stack);
-        GunItemRenderer.Item gunItem = gunItemRenderer.get(stack);
+    // ========== BBS PLAYER MOD - DISABLED MODEL BLOCK EDITOR ==========
+    // Model block editor functionality disabled
+    // private void keyOpenModelBlockEditor(MinecraftClient mc)
+    // {
+    //     ItemStack stack = mc.player.getEquippedStack(EquipmentSlot.MAINHAND);
+    //     ModelBlockItemRenderer.Item item = modelBlockItemRenderer.get(stack);
+    //     GunItemRenderer.Item gunItem = gunItemRenderer.get(stack);
+    //
+    //     if (item != null)
+    //     {
+    //         UIScreen.open(new UIModelBlockEditorMenu(item.entity.getProperties()));
+    //     }
+    //     else if (gunItem != null)
+    //     {
+    //         UIScreen.open(new UIModelBlockEditorMenu(gunItem.properties));
+    //     }
+    // }
+    // ================================================================
 
-        if (item != null)
-        {
-            UIScreen.open(new UIModelBlockEditorMenu(item.entity.getProperties()));
-        }
-        else if (gunItem != null)
-        {
-            UIScreen.open(new UIModelBlockEditorMenu(gunItem.properties));
-        }
-    }
+    // ========== BBS PLAYER MOD - DISABLED PLAYBACK KEYBIND METHODS ==========
+    // Play and pause methods disabled - films controlled only via commands
+    // private void keyPlayFilm()
+    // {
+    //     UIFilmPanel panel = getDashboard().getPanel(UIFilmPanel.class);
+    //
+    //     if (panel.getData() != null)
+    //     {
+    //         Films.playFilm(panel.getData().getId(), false);
+    //     }
+    // }
+    //
+    // private void keyPauseFilm()
+    // {
+    //     UIFilmPanel panel = getDashboard().getPanel(UIFilmPanel.class);
+    //
+    //     if (panel.getData() != null)
+    //     {
+    //         Films.pauseFilm(panel.getData().getId());
+    //     }
+    // }
+    // ================================================================
 
-    private void keyPlayFilm()
-    {
-        UIFilmPanel panel = getDashboard().getPanel(UIFilmPanel.class);
-
-        if (panel.getData() != null)
-        {
-            Films.playFilm(panel.getData().getId(), false);
-        }
-    }
-
-    private void keyPauseFilm()
-    {
-        UIFilmPanel panel = getDashboard().getPanel(UIFilmPanel.class);
-
-        if (panel.getData() != null)
-        {
-            Films.pauseFilm(panel.getData().getId());
-        }
-    }
-
-    private void keyRecordReplay()
-    {
-        UIDashboard dashboard = getDashboard();
-        UIFilmPanel panel = dashboard.getPanel(UIFilmPanel.class);
-
-        if (panel != null && panel.getData() != null)
-        {
-            Recorder recorder = getFilms().getRecorder();
-
-            if (recorder != null)
-            {
-                recorder = BBSModClient.getFilms().stopRecording();
-
-                if (recorder == null || recorder.hasNotStarted() || panel.getData() == null)
-                {
-                    return;
-                }
-
-                panel.applyRecordedKeyframes(recorder, panel.getData());
-            }
-            else
-            {
-                Replay replay = panel.replayEditor.getReplay();
-                int index = panel.getData().replays.getList().indexOf(replay);
-
-                if (index >= 0)
-                {
-                    getFilms().startRecording(panel.getData(), index, 0);
-                }
-            }
-        }
-    }
-
-    private void keyOpenReplays()
-    {
-        UIDashboard dashboard = getDashboard();
-
-        UIScreen.open(dashboard);
-
-        if (dashboard.getPanels().panel instanceof UIFilmPanel panel && panel.getData() != null)
-        {
-            panel.preview.openReplays();
-        }
-        else
-        {
-            dashboard.setPanel(dashboard.getPanel(UIFilmPanel.class));
-        }
-    }
-
-    private void keyTeleport()
-    {
-        UIDashboard dashboard = getDashboard();
-        UIFilmPanel panel = dashboard.getPanel(UIFilmPanel.class);
-
-        if (panel != null)
-        {
-            panel.replayEditor.teleport();
-        }
-    }
+    // ========== BBS PLAYER MOD - DISABLED RECORDING/REPLAY METHODS ==========
+    // Recording, replay editing and teleport methods disabled
+    // private void keyRecordReplay()
+    // {
+    //     UIDashboard dashboardPanel = getDashboard();
+    //     UIFilmPanel panel = dashboardPanel.getPanel(UIFilmPanel.class);
+    //
+    //     if (panel != null && panel.getData() != null)
+    //     {
+    //         Recorder recorder = getFilms().getRecorder();
+    //
+    //         if (recorder != null)
+    //         {
+    //             recorder = BBSModClient.getFilms().stopRecording();
+    //
+    //             if (recorder == null || recorder.hasNotStarted() || panel.getData() == null)
+    //             {
+    //                 return;
+    //             }
+    //
+    //             panel.applyRecordedKeyframes(recorder, panel.getData());
+    //         }
+    //         else
+    //         {
+    //             Replay replay = panel.replayEditor.getReplay();
+    //             int index = panel.getData().replays.getList().indexOf(replay);
+    //
+    //             if (index >= 0)
+    //             {
+    //                 getFilms().startRecording(panel.getData(), index, 0);
+    //             }
+    //         }
+    //     }
+    // }
+    //
+    // private void keyOpenReplays()
+    // {
+    //     UIDashboard dashboardPanel = getDashboard();
+    //
+    //     UIScreen.open(dashboardPanel);
+    //
+    //     if (dashboardPanel.getPanels().panel instanceof UIFilmPanel panel && panel.getData() != null)
+    //     {
+    //         panel.preview.openReplays();
+    //     }
+    //     else
+    //     {
+    //         dashboardPanel.setPanel(dashboardPanel.getPanel(UIFilmPanel.class));
+    //     }
+    // }
+    //
+    // private void keyTeleport()
+    // {
+    //     UIDashboard dashboardPanel = getDashboard();
+    //     UIFilmPanel panel = dashboardPanel.getPanel(UIFilmPanel.class);
+    //
+    //     if (panel != null)
+    //     {
+    //         panel.replayEditor.teleport();
+    //     }
+    // }
+    // ================================================================
 
     public static String getLanguageKey()
     {
