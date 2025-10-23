@@ -24,9 +24,9 @@ import mchorse.bbs_mod.forms.entities.StubEntity;
 import mchorse.bbs_mod.forms.forms.BodyPart;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.forms.ModelForm;
-import mchorse.bbs_mod.forms.properties.IFormProperty;
 import mchorse.bbs_mod.forms.triggers.StateTrigger;
 import mchorse.bbs_mod.resources.Link;
+import mchorse.bbs_mod.settings.values.base.BaseValueBasic;
 import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.framework.elements.utils.StencilMap;
 import mchorse.bbs_mod.utils.MathUtils;
@@ -88,7 +88,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
 
         for (String key : trigger.states.keys())
         {
-            IFormProperty property = FormUtils.getProperty(this.form, key);
+            BaseValueBasic property = FormUtils.getProperty(this.form, key);
 
             if (property != null)
             {
@@ -471,6 +471,9 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
             Supplier<ShaderProgram> mainShader = (BBSRendering.isIrisShadersEnabled() && BBSRendering.isRenderingWorld()) || !model.isVAORendered()
                 ? GameRenderer::getRenderTypeEntityTranslucentCullProgram
                 : BBSShaders::getModel;
+
+            RenderSystem.enableDepthTest();
+            RenderSystem.enableBlend();
 
             this.renderModel(this.entity, mainShader, matrices, model, light, OverlayTexture.DEFAULT_UV, color, false, null, 0F);
 
