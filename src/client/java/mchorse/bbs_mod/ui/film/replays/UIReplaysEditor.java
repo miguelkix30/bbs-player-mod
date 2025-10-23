@@ -20,14 +20,13 @@ import mchorse.bbs_mod.forms.FormUtils;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.forms.ModelForm;
-import mchorse.bbs_mod.forms.properties.IFormProperty;
 import mchorse.bbs_mod.forms.renderers.ModelFormRenderer;
 import mchorse.bbs_mod.graphics.window.Window;
 import mchorse.bbs_mod.l10n.keys.IKey;
-import mchorse.bbs_mod.math.molang.MolangParser;
 import mchorse.bbs_mod.math.molang.expressions.MolangExpression;
 import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
+import mchorse.bbs_mod.settings.values.base.BaseValueBasic;
 import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.ui.film.UIClipsPanel;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
@@ -60,8 +59,6 @@ import mchorse.bbs_mod.utils.keyframes.Keyframe;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
 import mchorse.bbs_mod.utils.keyframes.KeyframeSegment;
 import mchorse.bbs_mod.utils.keyframes.factories.KeyframeFactories;
-import mchorse.bbs_mod.utils.pose.Pose;
-import mchorse.bbs_mod.utils.pose.PoseTransform;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.hit.BlockHitResult;
@@ -394,7 +391,7 @@ public class UIReplaysEditor extends UIElement
 
             if (property != null)
             {
-                IFormProperty formProperty = FormUtils.getProperty(this.replay.form.get(), key);
+                BaseValueBasic formProperty = FormUtils.getProperty(this.replay.form.get(), key);
                 UIKeyframeSheet sheet = new UIKeyframeSheet(getColor(key), false, property, formProperty);
 
                 sheets.add(sheet.icon(getIcon(key)));
@@ -425,7 +422,7 @@ public class UIReplaysEditor extends UIElement
 
         for (UIKeyframeSheet sheet : sheets)
         {
-            Object form = sheet.property == null ? null : sheet.property.getForm();
+            Object form = sheet.property == null ? null : FormUtils.getForm(sheet.property);
 
             if (!Objects.equals(lastForm, form))
             {
@@ -482,7 +479,6 @@ public class UIReplaysEditor extends UIElement
                     if (sheet != null && sheet.channel.getFactory() == KeyframeFactories.POSE && sheet.id.equals("pose"))
                     {
                         menu.action(Icons.POSE, UIKeys.FILM_REPLAY_CONTEXT_ANIMATION_TO_KEYFRAMES, () -> this.animationToPoses(modelForm, sheet));
-                        // TODO: menu.action(Icons.UPLOAD, IKey.raw("Copy as .bbs.json animation"), () -> this.copyAaBBSJSON(sheet));
                     }
                 }
 
@@ -519,43 +515,13 @@ public class UIReplaysEditor extends UIElement
         }
     }
 
-    private void copyAaBBSJSON(UIKeyframeSheet sheet)
-    {
-        MolangParser parser = BBSModClient.getModels().parser;
-        Animation animation = new Animation("exported_animation", parser);
-        int min = Integer.MAX_VALUE;
-        int max = Integer.MIN_VALUE;
-        List<Keyframe> selected = sheet.selection.getSelected();
-
-        for (Keyframe keyframe : selected)
-        {
-            min = Math.min(min, (int) keyframe.getTick());
-            max = Math.max(min, (int) keyframe.getTick());
-        }
-
-        for (Keyframe keyframe : selected)
-        {
-            if (keyframe.getValue() instanceof Pose pose)
-            {
-                for (Map.Entry<String, PoseTransform> entry : pose.transforms.entrySet())
-                {
-                    String key = entry.getKey();
-                    PoseTransform value = entry.getValue();
-                    AnimationPart part = new AnimationPart(parser);
-
-                    animation.parts.put(key, part);
-                }
-            }
-        }
-    }
-
     private void animationToPoses(ModelForm modelForm, UIKeyframeSheet sheet)
     {
         ModelInstance model = ModelFormRenderer.getModel(modelForm);
 
         if (model != null)
         {
-            UIOverlay.addOverlay(this.getContext(), new UIAnimationToPoseOverlayPanel(this, modelForm, sheet), 200, 197);
+            UIOverlay.addOverlay(this.getContext(), new UIAnimationToPoseOverlayPanel(this::animationToPoseKeyframes, modelForm, sheet), 200, 197);
         }
     }
 
@@ -636,7 +602,7 @@ public class UIReplaysEditor extends UIElement
         Keyframe selected = this.keyframeEditor.view.getGraph().getSelected();
         String type = "pose";
 
-        if (selected != null && selected.getParent().getId().endsWith("pose_overlay"))
+        if (selected != null && selected.getParentValue().getId().endsWith("pose_overlay"))
         {
             type = "pose_overlay";
         }
@@ -652,16 +618,16 @@ public class UIReplaysEditor extends UIElement
 
         manager.autoKeys();
 
-        for (IFormProperty formProperty : form.getProperties().values())
+        for (BaseValueBasic formProperty : form.getProperties().values())
         {
-            if (!formProperty.canCreateChannel())
+            if (!formProperty.isVisible())
             {
                 continue;
             }
 
-            manager.action(getIcon(formProperty.getKey()), IKey.constant(formProperty.getKey()), () ->
+            manager.action(getIcon(formProperty.getId()), IKey.constant(formProperty.getId()), () ->
             {
-                this.pickProperty(bone, StringUtils.combinePaths(path, formProperty.getKey()), shift);
+                this.pickProperty(bone, StringUtils.combinePaths(path, formProperty.getId()), shift);
             });
         }
 
@@ -672,7 +638,7 @@ public class UIReplaysEditor extends UIElement
     {
         for (UIKeyframeSheet sheet : this.keyframeEditor.view.getGraph().getSheets())
         {
-            IFormProperty property = sheet.property;
+            BaseValueBasic property = sheet.property;
 
             if (property != null && FormUtils.getPropertyPath(property).equals(key))
             {
