@@ -1,8 +1,8 @@
 package mchorse.bbs_mod;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import mchorse.bbs_mod.actions.types.FormTriggerClientActionClip;
 import mchorse.bbs_mod.audio.SoundManager;
+import mchorse.bbs_mod.blocks.entities.ModelProperties;
 import mchorse.bbs_mod.camera.clips.ClipFactoryData;
 import mchorse.bbs_mod.camera.clips.misc.AudioClientClip;
 import mchorse.bbs_mod.camera.clips.misc.CurveClientClip;
@@ -19,12 +19,8 @@ import mchorse.bbs_mod.film.Films;
 import mchorse.bbs_mod.film.Recorder;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.FormCategories;
-import mchorse.bbs_mod.forms.FormUtilsClient;
 import mchorse.bbs_mod.forms.categories.UserFormCategory;
 import mchorse.bbs_mod.forms.forms.Form;
-import mchorse.bbs_mod.forms.forms.ModelForm;
-import mchorse.bbs_mod.forms.renderers.ModelFormRenderer;
-import mchorse.bbs_mod.forms.triggers.StateTrigger;
 import mchorse.bbs_mod.graphics.Draw;
 import mchorse.bbs_mod.graphics.FramebufferManager;
 import mchorse.bbs_mod.graphics.texture.TextureManager;
@@ -33,6 +29,7 @@ import mchorse.bbs_mod.items.GunZoom;
 import mchorse.bbs_mod.l10n.L10n;
 import mchorse.bbs_mod.morphing.Morph;
 import mchorse.bbs_mod.network.ClientNetwork;
+import mchorse.bbs_mod.network.ServerNetwork;
 import mchorse.bbs_mod.particles.ParticleManager;
 import mchorse.bbs_mod.resources.AssetProvider;
 import mchorse.bbs_mod.resources.Link;
@@ -68,6 +65,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.impl.client.rendering.BlockEntityRendererRegistryImpl;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
@@ -80,6 +78,7 @@ import net.minecraft.client.util.Window;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.Hand;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -232,6 +231,25 @@ public class BBSModClient implements ClientModInitializer
         return Math.max(originalFramebufferScale, 1);
     }
 
+    public static ModelProperties getItemStackProperties(ItemStack stack)
+    {
+        ModelBlockItemRenderer.Item item = modelBlockItemRenderer.get(stack);
+
+        if (item != null)
+        {
+            return item.entity.getProperties();
+        }
+
+        GunItemRenderer.Item gunItem = gunItemRenderer.get(stack);
+
+        if (gunItem != null)
+        {
+            return gunItem.properties;
+        }
+
+        return null;
+    }
+
     public static void onEndKey(long window, int key, int scancode, int action, int modifiers, CallbackInfo info)
     {
         if (action != GLFW.GLFW_PRESS)
@@ -239,24 +257,36 @@ public class BBSModClient implements ClientModInitializer
             return;
         }
 
-        Morph morph = Morph.getMorph(MinecraftClient.getInstance().player);
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        Morph morph = Morph.getMorph(player);
 
-        /* State trigger */
-        if (morph != null && morph.getForm() instanceof ModelForm modelForm)
+        /* Animation state trigger */
+        if (morph != null && morph.getForm() != null && morph.getForm().findState(key, (form, state) ->
         {
-            for (StateTrigger trigger : modelForm.triggers.triggers)
+            ClientNetwork.sendFormTrigger(state.id.get(), ServerNetwork.STATE_TRIGGER_MORPH);
+            form.playState(state);
+        }))
+            return;
+
+        /* Animation state trigger for items*/
+        if (player != null)
+        {
+            ModelProperties main = getItemStackProperties(player.getStackInHand(Hand.MAIN_HAND));
+            ModelProperties offhand = getItemStackProperties(player.getStackInHand(Hand.OFF_HAND));
+
+            if (main != null && main.getForm() != null && main.getForm().findState(key, (form, state) ->
             {
-                if (trigger.hotkey == key)
-                {
-                    ModelFormRenderer renderer = (ModelFormRenderer) FormUtilsClient.getRenderer(modelForm);
+                ClientNetwork.sendFormTrigger(state.id.get(), ServerNetwork.STATE_TRIGGER_MAIN_HAND_ITEM);
+                form.playState(state);
+            }))
+                return;
 
-                    BBSModClient.getFilms().recordTrigger(modelForm, trigger);
-                    renderer.triggerState(trigger);
-                    ClientNetwork.sendFormTrigger(trigger.id);
-
-                    return;
-                }
-            }
+            if (offhand != null && offhand.getForm() != null && offhand.getForm().findState(key, (form, state) ->
+            {
+                ClientNetwork.sendFormTrigger(state.id.get(), ServerNetwork.STATE_TRIGGER_OFF_HAND_ITEM);
+                form.playState(state);
+            }))
+                return;
         }
 
         /* Change form based on the hotkey */
@@ -349,10 +379,6 @@ public class BBSModClient implements ClientModInitializer
             .register(Link.bbs("audio"), AudioClientClip.class, new ClipFactoryData(Icons.SOUND, 0xffc825))
             .register(Link.bbs("tracker"), TrackerClientClip.class, new ClipFactoryData(Icons.USER, 0x4cedfc))
             .register(Link.bbs("curve"), CurveClientClip.class, new ClipFactoryData(Icons.ARC, 0xff1493));
-
-        /* Replace form trigger action clip with client version that plays animation */
-        BBSMod.getFactoryActionClips()
-            .register(Link.bbs("form_trigger"), FormTriggerClientActionClip.class, new ClipFactoryData(Icons.KEY_CAP, Colors.PINK));
 
         /* Keybinds */
         // ========== BBS PLAYER MOD - ALL KEYBINDS DISABLED ==========

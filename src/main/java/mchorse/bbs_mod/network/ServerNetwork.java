@@ -6,7 +6,6 @@ import mchorse.bbs_mod.actions.ActionPlayer;
 import mchorse.bbs_mod.actions.ActionRecorder;
 import mchorse.bbs_mod.actions.ActionState;
 import mchorse.bbs_mod.actions.PlayerType;
-import mchorse.bbs_mod.actions.types.FormTriggerActionClip;
 import mchorse.bbs_mod.blocks.entities.ModelBlockEntity;
 import mchorse.bbs_mod.data.DataStorageUtils;
 import mchorse.bbs_mod.data.types.BaseType;
@@ -44,14 +43,15 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 public class ServerNetwork
 {
-    public static final List<String> EXTENSIONS = Arrays.asList("wav", "json", "vox", "png", "ogg");
+    public static final int STATE_TRIGGER_MORPH = 0;
+    public static final int STATE_TRIGGER_MAIN_HAND_ITEM = 1;
+    public static final int STATE_TRIGGER_OFF_HAND_ITEM = 2;
 
     public static final Identifier CLIENT_CLICKED_MODEL_BLOCK_PACKET = new Identifier(BBSMod.MOD_ID, "c1");
     public static final Identifier CLIENT_PLAYER_FORM_PACKET = new Identifier(BBSMod.MOD_ID, "c2");
@@ -60,14 +60,16 @@ public class ServerNetwork
     public static final Identifier CLIENT_STOP_FILM_PACKET = new Identifier(BBSMod.MOD_ID, "c5");
     public static final Identifier CLIENT_HANDSHAKE = new Identifier(BBSMod.MOD_ID, "c6");
     public static final Identifier CLIENT_RECORDED_ACTIONS = new Identifier(BBSMod.MOD_ID, "c7");
-    public static final Identifier CLIENT_FORM_TRIGGER = new Identifier(BBSMod.MOD_ID, "c8");
-    public static final Identifier CLIENT_CHEATS_PERMISSION = new Identifier(BBSMod.MOD_ID, "c11");
-    public static final Identifier CLIENT_SHARED_FORM = new Identifier(BBSMod.MOD_ID, "c12");
-    public static final Identifier CLIENT_ENTITY_FORM = new Identifier(BBSMod.MOD_ID, "c13");
-    public static final Identifier CLIENT_ACTORS = new Identifier(BBSMod.MOD_ID, "c14");
-    public static final Identifier CLIENT_GUN_PROPERTIES = new Identifier(BBSMod.MOD_ID, "c15");
-    public static final Identifier CLIENT_PAUSE_FILM = new Identifier(BBSMod.MOD_ID, "c16");
-    public static final Identifier CLIENT_SELECTED_SLOT = new Identifier(BBSMod.MOD_ID, "c17");
+    public static final Identifier CLIENT_ANIMATION_STATE_TRIGGER = new Identifier(BBSMod.MOD_ID, "c8");
+    public static final Identifier CLIENT_CHEATS_PERMISSION = new Identifier(BBSMod.MOD_ID, "c9");
+    public static final Identifier CLIENT_SHARED_FORM = new Identifier(BBSMod.MOD_ID, "c10");
+    public static final Identifier CLIENT_ENTITY_FORM = new Identifier(BBSMod.MOD_ID, "c11");
+    public static final Identifier CLIENT_ACTORS = new Identifier(BBSMod.MOD_ID, "c12");
+    public static final Identifier CLIENT_GUN_PROPERTIES = new Identifier(BBSMod.MOD_ID, "c13");
+    public static final Identifier CLIENT_PAUSE_FILM = new Identifier(BBSMod.MOD_ID, "c14");
+    public static final Identifier CLIENT_SELECTED_SLOT = new Identifier(BBSMod.MOD_ID, "c15");
+    public static final Identifier CLIENT_ANIMATION_STATE_MODEL_BLOCK_TRIGGER = new Identifier(BBSMod.MOD_ID, "c16");
+    public static final Identifier CLIENT_REFRESH_MODEL_BLOCKS = new Identifier(BBSMod.MOD_ID, "c17");
 
     public static final Identifier SERVER_MODEL_BLOCK_FORM_PACKET = new Identifier(BBSMod.MOD_ID, "s1");
     public static final Identifier SERVER_MODEL_BLOCK_TRANSFORMS_PACKET = new Identifier(BBSMod.MOD_ID, "s2");
@@ -78,10 +80,10 @@ public class ServerNetwork
     public static final Identifier SERVER_ACTION_CONTROL = new Identifier(BBSMod.MOD_ID, "s7");
     public static final Identifier SERVER_FILM_DATA_SYNC = new Identifier(BBSMod.MOD_ID, "s8");
     public static final Identifier SERVER_PLAYER_TP = new Identifier(BBSMod.MOD_ID, "s9");
-    public static final Identifier SERVER_FORM_TRIGGER = new Identifier(BBSMod.MOD_ID, "s10");
-    public static final Identifier SERVER_SHARED_FORM = new Identifier(BBSMod.MOD_ID, "s13");
-    public static final Identifier SERVER_ZOOM = new Identifier(BBSMod.MOD_ID, "s14");
-    public static final Identifier SERVER_PAUSE_FILM = new Identifier(BBSMod.MOD_ID, "s15");
+    public static final Identifier SERVER_ANIMATION_STATE_TRIGGER = new Identifier(BBSMod.MOD_ID, "s10");
+    public static final Identifier SERVER_SHARED_FORM = new Identifier(BBSMod.MOD_ID, "s11");
+    public static final Identifier SERVER_ZOOM = new Identifier(BBSMod.MOD_ID, "s12");
+    public static final Identifier SERVER_PAUSE_FILM = new Identifier(BBSMod.MOD_ID, "s13");
 
     private static ServerPacketCrusher crusher = new ServerPacketCrusher();
 
@@ -101,7 +103,7 @@ public class ServerNetwork
         ServerPlayNetworking.registerGlobalReceiver(SERVER_ACTION_CONTROL, (server, player, handler, buf, responder) -> handleActionControl(server, player, buf));
         ServerPlayNetworking.registerGlobalReceiver(SERVER_FILM_DATA_SYNC, (server, player, handler, buf, responder) -> handleSyncData(server, player, buf));
         ServerPlayNetworking.registerGlobalReceiver(SERVER_PLAYER_TP, (server, player, handler, buf, responder) -> handleTeleportPlayer(server, player, buf));
-        ServerPlayNetworking.registerGlobalReceiver(SERVER_FORM_TRIGGER, (server, player, handler, buf, responder) -> handleFormTrigger(server, player, buf));
+        ServerPlayNetworking.registerGlobalReceiver(SERVER_ANIMATION_STATE_TRIGGER, (server, player, handler, buf, responder) -> handleAnimationStateTriggerPacket(server, player, buf));
         ServerPlayNetworking.registerGlobalReceiver(SERVER_SHARED_FORM, (server, player, handler, buf, responder) -> handleSharedFormPacket(server, player, buf));
         ServerPlayNetworking.registerGlobalReceiver(SERVER_ZOOM, (server, player, handler, buf, responder) -> handleZoomPacket(server, player, buf));
         ServerPlayNetworking.registerGlobalReceiver(SERVER_PAUSE_FILM, (server, player, handler, buf, responder) -> handlePauseFilmPacket(server, player, buf));
@@ -453,29 +455,24 @@ public class ServerNetwork
         });
     }
 
-    private static void handleFormTrigger(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
+    private static void handleAnimationStateTriggerPacket(MinecraftServer server, ServerPlayerEntity player, PacketByteBuf buf)
     {
         String string = buf.readString();
+        int type = buf.readInt();
         PacketByteBuf newBuf = PacketByteBufs.create();
 
         newBuf.writeInt(player.getId());
         newBuf.writeString(string);
+        newBuf.writeInt(type);
 
         for (ServerPlayerEntity otherPlayer : PlayerLookup.tracking(player))
         {
-            ServerPlayNetworking.send(otherPlayer, CLIENT_FORM_TRIGGER, newBuf);
+            ServerPlayNetworking.send(otherPlayer, CLIENT_ANIMATION_STATE_TRIGGER, newBuf);
         }
 
         server.execute(() ->
         {
-            BBSMod.getActions().addAction(player, () ->
-            {
-                FormTriggerActionClip action = new FormTriggerActionClip();
-
-                action.trigger.set(string);
-
-                return action;
-            });
+            /* TODO: State Triggers */
         });
     }
 
@@ -731,5 +728,24 @@ public class ServerNetwork
         buf.writeInt(slot);
 
         ServerPlayNetworking.send(player, CLIENT_SELECTED_SLOT, buf);
+    }
+
+    public static void sendModelBlockState(ServerPlayerEntity player, BlockPos pos, String trigger)
+    {
+        PacketByteBuf buf = PacketByteBufs.create();
+
+        buf.writeBlockPos(pos);
+        buf.writeString(trigger);
+
+        ServerPlayNetworking.send(player, CLIENT_ANIMATION_STATE_MODEL_BLOCK_TRIGGER, buf);
+    }
+
+    public static void sendReloadModelBlocks(ServerPlayerEntity player, int tickRandom)
+    {
+        PacketByteBuf buf = PacketByteBufs.create();
+
+        buf.writeInt(tickRandom);
+
+        ServerPlayNetworking.send(player, CLIENT_REFRESH_MODEL_BLOCKS, buf);
     }
 }
