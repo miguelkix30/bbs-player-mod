@@ -293,7 +293,7 @@ public class UIKeyframes extends UIElement
 
         if (keyframe != null)
         {
-            KeyframeChannel channel = (KeyframeChannel) keyframe.getParentValue();
+            KeyframeChannel channel = (KeyframeChannel) keyframe.getParent();
             int existingIndex = channel.getKeyframes().indexOf(keyframe);
             int index = MathUtils.cycler(existingIndex + direction, channel.getAll());
             Keyframe nextKeyframe = channel.get(index);
@@ -658,8 +658,24 @@ public class UIKeyframes extends UIElement
         }
         else
         {
+            float min = Float.MAX_VALUE;
+
             for (Map.Entry<String, PastedKeyframes> entry : keyframes.entrySet())
             {
+                if (entry.getValue().keyframes.isEmpty())
+                {
+                    continue;
+                }
+
+                entry.getValue().keyframes.sort((a, b) -> Float.compare(a.getTick(), b.getTick()));
+
+                min = Math.min(min, entry.getValue().keyframes.get(0).getTick());
+            }
+
+            for (Map.Entry<String, PastedKeyframes> entry : keyframes.entrySet())
+            {
+                float entryMin = entry.getValue().keyframes.get(0).getTick();
+
                 for (UIKeyframeSheet property : sheets)
                 {
                     if (!property.id.equals(entry.getKey()))
@@ -667,7 +683,9 @@ public class UIKeyframes extends UIElement
                         continue;
                     }
 
-                    this.pasteKeyframesTo(property, entry.getValue(), offset);
+                    float d = min == Float.MAX_VALUE ? 0F : entryMin - min;
+
+                    this.pasteKeyframesTo(property, entry.getValue(), offset + d);
                 }
             }
         }

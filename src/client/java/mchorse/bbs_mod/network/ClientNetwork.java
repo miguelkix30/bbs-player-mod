@@ -3,6 +3,8 @@ package mchorse.bbs_mod.network;
 import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.actions.ActionState;
 import mchorse.bbs_mod.blocks.entities.ModelBlockEntity;
+import mchorse.bbs_mod.blocks.entities.ModelProperties;
+import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.data.DataStorageUtils;
 import mchorse.bbs_mod.data.types.BaseType;
 import mchorse.bbs_mod.data.types.MapType;
@@ -11,11 +13,7 @@ import mchorse.bbs_mod.entity.IEntityFormProvider;
 import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.film.Films;
 import mchorse.bbs_mod.forms.FormUtils;
-import mchorse.bbs_mod.forms.FormUtilsClient;
 import mchorse.bbs_mod.forms.forms.Form;
-import mchorse.bbs_mod.forms.forms.ModelForm;
-import mchorse.bbs_mod.forms.renderers.ModelFormRenderer;
-import mchorse.bbs_mod.forms.triggers.StateTrigger;
 import mchorse.bbs_mod.items.GunProperties;
 import mchorse.bbs_mod.morphing.Morph;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
@@ -33,8 +31,11 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.HashMap;
@@ -72,7 +73,7 @@ public class ClientNetwork
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_STOP_FILM_PACKET, (client, handler, buf, responseSender) -> handleStopFilmPacket(client, buf));
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_HANDSHAKE, (client, handler, buf, responseSender) -> handleHandshakePacket(client, buf));
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_RECORDED_ACTIONS, (client, handler, buf, responseSender) -> handleRecordedActionsPacket(client, buf));
-        ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_FORM_TRIGGER, (client, handler, buf, responseSender) -> handleFormTriggerPacket(client, buf));
+        ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_ANIMATION_STATE_TRIGGER, (client, handler, buf, responseSender) -> handleFormTriggerPacket(client, buf));
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_CHEATS_PERMISSION, (client, handler, buf, responseSender) -> handleCheatsPermissionPacket(client, buf));
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_SHARED_FORM, (client, handler, buf, responseSender) -> handleShareFormPacket(client, buf));
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_ENTITY_FORM, (client, handler, buf, responseSender) -> handleEntityFormPacket(client, buf));
@@ -80,6 +81,8 @@ public class ClientNetwork
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_GUN_PROPERTIES, (client, handler, buf, responseSender) -> handleGunPropertiesPacket(client, buf));
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_PAUSE_FILM, (client, handler, buf, responseSender) -> handlePauseFilmPacket(client, buf));
         ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_SELECTED_SLOT, (client, handler, buf, responseSender) -> handleSelectedSlotPacket(client, buf));
+        ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_ANIMATION_STATE_MODEL_BLOCK_TRIGGER, (client, handler, buf, responseSender) -> handleAnimationStateModelBlockPacket(client, buf));
+        ClientPlayNetworking.registerGlobalReceiver(ServerNetwork.CLIENT_REFRESH_MODEL_BLOCKS, (client, handler, buf, responseSender) -> handleRefreshModelBlocksPacket(client, buf));
     }
 
     /* Handlers */
@@ -201,22 +204,26 @@ public class ClientNetwork
     {
         int id = buf.readInt();
         String triggerId = buf.readString();
+        int type = buf.readInt();
 
         client.execute(() ->
         {
             Entity entity = client.world.getEntityById(id);
             Morph morph = Morph.getMorph(entity);
 
-            if (morph.getForm() instanceof ModelForm modelForm)
+            if (morph != null && morph.getForm() != null)
             {
-                for (StateTrigger trigger : modelForm.triggers.triggers)
-                {
-                    if (trigger.id.equals(triggerId))
-                    {
-                        ((ModelFormRenderer) FormUtilsClient.getRenderer(modelForm)).triggerState(trigger);
+                morph.getForm().playState(triggerId);
+            }
 
-                        return;
-                    }
+            if (entity instanceof LivingEntity livingEntity && type > 0)
+            {
+                ItemStack stackInHand = livingEntity.getStackInHand(type == 1 ? Hand.MAIN_HAND : Hand.OFF_HAND);
+                ModelProperties properties = BBSModClient.getItemStackProperties(stackInHand);
+
+                if (properties != null && properties.getForm() != null)
+                {
+                    properties.getForm().playState(triggerId);
                 }
             }
         });
@@ -347,6 +354,48 @@ public class ClientNetwork
         });
     }
 
+    private static void handleAnimationStateModelBlockPacket(MinecraftClient client, PacketByteBuf buf)
+    {
+        BlockPos pos = buf.readBlockPos();
+        String state = buf.readString();
+
+        client.execute(() ->
+        {
+            BlockEntity blockEntity = client.world.getBlockEntity(pos);
+
+            if (blockEntity instanceof ModelBlockEntity block)
+            {
+                if (block.getProperties().getForm() != null)
+                {
+                    block.getProperties().getForm().playState(state);
+                }
+            }
+        });
+    }
+
+    private static void handleRefreshModelBlocksPacket(MinecraftClient client, PacketByteBuf buf)
+    {
+        int range = buf.readInt();
+
+        client.execute(() ->
+        {
+            for (ModelBlockEntity mb : BBSRendering.capturedModelBlocks)
+            {
+                ModelProperties properties = mb.getProperties();
+                int random = (int) (Math.random() * range);
+
+                properties.setForm(FormUtils.copy(properties.getForm()));
+
+                while (random > 0)
+                {
+                    properties.update(mb.getEntity());
+
+                    random -= 1;
+                }
+            }
+        });
+    }
+
     /* API */
     
     public static void sendModelBlockForm(BlockPos pos, ModelBlockEntity modelBlock)
@@ -467,13 +516,14 @@ public class ClientNetwork
         ClientPlayNetworking.send(ServerNetwork.SERVER_PLAYER_TP, buf);
     }
 
-    public static void sendFormTrigger(String triggerId)
+    public static void sendFormTrigger(String triggerId, int type)
     {
         PacketByteBuf buf = PacketByteBufs.create();
 
         buf.writeString(triggerId);
+        buf.writeInt(type);
 
-        ClientPlayNetworking.send(ServerNetwork.SERVER_FORM_TRIGGER, buf);
+        ClientPlayNetworking.send(ServerNetwork.SERVER_ANIMATION_STATE_TRIGGER, buf);
     }
 
     public static void sendSharedForm(Form form, UUID uuid)
